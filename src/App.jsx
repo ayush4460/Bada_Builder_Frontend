@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css'
 import Header from './components/Header/Header';
 import Footer from './components/Footer/Footer';
+import LeadModal from './components/LeadModal/LeadModal';
 
 import HeroSection from './components/HeroSection/HeroSection';
 import RecommendedProjects from './components/RecommendedProjects/RecommendedProjects';
@@ -16,6 +17,13 @@ import BookSiteVisit from './pages/BookSiteVisit';
 import Investments from './pages/Investments';
 import Exhibition from './pages/Exhibition';
 import Working from './pages/Working';
+import Services from './pages/Services';
+import SubscriptionPlans from './pages/SubscriptionPlans';
+import PostProperty from './pages/PostProperty';
+import ByIndividual from './pages/Exhibition/ByIndividual';
+import ByDeveloper from './pages/Exhibition/ByDeveloper';
+import ByBadaBuilder from './pages/Exhibition/ByBadaBuilder';
+import LiveGrouping from './pages/Exhibition/LiveGrouping';
 import LAM from './pages/Report Data/LAM';
 import MarketInvestmentAnalysis from './pages/Report Data/MarketInvestmentAnalysis';
 import RealEstateFinancialModelling from './pages/Report Data/RealEstateFinancialModelling';
@@ -47,9 +55,26 @@ import NPVCalculator from './pages/calculator/NPVCalculator';
 
 
 function App() {
+  const [showLeadModal, setShowLeadModal] = useState(false);
+
+  useEffect(() => {
+    // Show lead modal after 2 seconds on first load
+    const hasSeenModal = sessionStorage.getItem('hasSeenLeadModal');
+    
+    if (!hasSeenModal) {
+      const timer = setTimeout(() => {
+        setShowLeadModal(true);
+        sessionStorage.setItem('hasSeenLeadModal', 'true');
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
   return (
     <Router>
       <Header />
+      <LeadModal isOpen={showLeadModal} onClose={() => setShowLeadModal(false)} />
       <Routes>
         <Route path="/" element={
           <>
@@ -58,9 +83,16 @@ function App() {
           </>
         } />
         {/* <Route path="/projects" element={<Projects />} /> */}
+        <Route path="/services" element={<Services />} />
         <Route path="/investments" element={<Investments />} />
         <Route path="/exhibition" element={<Exhibition />} />
+        <Route path="/exhibition/individual" element={<ByIndividual />} />
+        <Route path="/exhibition/developer" element={<ByDeveloper />} />
+        <Route path="/exhibition/live-grouping" element={<LiveGrouping />} />
+        <Route path="/exhibition/badabuilder" element={<ByBadaBuilder />} />
         <Route path="/report" element={<Working />} />
+        <Route path="/subscription-plans" element={<SubscriptionPlans />} />
+        <Route path="/post-property" element={<PostProperty />} />
 
         {/* Learn */}
         <Route path="/learn/lease-and-asset-management" element = {<LAM/>}></Route>

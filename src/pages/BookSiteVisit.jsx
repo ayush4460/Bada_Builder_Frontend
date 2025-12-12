@@ -1,8 +1,17 @@
 // src/pages/BookSiteVisit.jsx
 import React, { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { collection, addDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 import './BookSiteVisit.css';
 
 const BookSiteVisit = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { currentUser, isAuthenticated } = useAuth();
+  const property = location.state?.property;
+
   const [formData, setFormData] = useState({
     date: '',
     time: '',
@@ -14,6 +23,8 @@ const BookSiteVisit = () => {
     paymentMethod: 'postvisit',
   });
 
+  const [loading, setLoading] = useState(false);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -23,11 +34,77 @@ const BookSiteVisit = () => {
     setFormData({ ...formData, paymentMethod: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Implement form submission logic here
-    console.log('Form submitted:', formData);
-    alert('Your site visit has been booked!');
+
+    if (!isAuthenticated) {
+      alert('Please login to book a site visit');
+      navigate('/login');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Save booking to Firestore
+      const bookingData = {
+        property_id: property?.id || 'unknown',
+        property_title: property?.title || 'Unknown Property',
+        user_id: currentUser.uid,
+        user_email: currentUser.email,
+        visit_date: formData.date,
+        visit_time: formData.time,
+        number_of_people: formData.people,
+        person1_name: formData.person1,
+        person2_name: formData.person2 || null,
+        person3_name: formData.person3 || null,
+        pickup_address: formData.address,
+        payment_method: formData.paymentMethod,
+        created_at: new Date().toISOString(),
+        status: 'pending'
+      };
+
+      await addDoc(collection(db, 'bookings'), bookingData);
+
+      // Email notification (console log for MVP)
+      const emailBody = `
+        ========================================
+        NEW SITE VISIT BOOKING
+        ========================================
+        
+        Property: ${property?.title || 'Unknown Property'}
+        Property ID: ${property?.id || 'N/A'}
+        
+        User Details:
+        - Email: ${currentUser.email}
+        - User ID: ${currentUser.uid}
+        
+        Visit Details:
+        - Date: ${formData.date}
+        - Time: ${formData.time}
+        - Number of People: ${formData.people}
+        - Person 1: ${formData.person1}
+        ${formData.person2 ? `- Person 2: ${formData.person2}` : ''}
+        ${formData.person3 ? `- Person 3: ${formData.person3}` : ''}
+        
+        Pickup Address:
+        ${formData.address}
+        
+        Payment Method: ${formData.paymentMethod}
+        
+        ========================================
+      `;
+
+      console.log('📧 EMAIL NOTIFICATION TO ADMIN:', emailBody);
+
+      alert('Your site visit has been booked successfully!');
+      navigate('/');
+    } catch (error) {
+      console.error('Error booking site visit:', error);
+      alert('Failed to book site visit. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -104,7 +181,9 @@ const BookSiteVisit = () => {
             </div>
           )}
           <div className="form-actions">
-            <button type="submit">Book</button>
+            <button type="submit" disabled={loading}>
+              {loading ? 'Booking...' : 'Book'}
+            </button>
             <button type="button" onClick={() => alert('Reschedule functionality coming soon!')}>Reschedule</button>
             <button type="button" onClick={() => alert('Cancel functionality coming soon!')}>Cancel</button>
           </div>

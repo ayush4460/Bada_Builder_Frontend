@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import './HeroSection.css';
 import { useNavigate } from 'react-router-dom';
 import listings from '../../data/listings';
 
 const HeroSection = () => {
-  const navigate = useNavigate(); // ✅ moved here
+  const navigate = useNavigate();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [propertyType, setPropertyType] = useState('');
@@ -27,9 +28,26 @@ const HeroSection = () => {
   return (
     <section className="hero-section">
       <div className="hero-content">
-        <h1>Find Your Dream Property</h1>
-        <p>Search from a wide range of properties across India</p>
-        <div className="search-bar">
+        <motion.h1
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          Find Your Dream Property
+        </motion.h1>
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          Search from a wide range of properties across India
+        </motion.p>
+        <motion.div 
+          className="search-bar"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+        >
           <input
             type="text"
             placeholder="Search Location"
@@ -61,7 +79,7 @@ const HeroSection = () => {
             <option value="Surat">Surat</option>
           </select>
           <button onClick={handleSearch}>Search</button>
-        </div>
+        </motion.div>
       </div>
     </section>
   );

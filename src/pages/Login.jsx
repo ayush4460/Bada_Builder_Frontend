@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import './Login.css';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword  } from 'firebase/auth';
-import { auth } from "../firebase"
+import { doc, setDoc } from 'firebase/firestore';
+import { auth, db } from "../firebase";
+import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
+  const navigate = useNavigate();
   const [mode, setMode] = useState('login'); // 'login' or 'register'
   const [formData, setFormData] = useState({
     name: '',
@@ -13,6 +17,7 @@ const Login = () => {
   });
 
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -46,34 +51,88 @@ const Login = () => {
   };
 
   // To Login for an existing User
-  function loginUser(email, password) {
-    signInWithEmailAndPassword(auth, email, password).then((userCredential) => {
-      console.log("Logged In Successfully::", userCredential.user);
-    })
-    .catch((error) => {
-      console.error("Login error:", error.message);
-    });
+  async function loginUser(email, password) {
+    setLoading(true);
+    setErrors({});
+    
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      console.log("✅ Logged In Successfully:", userCredential.user.email);
+      
+      // Small delay for better UX
+      setTimeout(() => {
+        navigate('/');
+      }, 500);
+    } catch (error) {
+      console.error("❌ Login error:", error.code, error.message);
+      
+      let errorMessage = 'Login failed. Please try again.';
+      
+      if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
+        errorMessage = 'Invalid email or password';
+      } else if (error.code === 'auth/user-not-found') {
+        errorMessage = 'No account found with this email';
+      } else if (error.code === 'auth/too-many-requests') {
+        errorMessage = 'Too many attempts. Please try again later';
+      } else if (error.code === 'auth/network-request-failed') {
+        errorMessage = 'Network error. Check your connection';
+      }
+      
+      setErrors({ submit: errorMessage });
+      setLoading(false);
+    }
   }
 
   // To Register a new User
-  function createUser(email, password) {
-    createUserWithEmailAndPassword(auth, email, password).then((userCredential) => {
-      console.log("User Created Successfully:", userCredential.user);
-    })
-    .catch((error) => {
-      console.error("Failed to create user. Error:", error.message);
-    });
+  async function createUser(email, password, name, phone) {
+    setLoading(true);
+    setErrors({});
+    
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      console.log("✅ User Created:", userCredential.user.email);
+      
+      // Create user profile in Firestore
+      await setDoc(doc(db, 'users', userCredential.user.uid), {
+        email: email,
+        name: name,
+        phone: phone,
+        is_subscribed: false,
+        subscription_expiry: null,
+        created_at: new Date().toISOString()
+      });
+      
+      console.log("✅ User profile saved to Firestore");
+      
+      // Small delay for better UX
+      setTimeout(() => {
+        navigate('/');
+      }, 500);
+    } catch (error) {
+      console.error("❌ Registration error:", error.code, error.message);
+      
+      let errorMessage = 'Registration failed. Please try again.';
+      
+      if (error.code === 'auth/email-already-in-use') {
+        errorMessage = 'Email already registered. Please login instead';
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = 'Password is too weak. Use at least 6 characters';
+      } else if (error.code === 'auth/network-request-failed') {
+        errorMessage = 'Network error. Check your connection';
+      }
+      
+      setErrors({ submit: errorMessage });
+      setLoading(false);
+    }
   }
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validate()) {
       if (mode === 'login') {
-        console.log('Logging in...', formData);
-        loginUser(formData.email, formData.password)
+        loginUser(formData.email, formData.password);
       } else {
-        console.log('Registering...', formData);
-        createUser(formData.email, formData.password)
+        createUser(formData.email, formData.password, formData.name, formData.phone);
       }
     }
   };
@@ -85,8 +144,20 @@ const Login = () => {
 
   return (
     <div className="login-page">
-      <div className="login-box">
-        <h2>{mode === 'login' ? 'Login' : 'Register'}</h2>
+      <motion.div 
+        className="login-box"
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <motion.h2
+          key={mode}
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          {mode === 'login' ? 'Welcome Back' : 'Create Account'}
+        </motion.h2>
         <p>Please enter your details to continue</p>
 
         <form onSubmit={handleSubmit} className="login-form">
@@ -142,8 +213,25 @@ const Login = () => {
           />
           {errors.password && <p className="error">{errors.password}</p>}
 
-          <button type="submit" className="submit-btn">
-            {mode === 'login' ? 'Login' : 'Register'}
+          {errors.submit && (
+            <motion.p 
+              className="error submit-error"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              {errors.submit}
+            </motion.p>
+          )}
+
+          <button type="submit" className="submit-btn" disabled={loading}>
+            {loading ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="spinner"></span>
+                {mode === 'login' ? 'Logging in...' : 'Creating account...'}
+              </span>
+            ) : (
+              mode === 'login' ? 'Login' : 'Register'
+            )}
           </button>
         </form>
 
@@ -153,7 +241,7 @@ const Login = () => {
             {mode === 'login' ? 'Register' : 'Login'}
           </span>
         </p>
-      </div>
+      </motion.div>
     </div>
   );
 };

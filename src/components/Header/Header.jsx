@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import logo from '../../assets/logo.png';
+import UserTypeModal from '../UserTypeModal/UserTypeModal';
 import './Header.css';
 
 const calcdropdownItems = [
@@ -42,6 +43,7 @@ const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [mobileLearnOpen, setMobileLearnOpen] = useState(false);
   const [mobileCalcOpen, setMobileCalcOpen] = useState(false);
+  const [isUserTypeModalOpen, setIsUserTypeModalOpen] = useState(false);
 
   const timeoutRef = useRef(null);
   const calctimeoutRef = useRef(null);
@@ -94,7 +96,7 @@ const Header = () => {
 
   return (
     <>
-      <header className="custom-header flex justify-between items-center px-2 md:px-8 py-5 bg-white rounded-2xl border-b border-gray-100 relative">
+      <header className="custom-header flex justify-between items-center px-4 md:px-8 py-4 bg-white shadow-sm sticky top-0 z-50 backdrop-blur-sm bg-opacity-95">
         {/* Logo */}
         <div className="logo-container flex-shrink-0">
           <Link to="/" className="logo-link inline-block transition-transform duration-200 hover:scale-105">
@@ -103,19 +105,19 @@ const Header = () => {
         </div>
 
         {/* Desktop Navigation */}
-        <nav className="flex items-center space-x-10 hidden lg:flex font-medium text-gray-700">
+        <nav className="flex items-center space-x-8 hidden lg:flex font-semibold text-gray-900">
           <Link 
             to="/exhibition" 
-            className="nav-link relative py-2 px-1 hover:text-gray-900 transition-all duration-200 after:content-[''] after:absolute after:w-0 after:h-0.5 after:bg-[#58335e] after:left-0 after:bottom-0 after:transition-all after:duration-300 hover:after:w-full"
+            className="nav-link relative py-2 px-2 text-gray-900 hover:text-[#58335e] transition-all duration-200 after:content-[''] after:absolute after:w-0 after:h-0.5 after:bg-[#58335e] after:left-0 after:bottom-0 after:transition-all after:duration-300 hover:after:w-full"
           >
             Exhibition
           </Link>
           
           <Link 
-            to="/investments" 
-            className="nav-link relative py-2 px-1 hover:text-gray-900 transition-all duration-200 after:content-[''] after:absolute after:w-0 after:h-0.5 after:bg-[#58335e] after:left-0 after:bottom-0 after:transition-all after:duration-300 hover:after:w-full"
+            to="/services" 
+            className="nav-link relative py-2 px-2 text-gray-900 hover:text-[#58335e] transition-all duration-200 after:content-[''] after:absolute after:w-0 after:h-0.5 after:bg-[#58335e] after:left-0 after:bottom-0 after:transition-all after:duration-300 hover:after:w-full"
           >
-            Investment
+            Services
           </Link>
 
           {/* Learn Reit's Dropdown menu */}
@@ -124,7 +126,7 @@ const Header = () => {
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
           >
-            <div className={`nav-link cursor-pointer py-2 px-1 transition-all duration-200 flex items-center gap-1 relative after:content-[''] after:absolute after:w-0 after:h-0.5 after:bg-[#58335e] after:left-0 after:bottom-0 after:transition-all after:duration-300 ${showDropdown ? 'text-gray-900 after:w-full' : 'hover:text-gray-900 hover:after:w-full'}`}>
+            <div className={`nav-link cursor-pointer py-2 px-2 text-gray-900 transition-all duration-200 flex items-center gap-1 relative after:content-[''] after:absolute after:w-0 after:h-0.5 after:bg-[#58335e] after:left-0 after:bottom-0 after:transition-all after:duration-300 ${showDropdown ? 'text-[#58335e] after:w-full' : 'hover:text-[#58335e] hover:after:w-full'}`}>
               Learn Reit's 
               <span className={`inline-block transition-transform duration-200 ${showDropdown ? 'rotate-180' : ''}`}>
                 ▾
@@ -138,7 +140,7 @@ const Header = () => {
                     <Link
                       key={index}
                       to={item.href}
-                      className="block px-5 py-3 text-sm text-gray-700 hover:bg-purple-50 hover:text-[#58335e] transition-all duration-150 border-l-4 border-transparent hover:border-[#58335e] font-medium"
+                      className="block px-5 py-3 text-sm text-gray-800 hover:bg-purple-50 hover:text-[#58335e] transition-all duration-150 border-l-4 border-transparent hover:border-[#58335e] font-semibold"
                     >
                       {item.label}
                     </Link>
@@ -154,7 +156,7 @@ const Header = () => {
             onMouseEnter={calchandleMouseEnter}
             onMouseLeave={calchandleMouseLeave}
           >
-            <div className={`nav-link cursor-pointer py-2 px-1 transition-all duration-200 flex items-center gap-1 relative after:content-[''] after:absolute after:w-0 after:h-0.5 after:bg-[#58335e] after:left-0 after:bottom-0 after:transition-all after:duration-300 ${CaclshowDropdown ? 'text-gray-900 after:w-full' : 'hover:text-gray-900 hover:after:w-full'}`}>
+            <div className={`nav-link cursor-pointer py-2 px-2 text-gray-900 transition-all duration-200 flex items-center gap-1 relative after:content-[''] after:absolute after:w-0 after:h-0.5 after:bg-[#58335e] after:left-0 after:bottom-0 after:transition-all after:duration-300 ${CaclshowDropdown ? 'text-[#58335e] after:w-full' : 'hover:text-[#58335e] hover:after:w-full'}`}>
               Calculator 
               <span className={`inline-block transition-transform duration-200 ${CaclshowDropdown ? 'rotate-180' : ''}`}>
                 ▾
@@ -168,7 +170,7 @@ const Header = () => {
                     <Link
                       key={index}
                       to={item.href}
-                      className="block px-5 py-3 text-sm text-gray-700 hover:bg-purple-50 hover:text-[#58335e] transition-all duration-150 border-l-4 border-transparent hover:border-[#58335e] font-medium"
+                      className="block px-5 py-3 text-sm text-gray-800 hover:bg-purple-50 hover:text-[#58335e] transition-all duration-150 border-l-4 border-transparent hover:border-[#58335e] font-semibold"
                     >
                       {item.label}
                     </Link>
@@ -180,21 +182,27 @@ const Header = () => {
 
           <Link 
             to="/contact" 
-            className="nav-link relative py-2 px-1 hover:text-gray-900 transition-all duration-200 after:content-[''] after:absolute after:w-0 after:h-0.5 after:bg-[#58335e] after:left-0 after:bottom-0 after:transition-all after:duration-300 hover:after:w-full"
+            className="nav-link relative py-2 px-2 text-gray-900 hover:text-[#58335e] transition-all duration-200 after:content-[''] after:absolute after:w-0 after:h-0.5 after:bg-[#58335e] after:left-0 after:bottom-0 after:transition-all after:duration-300 hover:after:w-full"
           >
             Contact Us
           </Link>
           
           <Link 
             to="/about" 
-            className="nav-link relative py-2 px-1 hover:text-gray-900 transition-all duration-200 after:content-[''] after:absolute after:w-0 after:h-0.5 after:bg-[#58335e] after:left-0 after:bottom-0 after:transition-all after:duration-300 hover:after:w-full"
+            className="nav-link relative py-2 px-2 text-gray-900 hover:text-[#58335e] transition-all duration-200 after:content-[''] after:absolute after:w-0 after:h-0.5 after:bg-[#58335e] after:left-0 after:bottom-0 after:transition-all after:duration-300 hover:after:w-full"
           >
             Who are we
           </Link>
         </nav>
 
-        {/* Desktop Login Button */}
-        <div className="hidden lg:flex flex-shrink-0">
+        {/* Desktop Buttons */}
+        <div className="hidden lg:flex items-center gap-3 flex-shrink-0">
+          <button 
+            onClick={() => setIsUserTypeModalOpen(true)}
+            className="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-2.5 rounded-full shadow-md hover:shadow-lg hover:from-green-700 hover:to-green-800 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-opacity-50 font-medium text-sm tracking-wide transform hover:scale-105 active:scale-95"
+          >
+            Post Property
+          </button>
           <Link to="/login">
             <button className="bg-[#58335e] text-white px-6 py-2.5 rounded-full shadow-md hover:shadow-lg hover:bg-opacity-90 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#58335e] focus:ring-opacity-50 font-medium text-sm tracking-wide transform hover:scale-105 active:scale-95">
               Login
@@ -203,14 +211,7 @@ const Header = () => {
         </div>
 
         {/* Mobile Menu Button */}
-        <div className="lg:hidden flex items-center gap-1">
-          {/* Mobile Login Button */}
-          <Link to="/login">
-            <button className="bg-[#58335e] text-white px-2 md:px-4 py-2 rounded-full shadow-md hover:shadow-lg hover:bg-opacity-90 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#58335e] focus:ring-opacity-50 font-medium text-xs tracking-wide">
-              Login
-            </button>
-          </Link>
-          
+        <div className="lg:hidden flex items-center">
           {/* Hamburger Menu */}
           <button
             onClick={toggleMobileMenu}
@@ -247,44 +248,66 @@ const Header = () => {
             </div>
 
             {/* Mobile Menu Content */}
-            <div className="px-6 py-4 overflow-y-auto h-full">
-              <nav className="space-y-2">
+            <div className="mobile-menu-content">
+              <nav className="mobile-nav">
+                {/* Login Button - Prominent */}
+                <Link 
+                  to="/login" 
+                  onClick={toggleMobileMenu}
+                  className="mobile-login-btn"
+                >
+                  🔐 Login / Sign Up
+                </Link>
+
+                {/* Post Property Button */}
+                <button 
+                  onClick={() => {
+                    toggleMobileMenu();
+                    setIsUserTypeModalOpen(true);
+                  }}
+                  className="mobile-post-btn"
+                >
+                  <span className="mobile-btn-icon">📝</span>
+                  <span>Post Property</span>
+                </button>
+
+                {/* Regular Menu Items */}
                 <Link 
                   to="/exhibition" 
                   onClick={toggleMobileMenu}
-                  className="block py-3 px-3 text-gray-700 hover:text-[#58335e] hover:bg-purple-50 rounded-md transition-all duration-200 font-medium"
+                  className="mobile-menu-item"
                 >
                   Exhibition
                 </Link>
                 
                 <Link 
-                  to="/investments" 
+                  to="/services" 
                   onClick={toggleMobileMenu}
-                  className="block py-3 px-3 text-gray-700 hover:text-[#58335e] hover:bg-purple-50 rounded-md transition-all duration-200 font-medium"
+                  className="mobile-menu-item"
                 >
-                  Investment
+                  Services
                 </Link>
 
                 {/* Mobile Learn Reit's Dropdown */}
-                <div className="space-y-1">
+                <div className="mobile-dropdown">
                   <button
                     onClick={toggleMobileLearn}
-                    className="w-full flex justify-between items-center py-3 px-3 text-gray-700 hover:text-[#58335e] hover:bg-purple-50 rounded-md transition-all duration-200 font-medium"
+                    className="mobile-dropdown-btn"
                   >
-                    Learn Reit's
-                    <span className={`transform transition-transform duration-200 ${mobileLearnOpen ? 'rotate-180' : ''}`}>
+                    <span>Learn Reit's</span>
+                    <span className={`mobile-dropdown-icon ${mobileLearnOpen ? 'rotate' : ''}`}>
                       ▾
                     </span>
                   </button>
                   
                   {mobileLearnOpen && (
-                    <div className="pl-4 space-y-1 animate-fadeIn">
+                    <div className="mobile-dropdown-content">
                       {dropdownItems.map((item, index) => (
                         <Link
                           key={index}
                           to={item.href}
                           onClick={toggleMobileMenu}
-                          className="block py-2 px-3 text-sm text-gray-600 hover:text-[#58335e] hover:bg-purple-25 rounded-md transition-all duration-150"
+                          className="mobile-dropdown-item"
                         >
                           {item.label}
                         </Link>
@@ -294,25 +317,25 @@ const Header = () => {
                 </div>
 
                 {/* Mobile Calculator Dropdown */}
-                <div className="space-y-1">
+                <div className="mobile-dropdown">
                   <button
                     onClick={toggleMobileCalc}
-                    className="w-full flex justify-between items-center py-3 px-3 text-gray-700 hover:text-[#58335e] hover:bg-purple-50 rounded-md transition-all duration-200 font-medium"
+                    className="mobile-dropdown-btn"
                   >
-                    Calculator
-                    <span className={`transform transition-transform duration-200 ${mobileCalcOpen ? 'rotate-180' : ''}`}>
+                    <span>Calculator</span>
+                    <span className={`mobile-dropdown-icon ${mobileCalcOpen ? 'rotate' : ''}`}>
                       ▾
                     </span>
                   </button>
                   
                   {mobileCalcOpen && (
-                    <div className="pl-4 space-y-1 animate-fadeIn max-h-64 overflow-y-auto">
+                    <div className="mobile-dropdown-content mobile-dropdown-scrollable">
                       {calcdropdownItems.map((item, index) => (
                         <Link
                           key={index}
                           to={item.href}
                           onClick={toggleMobileMenu}
-                          className="block py-2 px-3 text-sm text-gray-600 hover:text-[#58335e] hover:bg-purple-25 rounded-md transition-all duration-150"
+                          className="mobile-dropdown-item"
                         >
                           {item.label}
                         </Link>
@@ -324,7 +347,7 @@ const Header = () => {
                 <Link 
                   to="/contact" 
                   onClick={toggleMobileMenu}
-                  className="block py-3 px-3 text-gray-700 hover:text-[#58335e] hover:bg-purple-50 rounded-md transition-all duration-200 font-medium"
+                  className="mobile-menu-item"
                 >
                   Contact Us
                 </Link>
@@ -332,7 +355,7 @@ const Header = () => {
                 <Link 
                   to="/about" 
                   onClick={toggleMobileMenu}
-                  className="block py-3 px-3 text-gray-700 hover:text-[#58335e] hover:bg-purple-50 rounded-md transition-all duration-200 font-medium"
+                  className="mobile-menu-item"
                 >
                   Who are we
                 </Link>
@@ -341,6 +364,12 @@ const Header = () => {
           </div>
         </div>
       )}
+
+      {/* User Type Modal */}
+      <UserTypeModal 
+        isOpen={isUserTypeModalOpen} 
+        onClose={() => setIsUserTypeModalOpen(false)} 
+      />
     </>
   );
 };
