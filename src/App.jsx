@@ -27,7 +27,7 @@ import LiveGrouping from './pages/Exhibition/LiveGrouping';
 import LAM from './pages/Report Data/LAM';
 import MarketInvestmentAnalysis from './pages/Report Data/MarketInvestmentAnalysis';
 import RealEstateFinancialModelling from './pages/Report Data/RealEstateFinancialModelling';
-import RADD from './pages/Report Data/radd';
+import RADD from './pages/Report Data/RADD';
 import RealEstateReport from './pages/Report Data/RealEstateReport';
 import REITValuationCompliance from './pages/Report Data/REITValuationCompliance';
 import REITStakeholderCommunication from './pages/Report Data/REITStakeholderCommunication';
