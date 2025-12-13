@@ -8,6 +8,7 @@ const LeadModal = ({ isOpen, onClose }) => {
   const [formData, setFormData] = useState({
     name: '',
     requirementType: '',
+    bhkType: '',
     location: '',
     phone: ''
   });
@@ -25,7 +26,7 @@ const LeadModal = ({ isOpen, onClose }) => {
     e.preventDefault();
     
     // Validation
-    if (!formData.name || !formData.requirementType || !formData.location || !formData.phone) {
+    if (!formData.name || !formData.requirementType || !formData.bhkType || !formData.location || !formData.phone) {
       setError('All fields are required');
       return;
     }
@@ -43,6 +44,7 @@ const LeadModal = ({ isOpen, onClose }) => {
       await addDoc(collection(db, 'leads'), {
         name: formData.name,
         requirement_type: formData.requirementType,
+        bhk_type: formData.bhkType,
         location: formData.location,
         phone: formData.phone,
         created_at: new Date().toISOString()
@@ -53,7 +55,7 @@ const LeadModal = ({ isOpen, onClose }) => {
       
       // Close modal after 1.5 seconds
       setTimeout(() => {
-        setFormData({ name: '', requirementType: '', location: '', phone: '' });
+        setFormData({ name: '', requirementType: '', bhkType: '', location: '', phone: '' });
         setSuccess(false);
         onClose();
       }, 1500);
@@ -130,9 +132,32 @@ const LeadModal = ({ isOpen, onClose }) => {
               <option value="Flat">Flat</option>
               <option value="House">House</option>
               <option value="Villa">Villa</option>
-              <option value="Land">Land</option>
-              <option value="Shops">Shops</option>
-              <option value="Offices">Offices</option>
+              <option value="Plot">Plot</option>
+              <option value="Commercial">Commercial</option>
+              <option value="Shop">Shop</option>
+              <option value="Office">Office</option>
+              <option value="Warehouse">Warehouse</option>
+              <option value="Showroom">Showroom</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="bhkType">BHK Type *</label>
+            <select
+              id="bhkType"
+              name="bhkType"
+              value={formData.bhkType}
+              onChange={handleChange}
+              required
+            >
+              <option value="">Select BHK type</option>
+              <option value="1RK">1 RK</option>
+              <option value="1BHK">1 BHK</option>
+              <option value="2BHK">2 BHK</option>
+              <option value="3BHK">3 BHK</option>
+              <option value="4BHK">4 BHK</option>
+              <option value="5BHK">5 BHK</option>
+              <option value="6+BHK">6+ BHK</option>
             </select>
           </div>
 
@@ -144,9 +169,91 @@ const LeadModal = ({ isOpen, onClose }) => {
               name="location"
               value={formData.location}
               onChange={handleChange}
-              placeholder="Pan India"
+              placeholder="Enter city or location"
+              list="location-suggestions"
               required
             />
+            <datalist id="location-suggestions">
+              <option value="PAN India" />
+              <option value="Mumbai" />
+              <option value="Delhi" />
+              <option value="Bangalore" />
+              <option value="Hyderabad" />
+              <option value="Ahmedabad" />
+              <option value="Chennai" />
+              <option value="Kolkata" />
+              <option value="Pune" />
+              <option value="Jaipur" />
+              <option value="Surat" />
+              <option value="Lucknow" />
+              <option value="Kanpur" />
+              <option value="Nagpur" />
+              <option value="Indore" />
+              <option value="Thane" />
+              <option value="Bhopal" />
+              <option value="Visakhapatnam" />
+              <option value="Pimpri-Chinchwad" />
+              <option value="Patna" />
+              <option value="Vadodara" />
+              <option value="Ghaziabad" />
+              <option value="Ludhiana" />
+              <option value="Agra" />
+              <option value="Nashik" />
+              <option value="Faridabad" />
+              <option value="Meerut" />
+              <option value="Rajkot" />
+              <option value="Kalyan-Dombivali" />
+              <option value="Vasai-Virar" />
+              <option value="Varanasi" />
+              <option value="Srinagar" />
+              <option value="Aurangabad" />
+              <option value="Dhanbad" />
+              <option value="Amritsar" />
+              <option value="Navi Mumbai" />
+              <option value="Allahabad" />
+              <option value="Ranchi" />
+              <option value="Howrah" />
+              <option value="Coimbatore" />
+              <option value="Jabalpur" />
+              <option value="Gwalior" />
+              <option value="Vijayawada" />
+              <option value="Jodhpur" />
+              <option value="Madurai" />
+              <option value="Raipur" />
+              <option value="Kota" />
+              <option value="Chandigarh" />
+              <option value="Guwahati" />
+              <option value="Solapur" />
+              <option value="Hubli-Dharwad" />
+              <option value="Mysore" />
+              <option value="Tiruchirappalli" />
+              <option value="Bareilly" />
+              <option value="Aligarh" />
+              <option value="Tiruppur" />
+              <option value="Moradabad" />
+              <option value="Jalandhar" />
+              <option value="Bhubaneswar" />
+              <option value="Salem" />
+              <option value="Warangal" />
+              <option value="Mira-Bhayandar" />
+              <option value="Thiruvananthapuram" />
+              <option value="Bhiwandi" />
+              <option value="Saharanpur" />
+              <option value="Guntur" />
+              <option value="Amravati" />
+              <option value="Bikaner" />
+              <option value="Noida" />
+              <option value="Jamshedpur" />
+              <option value="Bhilai" />
+              <option value="Cuttack" />
+              <option value="Firozabad" />
+              <option value="Kochi" />
+              <option value="Nellore" />
+              <option value="Bhavnagar" />
+              <option value="Dehradun" />
+              <option value="Durgapur" />
+              <option value="Asansol" />
+            </datalist>
           </div>
 
           <div className="form-group">
