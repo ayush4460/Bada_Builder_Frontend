@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import logo from '../../assets/logo.png';
 import UserTypeModal from '../UserTypeModal/UserTypeModal';
+import SearchBar from '../SearchBar/SearchBar';
 import './Header.css';
 
 const calcdropdownItems = [
@@ -199,12 +200,12 @@ const Header = () => {
         <div className="hidden lg:flex items-center gap-3 flex-shrink-0">
           <button 
             onClick={() => setIsUserTypeModalOpen(true)}
-            className="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-2.5 rounded-full shadow-md hover:shadow-lg hover:from-green-700 hover:to-green-800 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-opacity-50 font-medium text-sm tracking-wide transform hover:scale-105 active:scale-95"
+            className="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-2.5 rounded-full shadow-md hover:shadow-lg hover:from-green-700 hover:to-green-800 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-opacity-50 font-medium text-sm tracking-wide transform hover:scale-105 active:scale-95 whitespace-nowrap"
           >
             Post Property
           </button>
           <Link to="/login">
-            <button className="bg-[#58335e] text-white px-6 py-2.5 rounded-full shadow-md hover:shadow-lg hover:bg-opacity-90 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#58335e] focus:ring-opacity-50 font-medium text-sm tracking-wide transform hover:scale-105 active:scale-95">
+            <button className="bg-[#58335e] text-white px-6 py-2.5 rounded-full shadow-md hover:shadow-lg hover:bg-opacity-90 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#58335e] focus:ring-opacity-50 font-medium text-sm tracking-wide transform hover:scale-105 active:scale-95 whitespace-nowrap">
               Login
             </button>
           </Link>

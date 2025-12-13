@@ -4,6 +4,7 @@ import './App.css'
 import Header from './components/Header/Header';
 import Footer from './components/Footer/Footer';
 import LeadModal from './components/LeadModal/LeadModal';
+import GlobalSearchBar from './components/GlobalSearchBar/GlobalSearchBar';
 
 import HeroSection from './components/HeroSection/HeroSection';
 import RecommendedProjects from './components/RecommendedProjects/RecommendedProjects';
@@ -74,6 +75,7 @@ function App() {
   return (
     <Router>
       <Header />
+      <GlobalSearchBar />
       <LeadModal isOpen={showLeadModal} onClose={() => setShowLeadModal(false)} />
       <Routes>
         <Route path="/" element={
