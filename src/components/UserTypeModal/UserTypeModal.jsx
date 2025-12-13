@@ -10,7 +10,17 @@ const UserTypeModal = ({ isOpen, onClose }) => {
   const [selectedType, setSelectedType] = useState(null);
   const [isChecking, setIsChecking] = useState(false);
 
+  // Reset state when modal opens/closes
+  React.useEffect(() => {
+    if (!isOpen) {
+      setSelectedType(null);
+      setIsChecking(false);
+    }
+  }, [isOpen]);
+
   const handleTypeSelection = async (type) => {
+    if (isChecking) return; // Prevent multiple clicks
+    
     setSelectedType(type);
     setIsChecking(true);
 
@@ -20,6 +30,8 @@ const UserTypeModal = ({ isOpen, onClose }) => {
     // Check authentication
     if (!isAuthenticated) {
       alert('Please login to post a property');
+      setIsChecking(false);
+      setSelectedType(null);
       onClose();
       navigate('/login');
       return;
@@ -28,12 +40,16 @@ const UserTypeModal = ({ isOpen, onClose }) => {
     // Check subscription
     if (!isSubscribed()) {
       alert('Please subscribe to a plan to post properties');
+      setIsChecking(false);
+      setSelectedType(null);
       onClose();
       navigate('/subscription-plans');
       return;
     }
 
     // All checks passed, navigate to post property with user type
+    setIsChecking(false);
+    setSelectedType(null);
     onClose();
     navigate('/post-property', { state: { userType: type } });
   };
