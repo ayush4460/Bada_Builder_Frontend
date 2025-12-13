@@ -4,9 +4,16 @@ import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(),
-
-  tailwindcss(),
-
+  plugins: [
+    react(),
+    tailwindcss(),
   ],
+  server: {
+    // Enable history fallback for SPA routing
+    historyApiFallback: true,
+  },
+  preview: {
+    // Enable history fallback for preview mode
+    historyApiFallback: true,
+  },
 })
