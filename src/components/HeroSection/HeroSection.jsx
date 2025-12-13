@@ -11,12 +11,26 @@ const HeroSection = () => {
   const [bhkType, setBhkType] = useState('');
   const [possession, setPossession] = useState('');
 
+  // Check if BHK type should be shown
+  const showBhkType = ['Flat', 'House', 'Villa'].includes(propertyType);
+
+  // Handle property type change
+  const handlePropertyTypeChange = (e) => {
+    const newType = e.target.value;
+    setPropertyType(newType);
+    // Reset BHK if property type doesn't support it
+    if (!['Flat', 'House', 'Villa'].includes(newType)) {
+      setBhkType('');
+    }
+  };
+
   const handleSearch = () => {
     // Build search query parameters
     const params = new URLSearchParams();
     if (location) params.append('location', location);
     if (propertyType) params.append('type', propertyType);
-    if (bhkType) params.append('bhk', bhkType);
+    // Only add BHK if it's applicable for the property type
+    if (bhkType && showBhkType) params.append('bhk', bhkType);
     if (possession) params.append('possession', possession);
     
     // Navigate to search results page
@@ -130,7 +144,7 @@ const HeroSection = () => {
           </datalist>
 
           {/* Property Type */}
-          <select value={propertyType} onChange={(e) => setPropertyType(e.target.value)} className="search-select">
+          <select value={propertyType} onChange={handlePropertyTypeChange} className="search-select">
             <option value="">Property Type</option>
             <option value="Flat">Flat/Apartment</option>
             <option value="House">Independent House</option>
@@ -143,17 +157,27 @@ const HeroSection = () => {
             <option value="Showroom">Showroom</option>
           </select>
 
-          {/* BHK Type */}
-          <select value={bhkType} onChange={(e) => setBhkType(e.target.value)} className="search-select">
-            <option value="">BHK Type</option>
-            <option value="1RK">1 RK</option>
-            <option value="1BHK">1 BHK</option>
-            <option value="2BHK">2 BHK</option>
-            <option value="3BHK">3 BHK</option>
-            <option value="4BHK">4 BHK</option>
-            <option value="5BHK">5 BHK</option>
-            <option value="6BHK">6+ BHK</option>
-          </select>
+          {/* BHK Type - Only show for Flat, House, Villa */}
+          {showBhkType && (
+            <motion.select 
+              value={bhkType} 
+              onChange={(e) => setBhkType(e.target.value)} 
+              className="search-select"
+              initial={{ opacity: 0, width: 0 }}
+              animate={{ opacity: 1, width: 'auto' }}
+              exit={{ opacity: 0, width: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <option value="">BHK Type</option>
+              <option value="1RK">1 RK</option>
+              <option value="1BHK">1 BHK</option>
+              <option value="2BHK">2 BHK</option>
+              <option value="3BHK">3 BHK</option>
+              <option value="4BHK">4 BHK</option>
+              <option value="5BHK">5 BHK</option>
+              <option value="6BHK">6+ BHK</option>
+            </motion.select>
+          )}
 
           {/* Possession Status */}
           <select value={possession} onChange={(e) => setPossession(e.target.value)} className="search-select">

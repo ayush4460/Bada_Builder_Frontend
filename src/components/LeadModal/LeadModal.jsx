@@ -18,16 +18,32 @@ const LeadModal = ({ isOpen, onClose }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // If property type changes, reset BHK type
+    if (name === 'requirementType') {
+      setFormData(prev => ({ ...prev, [name]: value, bhkType: '' }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
+    
     setError('');
   };
+
+  // Check if BHK type should be shown
+  const showBhkType = ['Flat', 'House', 'Villa'].includes(formData.requirementType);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     // Validation
-    if (!formData.name || !formData.requirementType || !formData.bhkType || !formData.location || !formData.phone) {
+    if (!formData.name || !formData.requirementType || !formData.location || !formData.phone) {
       setError('All fields are required');
+      return;
+    }
+
+    // Validate BHK type only if it should be shown
+    if (showBhkType && !formData.bhkType) {
+      setError('Please select BHK type');
       return;
     }
 
@@ -41,14 +57,20 @@ const LeadModal = ({ isOpen, onClose }) => {
 
     try {
       // Save to Firestore
-      await addDoc(collection(db, 'leads'), {
+      const leadData = {
         name: formData.name,
         requirement_type: formData.requirementType,
-        bhk_type: formData.bhkType,
         location: formData.location,
         phone: formData.phone,
         created_at: new Date().toISOString()
-      });
+      };
+
+      // Only add BHK type if applicable
+      if (showBhkType && formData.bhkType) {
+        leadData.bhk_type = formData.bhkType;
+      }
+
+      await addDoc(collection(db, 'leads'), leadData);
 
       console.log('✅ Lead saved successfully:', formData);
       setSuccess(true);
@@ -141,25 +163,34 @@ const LeadModal = ({ isOpen, onClose }) => {
             </select>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="bhkType">BHK Type *</label>
-            <select
-              id="bhkType"
-              name="bhkType"
-              value={formData.bhkType}
-              onChange={handleChange}
-              required
+          {/* Show BHK Type only for Flat, House, Villa */}
+          {showBhkType && (
+            <motion.div 
+              className="form-group"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
             >
-              <option value="">Select BHK type</option>
-              <option value="1RK">1 RK</option>
-              <option value="1BHK">1 BHK</option>
-              <option value="2BHK">2 BHK</option>
-              <option value="3BHK">3 BHK</option>
-              <option value="4BHK">4 BHK</option>
-              <option value="5BHK">5 BHK</option>
-              <option value="6+BHK">6+ BHK</option>
-            </select>
-          </div>
+              <label htmlFor="bhkType">BHK Type *</label>
+              <select
+                id="bhkType"
+                name="bhkType"
+                value={formData.bhkType}
+                onChange={handleChange}
+                required
+              >
+                <option value="">Select BHK type</option>
+                <option value="1RK">1 RK</option>
+                <option value="1BHK">1 BHK</option>
+                <option value="2BHK">2 BHK</option>
+                <option value="3BHK">3 BHK</option>
+                <option value="4BHK">4 BHK</option>
+                <option value="5BHK">5 BHK</option>
+                <option value="6+BHK">6+ BHK</option>
+              </select>
+            </motion.div>
+          )}
 
           <div className="form-group">
             <label htmlFor="location">Location *</label>

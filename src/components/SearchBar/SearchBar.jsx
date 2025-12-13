@@ -6,7 +6,21 @@ const SearchBar = ({ variant = 'default' }) => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [propertyType, setPropertyType] = useState('');
+  const [bhkType, setBhkType] = useState('');
   const [location, setLocation] = useState('');
+
+  // Check if BHK type should be shown
+  const showBhkType = ['flat', 'house', 'villa'].includes(propertyType);
+
+  // Handle property type change
+  const handlePropertyTypeChange = (e) => {
+    const newType = e.target.value;
+    setPropertyType(newType);
+    // Reset BHK if property type doesn't support it
+    if (!['flat', 'house', 'villa'].includes(newType)) {
+      setBhkType('');
+    }
+  };
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -15,6 +29,8 @@ const SearchBar = ({ variant = 'default' }) => {
     const params = new URLSearchParams();
     if (searchQuery) params.append('q', searchQuery);
     if (propertyType) params.append('type', propertyType);
+    // Only add BHK if it's applicable for the property type
+    if (bhkType && showBhkType) params.append('bhk', bhkType);
     if (location) params.append('location', location);
     
     // Navigate to search results page
@@ -73,7 +89,7 @@ const SearchBar = ({ variant = 'default' }) => {
           <select
             id="property-type"
             value={propertyType}
-            onChange={(e) => setPropertyType(e.target.value)}
+            onChange={handlePropertyTypeChange}
             className="search-select"
           >
             <option value="">Property Type</option>
@@ -86,6 +102,32 @@ const SearchBar = ({ variant = 'default' }) => {
             <option value="office">Office</option>
           </select>
         </div>
+
+        {/* BHK Type - Only show for flat, house, villa */}
+        {showBhkType && (
+          <div className="search-field">
+            <label htmlFor="bhk-type">
+              <svg className="field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+            </label>
+            <select
+              id="bhk-type"
+              value={bhkType}
+              onChange={(e) => setBhkType(e.target.value)}
+              className="search-select"
+            >
+              <option value="">BHK Type</option>
+              <option value="1RK">1 RK</option>
+              <option value="1BHK">1 BHK</option>
+              <option value="2BHK">2 BHK</option>
+              <option value="3BHK">3 BHK</option>
+              <option value="4BHK">4 BHK</option>
+              <option value="5BHK">5 BHK</option>
+              <option value="6BHK">6+ BHK</option>
+            </select>
+          </div>
+        )}
 
         <div className="search-field">
           <label htmlFor="location">

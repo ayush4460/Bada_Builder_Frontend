@@ -49,8 +49,22 @@ const PostProperty = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // If property type changes, reset BHK if not applicable
+    if (name === 'type') {
+      const newFormData = { ...formData, [name]: value };
+      // Reset BHK if property type doesn't support it
+      if (!['Flat/Apartment', 'Independent House/Villa'].includes(value)) {
+        newFormData.bhk = '';
+      }
+      setFormData(newFormData);
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
+
+  // Check if BHK type should be shown
+  const showBhkType = ['Flat/Apartment', 'Independent House/Villa'].includes(formData.type);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -87,7 +101,6 @@ const PostProperty = () => {
         type: formData.type,
         location: formData.location,
         price: formData.price,
-        bhk: formData.bhk,
         description: formData.description,
         facilities: formData.facilities.split(',').map(f => f.trim()),
         image_url: imageUrl,
@@ -96,6 +109,11 @@ const PostProperty = () => {
         created_at: new Date().toISOString(),
         status: 'active'
       };
+
+      // Only add BHK if applicable
+      if (showBhkType && formData.bhk) {
+        propertyData.bhk = formData.bhk;
+      }
 
       // Add developer-specific fields if user is a developer
       if (userType === 'developer') {
@@ -318,17 +336,27 @@ const PostProperty = () => {
           )}
 
           <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="bhk">BHK Type</label>
-              <input
-                type="text"
-                id="bhk"
-                name="bhk"
-                value={formData.bhk}
-                onChange={handleChange}
-                placeholder="e.g., 3 BHK"
-              />
-            </div>
+            {/* BHK Type - Only show for Flat/Apartment and Independent House/Villa */}
+            {showBhkType && (
+              <div className="form-group">
+                <label htmlFor="bhk">BHK Type</label>
+                <select
+                  id="bhk"
+                  name="bhk"
+                  value={formData.bhk}
+                  onChange={handleChange}
+                >
+                  <option value="">Select BHK type</option>
+                  <option value="1 RK">1 RK</option>
+                  <option value="1 BHK">1 BHK</option>
+                  <option value="2 BHK">2 BHK</option>
+                  <option value="3 BHK">3 BHK</option>
+                  <option value="4 BHK">4 BHK</option>
+                  <option value="5 BHK">5 BHK</option>
+                  <option value="6+ BHK">6+ BHK</option>
+                </select>
+              </div>
+            )}
 
             <div className="form-group">
               <label htmlFor="image">Property Image</label>
