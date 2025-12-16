@@ -5,6 +5,7 @@ import Header from './components/Header/Header';
 import Footer from './components/Footer/Footer';
 import LeadModal from './components/LeadModal/LeadModal';
 import GlobalSearchBar from './components/GlobalSearchBar/GlobalSearchBar';
+import Chatbot from './components/Chatbot/Chatbot';
 
 import HeroSection from './components/HeroSection/HeroSection';
 import RecommendedProjects from './components/RecommendedProjects/RecommendedProjects';
@@ -25,6 +26,8 @@ import ByIndividual from './pages/Exhibition/ByIndividual';
 import ByDeveloper from './pages/Exhibition/ByDeveloper';
 import ByBadaBuilder from './pages/Exhibition/ByBadaBuilder';
 import LiveGrouping from './pages/Exhibition/LiveGrouping';
+import LiveGroupingDetails from './pages/Exhibition/LiveGroupingDetails';
+import AdminLiveGrouping from './pages/Admin/AdminLiveGrouping';
 import LAM from './pages/Report Data/LAM';
 import MarketInvestmentAnalysis from './pages/Report Data/MarketInvestmentAnalysis';
 import RealEstateFinancialModelling from './pages/Report Data/RealEstateFinancialModelling';
@@ -77,6 +80,7 @@ function App() {
       <Header />
       <GlobalSearchBar />
       <LeadModal isOpen={showLeadModal} onClose={() => setShowLeadModal(false)} />
+      <Chatbot />
       <Routes>
         <Route path="/" element={
           <>
@@ -91,10 +95,12 @@ function App() {
         <Route path="/exhibition/individual" element={<ByIndividual />} />
         <Route path="/exhibition/developer" element={<ByDeveloper />} />
         <Route path="/exhibition/live-grouping" element={<LiveGrouping />} />
+        <Route path="/exhibition/live-grouping/:id" element={<LiveGroupingDetails />} />
         <Route path="/exhibition/badabuilder" element={<ByBadaBuilder />} />
         <Route path="/report" element={<Working />} />
         <Route path="/subscription-plans" element={<SubscriptionPlans />} />
         <Route path="/post-property" element={<PostProperty />} />
+        <Route path="/admin/live-grouping" element={<AdminLiveGrouping />} />
 
         {/* Learn */}
         <Route path="/learn/lease-and-asset-management" element = {<LAM/>}></Route>
