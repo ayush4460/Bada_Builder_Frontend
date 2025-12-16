@@ -62,17 +62,12 @@ function App() {
   const [showLeadModal, setShowLeadModal] = useState(false);
 
   useEffect(() => {
-    // Show lead modal after 2 seconds on first load
-    const hasSeenModal = sessionStorage.getItem('hasSeenLeadModal');
-    
-    if (!hasSeenModal) {
-      const timer = setTimeout(() => {
-        setShowLeadModal(true);
-        sessionStorage.setItem('hasSeenLeadModal', 'true');
-      }, 2000);
+    // Show lead modal after 2 seconds on every page load
+    const timer = setTimeout(() => {
+      setShowLeadModal(true);
+    }, 2000);
 
-      return () => clearTimeout(timer);
-    }
+    return () => clearTimeout(timer);
   }, []);
 
   return (

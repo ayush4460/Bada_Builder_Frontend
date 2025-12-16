@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
@@ -9,6 +9,7 @@ const LeadModal = ({ isOpen, onClose }) => {
     name: '',
     requirementType: '',
     bhkType: '',
+    budget: '',
     location: '',
     phone: ''
   });
@@ -16,14 +17,88 @@ const LeadModal = ({ isOpen, onClose }) => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
+  // Refs for form fields to enable auto-scroll
+  const nameRef = useRef(null);
+  const requirementTypeRef = useRef(null);
+  const bhkTypeRef = useRef(null);
+  const budgetRef = useRef(null);
+  const locationRef = useRef(null);
+  const phoneRef = useRef(null);
+  const modalBodyRef = useRef(null);
+
+  // Auto-scroll function to next field
+  const scrollToNextField = (currentField) => {
+    if (!modalBodyRef.current) return;
+
+    // Determine next field based on form logic
+    let nextField = null;
+    
+    if (currentField === 'name') {
+      nextField = 'requirementType';
+    } else if (currentField === 'requirementType') {
+      // If BHK type should be shown, go to BHK, otherwise go to budget
+      const showBhkType = ['Flat', 'House', 'Villa'].includes(formData.requirementType);
+      nextField = showBhkType ? 'bhkType' : 'budget';
+    } else if (currentField === 'bhkType') {
+      nextField = 'budget';
+    } else if (currentField === 'budget') {
+      nextField = 'location';
+    } else if (currentField === 'location') {
+      nextField = 'phone';
+    }
+
+    // Scroll to next field with delay to allow for animations
+    if (nextField) {
+      setTimeout(() => {
+        const nextElement = document.getElementById(nextField);
+        const nextFormGroup = nextElement?.closest('.form-group');
+        
+        if (nextElement && nextFormGroup && modalBodyRef.current) {
+          // Add highlight animation to the form group
+          nextFormGroup.classList.add('auto-scroll-target');
+          setTimeout(() => {
+            nextFormGroup.classList.remove('auto-scroll-target');
+          }, 600);
+
+          // Calculate scroll position
+          const containerRect = modalBodyRef.current.getBoundingClientRect();
+          const elementRect = nextFormGroup.getBoundingClientRect();
+          const relativeTop = elementRect.top - containerRect.top + modalBodyRef.current.scrollTop;
+          
+          // Scroll to position with some offset for better visibility
+          modalBodyRef.current.scrollTo({
+            top: Math.max(0, relativeTop - 60), // 60px offset from top
+            behavior: 'smooth'
+          });
+
+          // Focus the next field after scroll completes
+          setTimeout(() => {
+            nextElement.focus();
+          }, 400);
+        }
+      }, 350); // Delay to allow for field animations
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     
-    // If property type changes, reset BHK type
+    // If property type changes, reset BHK type and budget
     if (name === 'requirementType') {
-      setFormData(prev => ({ ...prev, [name]: value, bhkType: '' }));
-    } else {
+      setFormData(prev => ({ ...prev, [name]: value, bhkType: '', budget: '' }));
+      if (value) scrollToNextField(name); // Auto-scroll after selection
+    } 
+    // If BHK type changes, reset budget
+    else if (name === 'bhkType') {
+      setFormData(prev => ({ ...prev, [name]: value, budget: '' }));
+      if (value) scrollToNextField(name); // Auto-scroll after selection
+    } 
+    else {
       setFormData(prev => ({ ...prev, [name]: value }));
+      // Auto-scroll for other fields when they have a value
+      if (value && ['name', 'budget', 'location', 'phone'].includes(name)) {
+        scrollToNextField(name);
+      }
     }
     
     setError('');
@@ -31,12 +106,68 @@ const LeadModal = ({ isOpen, onClose }) => {
 
   // Check if BHK type should be shown
   const showBhkType = ['Flat', 'House', 'Villa'].includes(formData.requirementType);
+  
+  // Check if Budget should be shown - after property type is selected, and for BHK types after BHK is selected
+  const showBudget = formData.requirementType && (
+    !showBhkType || (showBhkType && formData.bhkType)
+  );
+
+  // Auto-scroll when new fields appear
+  useEffect(() => {
+    if (showBhkType && formData.requirementType && !formData.bhkType) {
+      // BHK field just appeared, scroll to it
+      setTimeout(() => {
+        const bhkElement = document.getElementById('bhkType');
+        if (bhkElement && modalBodyRef.current) {
+          const formGroup = bhkElement.closest('.form-group');
+          if (formGroup) {
+            formGroup.classList.add('auto-scroll-target');
+            setTimeout(() => formGroup.classList.remove('auto-scroll-target'), 600);
+          }
+          
+          const containerRect = modalBodyRef.current.getBoundingClientRect();
+          const elementRect = bhkElement.getBoundingClientRect();
+          const relativeTop = elementRect.top - containerRect.top + modalBodyRef.current.scrollTop;
+          
+          modalBodyRef.current.scrollTo({
+            top: Math.max(0, relativeTop - 60),
+            behavior: 'smooth'
+          });
+        }
+      }, 400); // Wait for animation to complete
+    }
+  }, [showBhkType, formData.requirementType]);
+
+  useEffect(() => {
+    if (showBudget && ((showBhkType && formData.bhkType) || (!showBhkType && formData.requirementType)) && !formData.budget) {
+      // Budget field just appeared, scroll to it
+      setTimeout(() => {
+        const budgetElement = document.getElementById('budget');
+        if (budgetElement && modalBodyRef.current) {
+          const formGroup = budgetElement.closest('.form-group');
+          if (formGroup) {
+            formGroup.classList.add('auto-scroll-target');
+            setTimeout(() => formGroup.classList.remove('auto-scroll-target'), 600);
+          }
+          
+          const containerRect = modalBodyRef.current.getBoundingClientRect();
+          const elementRect = budgetElement.getBoundingClientRect();
+          const relativeTop = elementRect.top - containerRect.top + modalBodyRef.current.scrollTop;
+          
+          modalBodyRef.current.scrollTo({
+            top: Math.max(0, relativeTop - 60),
+            behavior: 'smooth'
+          });
+        }
+      }, 400); // Wait for animation to complete
+    }
+  }, [showBudget, formData.bhkType, formData.requirementType]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     // Validation
-    if (!formData.name || !formData.requirementType || !formData.location || !formData.phone) {
+    if (!formData.name || !formData.requirementType || !formData.budget || !formData.location || !formData.phone) {
       setError('All fields are required');
       return;
     }
@@ -60,6 +191,7 @@ const LeadModal = ({ isOpen, onClose }) => {
       const leadData = {
         name: formData.name,
         requirement_type: formData.requirementType,
+        budget: formData.budget,
         location: formData.location,
         phone: formData.phone,
         created_at: new Date().toISOString()
@@ -77,7 +209,7 @@ const LeadModal = ({ isOpen, onClose }) => {
       
       // Close modal after 1.5 seconds
       setTimeout(() => {
-        setFormData({ name: '', requirementType: '', bhkType: '', location: '', phone: '' });
+        setFormData({ name: '', requirementType: '', bhkType: '', budget: '', location: '', phone: '' });
         setSuccess(false);
         onClose();
       }, 1500);
@@ -124,13 +256,17 @@ const LeadModal = ({ isOpen, onClose }) => {
             </motion.div>
           ) : (
             <>
-              <h2 className="lead-modal-title">Find Your Dream Property</h2>
-              <p className="lead-modal-subtitle">Tell us what you're looking for</p>
+              <div className="lead-modal-header">
+                <h2 className="lead-modal-title">Find Your Dream Property</h2>
+                <p className="lead-modal-subtitle">Tell us what you're looking for</p>
+              </div>
 
               <form onSubmit={handleSubmit} className="lead-modal-form">
+                <div className="lead-modal-body" ref={modalBodyRef}>
           <div className="form-group">
             <label htmlFor="name">Name *</label>
             <input
+              ref={nameRef}
               type="text"
               id="name"
               name="name"
@@ -144,6 +280,7 @@ const LeadModal = ({ isOpen, onClose }) => {
           <div className="form-group">
             <label htmlFor="requirementType">Property Type *</label>
             <select
+              ref={requirementTypeRef}
               id="requirementType"
               name="requirementType"
               value={formData.requirementType}
@@ -174,6 +311,7 @@ const LeadModal = ({ isOpen, onClose }) => {
             >
               <label htmlFor="bhkType">BHK Type *</label>
               <select
+                ref={bhkTypeRef}
                 id="bhkType"
                 name="bhkType"
                 value={formData.bhkType}
@@ -192,9 +330,56 @@ const LeadModal = ({ isOpen, onClose }) => {
             </motion.div>
           )}
 
+          {/* Show Budget only after property type is selected, and for BHK types after BHK is selected */}
+          {showBudget && (
+            <motion.div 
+              className="form-group"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <label htmlFor="budget">Budget *</label>
+              <select
+                ref={budgetRef}
+                id="budget"
+                name="budget"
+                value={formData.budget}
+                onChange={handleChange}
+                required
+              >
+                <option value="">Select budget range</option>
+                <optgroup label="In Lakhs">
+                  <option value="Under 10 Lakhs">Under ₹10 Lakhs</option>
+                  <option value="10-20 Lakhs">₹10-20 Lakhs</option>
+                  <option value="20-30 Lakhs">₹20-30 Lakhs</option>
+                  <option value="30-40 Lakhs">₹30-40 Lakhs</option>
+                  <option value="40-50 Lakhs">₹40-50 Lakhs</option>
+                  <option value="50-60 Lakhs">₹50-60 Lakhs</option>
+                  <option value="60-70 Lakhs">₹60-70 Lakhs</option>
+                  <option value="70-80 Lakhs">₹70-80 Lakhs</option>
+                  <option value="80-90 Lakhs">₹80-90 Lakhs</option>
+                  <option value="90 Lakhs - 1 Crore">₹90 Lakhs - 1 Crore</option>
+                </optgroup>
+                <optgroup label="In Crores">
+                  <option value="1-2 Crores">₹1-2 Crores</option>
+                  <option value="2-3 Crores">₹2-3 Crores</option>
+                  <option value="3-4 Crores">₹3-4 Crores</option>
+                  <option value="4-5 Crores">₹4-5 Crores</option>
+                  <option value="5-10 Crores">₹5-10 Crores</option>
+                  <option value="10-15 Crores">₹10-15 Crores</option>
+                  <option value="15-20 Crores">₹15-20 Crores</option>
+                  <option value="20-50 Crores">₹20-50 Crores</option>
+                  <option value="Above 50 Crores">Above ₹50 Crores</option>
+                </optgroup>
+              </select>
+            </motion.div>
+          )}
+
           <div className="form-group">
             <label htmlFor="location">Location *</label>
             <input
+              ref={locationRef}
               type="text"
               id="location"
               name="location"
@@ -290,6 +475,7 @@ const LeadModal = ({ isOpen, onClose }) => {
           <div className="form-group">
             <label htmlFor="phone">Phone Number *</label>
             <input
+              ref={phoneRef}
               type="tel"
               id="phone"
               name="phone"
@@ -301,26 +487,31 @@ const LeadModal = ({ isOpen, onClose }) => {
             />
           </div>
 
-                {error && (
-                  <motion.p 
-                    className="error-message"
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                  >
-                    {error}
-                  </motion.p>
-                )}
+                </div>
 
-                <button type="submit" className="submit-button" disabled={loading}>
-                  {loading ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <span className="spinner"></span>
-                      Submitting...
-                    </span>
-                  ) : (
-                    'Submit'
+                <div className="lead-modal-footer">
+                  {error && (
+                    <motion.p 
+                      className="error-message"
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      style={{ marginBottom: '16px' }}
+                    >
+                      {error}
+                    </motion.p>
                   )}
-                </button>
+
+                  <button type="submit" className="submit-button" disabled={loading}>
+                    {loading ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <span className="spinner"></span>
+                        Submitting...
+                      </span>
+                    ) : (
+                      'Submit'
+                    )}
+                  </button>
+                </div>
               </form>
             </>
           )}

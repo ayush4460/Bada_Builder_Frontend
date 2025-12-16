@@ -25,12 +25,14 @@
 .lead-modal-content {
   background: white;
   border-radius: 16px;
-  padding: 40px;
   max-width: 500px;
   width: 100%;
   position: relative;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   animation: slideUp 0.3s ease-out;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
 }
 
 @keyframes slideUp {
@@ -79,7 +81,65 @@
 .lead-modal-form {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.lead-modal-header {
+  padding: 40px 40px 0 40px;
+  flex-shrink: 0;
+}
+
+.lead-modal-body {
+  padding: 20px 40px 0 40px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   gap: 20px;
+  min-height: 200px;
+  scroll-behavior: smooth;
+  /* Custom scrollbar styling */
+  scrollbar-width: thin;
+  scrollbar-color: #58335e #f1f1f1;
+}
+
+.lead-modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.lead-modal-body::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.lead-modal-body::-webkit-scrollbar-thumb {
+  background: #58335e;
+  border-radius: 3px;
+}
+
+.lead-modal-body::-webkit-scrollbar-thumb:hover {
+  background: #6d4575;
+}
+
+/* Fade effect to indicate scrollable content */
+.lead-modal-body::after {
+  content: '';
+  position: sticky;
+  bottom: 0;
+  height: 20px;
+  background: linear-gradient(transparent, white);
+  pointer-events: none;
+  margin-top: -20px;
+}
+
+.lead-modal-footer {
+  padding: 20px 40px 40px 40px;
+  flex-shrink: 0;
+  border-top: 1px solid #f0f0f0;
+  background: white;
+  border-radius: 0 0 16px 16px;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .form-group {
@@ -109,11 +169,60 @@
   outline: none;
   border-color: #58335e;
   box-shadow: 0 0 0 3px rgba(88, 51, 94, 0.1);
+  transform: scale(1.02);
+  transition: all 0.3s ease;
+}
+
+.form-group {
+  transition: all 0.3s ease;
+}
+
+.form-group.auto-scroll-target {
+  animation: highlightField 0.6s ease-in-out;
+}
+
+@keyframes highlightField {
+  0% {
+    transform: translateX(0);
+    background-color: transparent;
+  }
+  25% {
+    transform: translateX(5px);
+    background-color: rgba(88, 51, 94, 0.05);
+  }
+  75% {
+    transform: translateX(-5px);
+    background-color: rgba(88, 51, 94, 0.05);
+  }
+  100% {
+    transform: translateX(0);
+    background-color: transparent;
+  }
 }
 
 .form-group select {
   cursor: pointer;
   background-color: white;
+}
+
+/* Optgroup styling for budget dropdown */
+.form-group select optgroup {
+  font-weight: 600;
+  color: #58335e;
+  background-color: #f8f9fa;
+  font-size: 14px;
+  padding: 8px 0;
+}
+
+.form-group select option {
+  padding: 8px 12px;
+  color: #333;
+  font-weight: 400;
+}
+
+.form-group select optgroup option {
+  padding-left: 20px;
+  color: #555;
 }
 
 .error-message {
@@ -133,7 +242,7 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s;
-  margin-top: 10px;
+  width: 100%;
 }
 
 .submit-button:hover:not(:disabled) {
@@ -195,8 +304,20 @@
   }
 
   .lead-modal-content {
-    padding: 30px 20px;
     max-width: 100%;
+    max-height: 95vh;
+  }
+
+  .lead-modal-header {
+    padding: 30px 20px 0 20px;
+  }
+
+  .lead-modal-body {
+    padding: 20px 20px 0 20px;
+  }
+
+  .lead-modal-footer {
+    padding: 20px 20px 30px 20px;
   }
 
   .lead-modal-title {
