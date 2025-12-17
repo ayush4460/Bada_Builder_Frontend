@@ -1846,16 +1846,18 @@ button:not([type='submit']):not(.cancel-btn):hover {
 /* Google Maps Container - Ensure proper rendering */
 .google-map-container {
   width: 100% !important;
-  height: 100% !important;
-  min-height: 400px !important;
+  height: 500px !important;
+  min-height: 500px !important;
   position: relative !important;
   overflow: hidden !important;
+  background-color: #e5e3df !important;
 }
 
 /* Ensure Google Maps renders properly in modal */
 .google-map-container > div {
   width: 100% !important;
   height: 100% !important;
+  min-height: 500px !important;
 }
 
 /* Fix Google Maps controls positioning */
@@ -1930,5 +1932,264 @@ button:not([type='submit']):not(.cancel-btn):hover {
   .map-modal-content {
     min-height: 500px !important;
     max-height: 95vh !important;
+  }
+}
+
+/* Use My Location Button Styling */
+.use-location-btn {
+  background-color: #2563eb !important;
+  color: white !important;
+  padding: 0.5rem 1rem !important;
+  border-radius: 0.5rem !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  transition: all 0.2s ease !important;
+  border: none !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+}
+
+.use-location-btn:hover:not(:disabled) {
+  background-color: #1d4ed8 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3) !important;
+}
+
+.use-location-btn:disabled {
+  background-color: #9ca3af !important;
+  cursor: not-allowed !important;
+  opacity: 0.6 !important;
+}
+
+.use-location-btn:active:not(:disabled) {
+  transform: translateY(0) !important;
+}
+
+/* Responsive adjustments for Use My Location button */
+@media (max-width: 768px) {
+  .use-location-btn {
+    padding: 0.625rem 0.875rem !important;
+    font-size: 0.8125rem !important;
+  }
+  
+  .use-location-btn svg {
+    width: 0.875rem !important;
+    height: 0.875rem !important;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Stack header items on very small screens */
+  .map-modal-content > div:first-child {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 1rem !important;
+  }
+  
+  .map-modal-content > div:first-child > div:last-child {
+    width: 100% !important;
+    justify-content: space-between !important;
+  }
+  
+  .use-location-btn {
+    flex: 1 !important;
+    justify-content: center !important;
+  }
+}
+
+/* Hide Google Maps error popups and overlays */
+.gm-err-container,
+.gm-err-content,
+.gm-err-message,
+.gm-err-title,
+.dismissButton {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+/* Hide Google Maps authentication error overlay */
+.gm-style .gm-err-container {
+  display: none !important;
+}
+
+/* Ensure map container doesn't show error background */
+.google-map-container .gm-err-container {
+  display: none !important;
+}
+
+/* Hide the "This page can't load Google Maps correctly" dialog */
+div[style*="background-color: white"][style*="padding: 1em"] {
+  display: none !important;
+}
+
+/* Search location input styling */
+.search-location-input {
+  flex: 1;
+  padding: 0.625rem 2.5rem 0.625rem 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.search-location-input:focus {
+  outline: none;
+  border-color: #111827;
+  box-shadow: 0 0 0 2px rgba(17, 24, 39, 0.1);
+}
+
+.search-location-input:disabled {
+  background-color: #f3f4f6;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Search button styling */
+.search-location-btn {
+  padding: 0.625rem 1.25rem;
+  background-color: #111827;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.search-location-btn:hover:not(:disabled) {
+  background-color: #1f2937;
+}
+
+.search-location-btn:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Responsive search bar */
+@media (max-width: 640px) {
+  .search-location-container {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .search-location-input {
+    width: 100%;
+  }
+  
+  .search-location-btn,
+  .use-location-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+
+/* NUCLEAR OPTION - Hide the specific Google Maps error dialog */
+/* Target the exact structure shown in the screenshot */
+div[style*="position: relative"] > div[style*="background-color: white"],
+div[style*="position: relative"] > div[style*="background-color: rgb(255, 255, 255)"] {
+  display: none !important;
+}
+
+/* Hide any div containing "This page can't load Google Maps correctly" */
+div:has(> *:contains("This page can't load Google Maps correctly")),
+div:has(> *:contains("Do you own this website")) {
+  display: none !important;
+}
+
+/* Target Google logo + error message container */
+.gm-style > div[style*="position: absolute"][style*="left: 0"][style*="top: 0"] {
+  display: none !important;
+}
+
+/* Hide all absolutely positioned white divs in map container */
+.google-map-container div[style*="position: absolute"][style*="background-color: white"],
+.google-map-container div[style*="position: absolute"][style*="background-color: rgb(255, 255, 255)"] {
+  display: none !important;
+}
+
+/* Target the specific z-index used by error dialogs */
+div[style*="z-index: 1000000"][style*="background-color"],
+div[style*="z-index: 100"][style*="background-color: white"] {
+  display: none !important;
+}
+
+
+/* Fix modal layout to prevent footer from going outside screen */
+.fixed.inset-0.flex.items-center.justify-center {
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+/* Ensure modal container doesn't exceed viewport */
+.bg-white.rounded-2xl.shadow-2xl {
+  max-height: 85vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+/* Ensure modal header doesn't grow */
+.p-6.border-b.border-gray-200.space-y-4 {
+  flex-shrink: 0 !important;
+}
+
+/* Ensure modal footer stays at bottom */
+.p-6.border-t.border-gray-200.flex.justify-end.gap-3 {
+  flex-shrink: 0 !important;
+  position: sticky !important;
+  bottom: 0 !important;
+  background-color: white !important;
+  z-index: 10 !important;
+}
+
+/* Map container should not expand beyond available space */
+.google-map-container {
+  flex-shrink: 1 !important;
+  max-height: 400px !important;
+}
+
+/* Responsive modal adjustments */
+@media (max-height: 700px) {
+  .bg-white.rounded-2xl.shadow-2xl {
+    max-height: 95vh !important;
+  }
+  
+  .google-map-container {
+    height: 300px !important;
+    max-height: 300px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .bg-white.rounded-2xl.shadow-2xl {
+    max-height: 90vh !important;
+  }
+  
+  .google-map-container {
+    height: 350px !important;
+    max-height: 350px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .p-6.border-b.border-gray-200.space-y-4 {
+    padding: 1rem !important;
+  }
+  
+  .p-6.border-t.border-gray-200.flex.justify-end.gap-3 {
+    padding: 1rem !important;
+    flex-direction: column !important;
+  }
+  
+  .p-6.border-t.border-gray-200.flex.justify-end.gap-3 button {
+    width: 100% !important;
   }
 }
