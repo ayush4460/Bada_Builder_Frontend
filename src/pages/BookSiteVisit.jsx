@@ -60,165 +60,64 @@ const BookSiteVisit = () => {
   const [error, setError] = useState('');
   const [showMapModal, setShowMapModal] = useState(false);
   const [mapLoading, setMapLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-
+  
   // Refs for Google Maps
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markerRef = useRef(null);
   const geocoderRef = useRef(null);
-  const searchBoxRef = useRef(null);
 
   // Google Maps API loaded state
   const [mapsApiLoaded, setMapsApiLoaded] = useState(false);
-  const [mapError, setMapError] = useState('');
 
-  // Initialize Google Maps API using script tag (more reliable)
+  // Initialize Google Maps API
   useEffect(() => {
-    const initializeGoogleMapsAPI = () => {
-      console.log('🗺️ Starting Google Maps API initialization...');
-
-      // Suppress Google Maps error popups - multiple approaches
-      window.gm_authFailure = () => {
-        console.error('❌ Google Maps authentication failed');
-        setMapError('Google Maps authentication failed. Using manual address entry.');
-        setMapsApiLoaded(false);
-      };
-
-      // Override Google Maps error display function
-      if (window.google && window.google.maps) {
-        const originalError = window.google.maps.event.addDomListener;
-        if (originalError) {
-          window.google.maps.event.addDomListener = function (...args) {
-            if (args[0] && args[0].className && args[0].className.includes('dismissButton')) {
-              return; // Don't add listener to dismiss button
-            }
-            return originalError.apply(this, args);
-          };
-        }
-      }
-
-      // Aggressively remove Google Maps error dialogs
-      const removeGoogleMapsErrors = () => {
-        // Remove error containers
-        const errorSelectors = [
-          '.gm-err-container',
-          '.gm-err-content',
-          '.gm-err-message',
-          '.gm-err-title',
-          '.gm-style-pbc',
-          'div[jstcache]'
-        ];
-
-        errorSelectors.forEach(selector => {
-          const elements = document.querySelectorAll(selector);
-          elements.forEach(el => el.remove());
-        });
-
-        // Remove white background divs that might be error dialogs
-        const allDivs = document.querySelectorAll('div[style*="background-color"]');
-        allDivs.forEach(div => {
-          const style = div.getAttribute('style') || '';
-          if (
-            (style.includes('background-color: white') ||
-              style.includes('background-color: rgb(255, 255, 255)')) &&
-            style.includes('position') &&
-            div.textContent.includes('Google Maps')
-          ) {
-            div.remove();
-          }
-        });
-      };
-
-      // Run error removal every 100ms for the first 5 seconds
-      const errorRemovalInterval = setInterval(removeGoogleMapsErrors, 100);
-      setTimeout(() => clearInterval(errorRemovalInterval), 5000);
-
-      // Also run on DOM mutations
-      const observer = new MutationObserver(removeGoogleMapsErrors);
-      observer.observe(document.body, { childList: true, subtree: true });
-
-      // Check if already loaded
-      if (window.google && window.google.maps) {
-        console.log('✅ Google Maps API already loaded');
-        setMapsApiLoaded(true);
-        return;
-      }
-
-      // Check if script is already being loaded
-      const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
-      if (existingScript) {
-        console.log('⏳ Google Maps script already loading...');
-        existingScript.addEventListener('load', () => {
-          if (window.google && window.google.maps) {
-            setMapsApiLoaded(true);
-            console.log('✅ Google Maps API loaded from existing script');
-          }
-        });
-        return;
-      }
-
-      // Create script tag
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyC19gbAYFABkS8jekTcyYeuRZCHrN5RozI&libraries=places,geometry&callback=initMap`;
-      script.async = true;
-      script.defer = true;
-
-      // Global callback
-      window.initMap = () => {
-        console.log('✅ Google Maps API loaded successfully');
+    const initializeGoogleMapsAPI = async () => {
+      console.log('Starting Google Maps API initialization...');
+      try {
+        // Check if Google Maps is already loaded
         if (window.google && window.google.maps) {
+          console.log('Google Maps API already loaded');
           setMapsApiLoaded(true);
-          setMapError('');
+          return;
         }
-        // Remove any error dialogs after init
-        setTimeout(removeGoogleMapsErrors, 100);
-      };
 
-      script.onerror = (error) => {
+        const loader = new Loader({
+          apiKey: "AIzaSyAruIz1wMmd6JXT3DAWVRym7N3vxPWo94A", // Replace with your actual API key
+          version: "weekly",
+          libraries: ["places", "geometry"]
+        });
+        
+        console.log('Loading Google Maps API...');
+        await loader.load();
+        setMapsApiLoaded(true);
+        // Clear any existing errors when API loads successfully
+        setError('');
+        console.log('✅ Google Maps API loaded successfully');
+      } catch (error) {
         console.error('❌ Error loading Google Maps API:', error);
-        setMapError('Failed to load Google Maps. Using manual address entry.');
         setMapsApiLoaded(false);
-      };
-
-      document.head.appendChild(script);
-      console.log('📡 Google Maps script tag added to document');
+        setError('Google Maps failed to load. Please enter your address manually.');
+        // Set a fallback after 5 seconds to allow manual address entry
+        setTimeout(() => {
+          console.log('Setting fallback state for manual address entry');
+          setMapsApiLoaded(true);
+        }, 5000);
+      }
     };
 
+    // Only initialize once on component mount
     initializeGoogleMapsAPI();
-
-    // Test function for debugging
-    window.testGoogleMaps = () => {
-      console.log('🧪 Testing Google Maps availability:');
-      console.log('- window.google exists:', !!window.google);
-      console.log('- window.google.maps exists:', !!(window.google && window.google.maps));
-      console.log('- mapsApiLoaded state:', mapsApiLoaded);
-      console.log('- mapError state:', mapError);
-
-      if (window.google && window.google.maps) {
-        console.log('✅ Google Maps is available!');
-        console.log('- Available services:', Object.keys(window.google.maps));
-      } else {
-        console.log('❌ Google Maps is NOT available');
-      }
-    };
-
-    // Cleanup
-    return () => {
-      if (window.initMap) {
-        delete window.initMap;
-      }
-    };
-  }, []);
+  }, []); // Empty dependency array
 
   const isSunday = (date) => date.getDay() === 0;
-
+  
   const isTimeDisabled = (time) => {
     if (!formData.date) return false;
-
+    
     const selectedDate = new Date(formData.date);
     const today = new Date();
-
+    
     // If selected date is today, disable past times
     if (selectedDate.toDateString() === today.toDateString()) {
       const [hours, minutes] = time.split(':').map(Number);
@@ -226,7 +125,7 @@ const BookSiteVisit = () => {
       timeDate.setHours(hours, minutes, 0, 0);
       return timeDate <= today;
     }
-
+    
     return false;
   };
 
@@ -283,62 +182,46 @@ const BookSiteVisit = () => {
 
   // Initialize Google Map in modal
   const initializeMap = async () => {
-    console.log('🗺️ Starting map initialization...');
-
-    // Comprehensive checks
-    if (!mapsApiLoaded) {
-      console.error('❌ Maps API not loaded');
-      setMapError('Google Maps API not loaded yet');
-      return;
-    }
-
-    if (!mapRef.current) {
-      console.error('❌ Map container not found');
-      return;
-    }
-
-    if (!window.google || !window.google.maps) {
-      console.error('❌ Google Maps not available');
-      setMapError('Google Maps not available. Please refresh the page.');
+    // Check if API is loaded and DOM element exists
+    if (!mapsApiLoaded || !mapRef.current || !window.google) {
+      console.log('Maps API not ready:', { mapsApiLoaded, mapRef: !!mapRef.current, google: !!window.google });
       return;
     }
 
     try {
       setMapLoading(true);
-      setMapError('');
-
-      // Wait for modal animation
-      await new Promise(resolve => setTimeout(resolve, 500));
-
+      
+      // Wait a bit more for DOM to be fully ready
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // Ensure the map container has dimensions
       const mapContainer = mapRef.current;
-
-      // Log dimensions for debugging
-      console.log('📏 Container dimensions:', {
-        offsetWidth: mapContainer.offsetWidth,
-        offsetHeight: mapContainer.offsetHeight,
-        clientWidth: mapContainer.clientWidth,
-        clientHeight: mapContainer.clientHeight,
-        scrollWidth: mapContainer.scrollWidth,
-        scrollHeight: mapContainer.scrollHeight
-      });
-
-      // Default location
+      if (mapContainer.offsetWidth === 0 || mapContainer.offsetHeight === 0) {
+        console.error('Map container has no dimensions');
+        setMapLoading(false);
+        return;
+      }
+      
+      // Default location (Delhi, India)
       const defaultLocation = { lat: 28.6139, lng: 77.2090 };
-
-      console.log('🎨 Creating map instance...');
-
-      // Create map with minimal options first
+      
+      // Initialize map with proper options
       const map = new window.google.maps.Map(mapContainer, {
         center: defaultLocation,
         zoom: 13,
-        disableDefaultUI: false,
-        zoomControl: true,
         mapTypeControl: false,
         streetViewControl: false,
-        fullscreenControl: false
+        fullscreenControl: false,
+        zoomControl: true,
+        gestureHandling: 'cooperative',
+        styles: [
+          {
+            featureType: 'poi',
+            elementType: 'labels',
+            stylers: [{ visibility: 'off' }]
+          }
+        ]
       });
-
-      console.log('✅ Map instance created');
 
       // Initialize geocoder
       const geocoder = new window.google.maps.Geocoder();
@@ -399,23 +282,12 @@ const BookSiteVisit = () => {
 
       // Trigger resize event to ensure proper rendering
       setTimeout(() => {
-        if (map && window.google && window.google.maps) {
-          window.google.maps.event.trigger(map, 'resize');
-          map.setCenter(defaultLocation);
-          console.log('✅ Map resize triggered and centered');
-        }
+        window.google.maps.event.trigger(map, 'resize');
+        map.setCenter(defaultLocation);
       }, 100);
 
-      // Additional resize after a longer delay to ensure rendering
-      setTimeout(() => {
-        if (map && window.google && window.google.maps) {
-          window.google.maps.event.trigger(map, 'resize');
-          map.setCenter(defaultLocation);
-        }
-      }, 500);
-
       setMapLoading(false);
-      console.log('✅ Map initialized successfully');
+      console.log('Map initialized successfully');
     } catch (error) {
       console.error('Error initializing map:', error);
       setMapLoading(false);
@@ -431,133 +303,11 @@ const BookSiteVisit = () => {
       (results, status) => {
         if (status === 'OK' && results[0]) {
           const address = results[0].formatted_address;
-          setFormData(prev => ({
-            ...prev,
-            address,
-            coordinates: { lat, lng }
+          setFormData(prev => ({ 
+            ...prev, 
+            address, 
+            coordinates: { lat, lng } 
           }));
-        }
-      }
-    );
-  };
-
-  // Get user's current location
-  const getCurrentLocation = () => {
-    console.log('🎯 getCurrentLocation called');
-
-    if (!navigator.geolocation) {
-      console.error('❌ Geolocation not supported');
-      setError('Geolocation is not supported by your browser');
-      return;
-    }
-
-    if (!mapInstanceRef.current || !markerRef.current) {
-      console.error('❌ Map not initialized', {
-        map: !!mapInstanceRef.current,
-        marker: !!markerRef.current
-      });
-      setError('Map is not initialized yet. Please wait a moment.');
-      return;
-    }
-
-    console.log('📍 Requesting current location...');
-    setMapLoading(true);
-    setError('');
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const userLocation = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
-        };
-
-        console.log('✅ Location received:', userLocation);
-
-        // Update map center and marker position
-        if (mapInstanceRef.current && markerRef.current) {
-          mapInstanceRef.current.setCenter(userLocation);
-          mapInstanceRef.current.setZoom(15); // Zoom in closer for current location
-          markerRef.current.setPosition(userLocation);
-
-          console.log('🗺️ Map updated with user location');
-
-          // Reverse geocode to get address
-          reverseGeocode(userLocation.lat, userLocation.lng);
-        }
-
-        setMapLoading(false);
-      },
-      (error) => {
-        console.error('❌ Geolocation error:', error);
-        setMapLoading(false);
-
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            setError('Location access denied. Please enable location permissions in your browser.');
-            break;
-          case error.POSITION_UNAVAILABLE:
-            setError('Location information is unavailable. Please try again.');
-            break;
-          case error.TIMEOUT:
-            setError('Location request timed out. Please try again.');
-            break;
-          default:
-            setError('An error occurred while getting your location.');
-            break;
-        }
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0
-      }
-    );
-  };
-
-  // Search for a location
-  const searchLocation = () => {
-    if (!searchQuery.trim()) {
-      setError('Please enter a location to search');
-      return;
-    }
-
-    if (!geocoderRef.current) {
-      setError('Map is not initialized yet');
-      return;
-    }
-
-    console.log('🔍 Searching for:', searchQuery);
-    setMapLoading(true);
-    setError('');
-
-    geocoderRef.current.geocode(
-      { address: searchQuery },
-      (results, status) => {
-        setMapLoading(false);
-
-        if (status === 'OK' && results[0]) {
-          const location = results[0].geometry.location;
-          const lat = location.lat();
-          const lng = location.lng();
-
-          console.log('✅ Location found:', { lat, lng });
-
-          // Update map and marker
-          if (mapInstanceRef.current && markerRef.current) {
-            mapInstanceRef.current.setCenter({ lat, lng });
-            mapInstanceRef.current.setZoom(15);
-            markerRef.current.setPosition({ lat, lng });
-
-            // Update address
-            setFormData(prev => ({
-              ...prev,
-              address: results[0].formatted_address,
-              coordinates: { lat, lng }
-            }));
-          }
-        } else {
-          console.error('❌ Geocoding failed:', status);
-          setError('Location not found. Please try a different search term.');
         }
       }
     );
@@ -582,7 +332,7 @@ const BookSiteVisit = () => {
       const timer = setTimeout(() => {
         initializeMap();
       }, 300);
-
+      
       return () => clearTimeout(timer);
     }
   }, [showMapModal, mapsApiLoaded]);
@@ -601,10 +351,10 @@ const BookSiteVisit = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    
     // Prevent double submission
     if (loading) return;
-
+    
     if (!isAuthenticated) {
       setError('Please login to book a site visit');
       setTimeout(() => navigate('/login'), 1500);
@@ -636,12 +386,12 @@ const BookSiteVisit = () => {
 
       // Save to Firestore with timeout
       const savePromise = addDoc(collection(db, 'bookings'), bookingData);
-      const timeoutPromise = new Promise((_, reject) =>
+      const timeoutPromise = new Promise((_, reject) => 
         setTimeout(() => reject(new Error('Request timeout')), 10000)
       );
 
       const docRef = await Promise.race([savePromise, timeoutPromise]);
-
+      
       // Add booking ID to data for notifications
       bookingData.booking_id = docRef.id;
       bookingData.property_location = property?.location || 'N/A';
@@ -662,12 +412,12 @@ const BookSiteVisit = () => {
 
       // Show success message and redirect automatically
       setBookingStep('Booking successful! Redirecting to home...');
-
+      
       // Automatic redirect without user interaction
       setTimeout(() => {
-        navigate('/', {
-          state: {
-            successMessage: 'Your site visit has been booked successfully! You will receive a confirmation shortly.'
+        navigate('/', { 
+          state: { 
+            successMessage: 'Your site visit has been booked successfully! You will receive a confirmation shortly.' 
           }
         });
       }, 2000);
@@ -675,7 +425,7 @@ const BookSiteVisit = () => {
     } catch (error) {
       console.error('Error booking site visit:', error);
       setLoading(false);
-
+      
       if (error.message === 'Request timeout') {
         setError('Request timed out. Please check your connection and try again.');
       } else {
@@ -723,14 +473,10 @@ const BookSiteVisit = () => {
                   <div className="date-time-grid">
                     {/* Date Picker */}
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-600">
-                        Visit Date
-                      </label>
-
+                      <label className="text-sm font-medium text-gray-600">Visit Date</label>
                       <div className="relative date-picker-container">
-                        <div className="date-select-wrapper form-input-height bg-gray-50 border border-gray-200 rounded-lg flex items-center gap-3 px-3 cursor-pointer">
+                        <div className="date-select-wrapper form-input-height bg-gray-50 border border-gray-200 rounded-lg w-full cursor-pointer flex items-center gap-3 px-3">
                           <CalendarDays className="w-4 h-4 text-gray-400 flex-shrink-0" />
-
                           <DatePicker
                             selected={formData.date}
                             onChange={handleDateChange}
@@ -752,43 +498,29 @@ const BookSiteVisit = () => {
                           </svg>
                         </div>
                       </div>
-
-                      <p className="text-xs text-gray-500 mt-1">
-                        Monday to Saturday only
-                      </p>
+                      <p className="text-xs text-gray-500 mt-1">Monday to Saturday only</p>
                     </div>
 
                     {/* Time Picker */}
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-600">
-                        Visit Time
-                      </label>
-
+                      <label className="text-sm font-medium text-gray-600">Visit Time</label>
                       <div className="relative time-picker-container">
-                        <Select
-                          value={formData.time}
-                          onValueChange={(value) => handleChange("time", value)}
+                        <Select 
+                          value={formData.time} 
+                          onValueChange={(value) => handleChange('time', value)}
                           disabled={!formData.date}
                         >
                           <SelectTrigger className="time-select-trigger form-input-height bg-gray-50 border-gray-200 w-full cursor-pointer flex items-center gap-3 px-3">
                             <Clock className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                            <SelectValue
-                              placeholder="Select time slot"
-                              className="flex-1 text-left"
-                            />
+                            <SelectValue placeholder="Select time slot" className="flex-1 text-left" />
                           </SelectTrigger>
-
                           <SelectContent className="bg-white border-gray-200 max-h-60 overflow-y-auto">
-                            {timeSlots.map((slot) => (
-                              <SelectItem
-                                key={slot.value}
+                            {timeSlots.map(slot => (
+                              <SelectItem 
+                                key={slot.value} 
                                 value={slot.value}
                                 disabled={isTimeDisabled(slot.value)}
-                                className={
-                                  isTimeDisabled(slot.value)
-                                    ? "opacity-50 cursor-not-allowed"
-                                    : ""
-                                }
+                                className={isTimeDisabled(slot.value) ? 'opacity-50 cursor-not-allowed' : ''}
                               >
                                 {slot.label}
                               </SelectItem>
@@ -796,12 +528,8 @@ const BookSiteVisit = () => {
                           </SelectContent>
                         </Select>
                       </div>
-
-                      <p className="text-xs text-gray-500 mt-1">
-                        10:00 AM - 5:00 PM 
-                      </p>
+                      <p className="text-xs text-gray-500 mt-1">10:00 AM - 5:00 PM (30 min slots)</p>
                     </div>
-
                   </div>
                 </div>
 
@@ -876,10 +604,11 @@ const BookSiteVisit = () => {
                       type="button"
                       onClick={openMapModal}
                       disabled={loading || !mapsApiLoaded}
-                      className={`absolute right-2 top-1/2 transform -translate-y-1/2 text-white p-2 rounded-lg text-sm transition-colors flex items-center gap-1 ${mapsApiLoaded
-                          ? 'bg-blue-500 hover:bg-blue-600 cursor-pointer'
+                      className={`absolute right-2 top-1/2 transform -translate-y-1/2 text-white p-2 rounded-lg text-sm transition-colors flex items-center gap-1 ${
+                        mapsApiLoaded 
+                          ? 'bg-blue-500 hover:bg-blue-600 cursor-pointer' 
                           : 'bg-gray-400 cursor-not-allowed'
-                        }`}
+                      }`}
                       title={mapsApiLoaded ? "Select location on map" : "Loading Google Maps..."}
                     >
                       {mapsApiLoaded ? (
@@ -907,8 +636,8 @@ const BookSiteVisit = () => {
                   <div className="flex gap-4">
                     <label className={cn(
                       "flex items-center gap-2 px-4 py-3 rounded-lg border cursor-pointer transition-all",
-                      formData.paymentMethod === 'previsit'
-                        ? "border-gray-900 bg-gray-50"
+                      formData.paymentMethod === 'previsit' 
+                        ? "border-gray-900 bg-gray-50" 
                         : "border-gray-200 hover:border-gray-300"
                     )}>
                       <input
@@ -923,8 +652,8 @@ const BookSiteVisit = () => {
                     </label>
                     <label className={cn(
                       "flex items-center gap-2 px-4 py-3 rounded-lg border cursor-pointer transition-all",
-                      formData.paymentMethod === 'postvisit'
-                        ? "border-gray-900 bg-gray-50"
+                      formData.paymentMethod === 'postvisit' 
+                        ? "border-gray-900 bg-gray-50" 
                         : "border-gray-200 hover:border-gray-300"
                     )}>
                       <input
@@ -981,7 +710,7 @@ const BookSiteVisit = () => {
                 <Car className="w-5 h-5 text-gray-700" />
                 <h3 className="font-semibold text-gray-900">Visit Information</h3>
               </div>
-
+              
               <div className="space-y-4 text-sm">
                 <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                   <p className="font-medium text-gray-900 mb-1">Visit Duration & Charges</p>
@@ -1049,90 +778,42 @@ const BookSiteVisit = () => {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col"
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-[80vh] flex flex-col"
               onClick={(e) => e.stopPropagation()}
-              style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
             >
               {/* Modal Header */}
-              <div className="p-6 border-b border-gray-200 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <h3 className="text-xl font-semibold text-gray-900">Select Pickup Location</h3>
-                    <p className="text-sm text-gray-500 mt-1">Search, use your location, or click on the map</p>
-                  </div>
-                  <button
-                    onClick={closeMapModal}
-                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                  >
-                    <X className="w-5 h-5 text-gray-500" />
-                  </button>
+              <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900">Select Pickup Location</h3>
+                  <p className="text-sm text-gray-500 mt-1">Click on the map or drag the marker to set your pickup location</p>
                 </div>
-
-                {/* Search Bar */}
-                <div className="flex gap-2">
-                  <div className="flex-1 relative">
-                    <Input
-                      type="text"
-                      placeholder="Search for a location (e.g., Connaught Place, Delhi)"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && searchLocation()}
-                      disabled={!mapsApiLoaded || mapLoading}
-                      className="pr-10"
-                    />
-                    <MapPin className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  </div>
-                  <Button
-                    type="button"
-                    onClick={searchLocation}
-                    disabled={!mapsApiLoaded || mapLoading || !searchQuery.trim()}
-                    className="bg-gray-900 text-white hover:bg-gray-800"
-                  >
-                    Search
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={getCurrentLocation}
-                    disabled={!mapsApiLoaded || mapLoading}
-                    className="bg-blue-600 text-white hover:bg-blue-700 gap-2"
-                  >
-                    <MapPin className="w-4 h-4" />
-                    My Location
-                  </Button>
-                </div>
+                <button
+                  onClick={closeMapModal}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
               </div>
 
               {/* Map Container */}
-              <div className="relative overflow-hidden" style={{ minHeight: '300px', height: '400px', flexShrink: 1 }}>
-                {(mapLoading || !mapsApiLoaded) && !mapError && (
+              <div className="flex-1 relative overflow-hidden">
+                {(mapLoading || !mapsApiLoaded) && (
                   <div className="absolute inset-0 bg-gray-100 flex items-center justify-center z-10">
                     <div className="text-center">
                       <Loader2 className="w-8 h-8 animate-spin text-gray-600 mx-auto mb-2" />
                       <p className="text-gray-600">
                         {!mapsApiLoaded ? 'Loading Google Maps API...' : 'Initializing map...'}
                       </p>
-                      <p className="text-xs text-gray-500 mt-2">This may take a few seconds</p>
-                    </div>
-                  </div>
-                )}
-                {mapError && (
-                  <div className="absolute inset-0 bg-red-50 flex items-center justify-center z-10">
-                    <div className="text-center p-6">
-                      <X className="w-12 h-12 text-red-500 mx-auto mb-4" />
-                      <p className="text-red-700 font-medium mb-2">Map Loading Error</p>
-                      <p className="text-sm text-red-600">{mapError}</p>
-                      <p className="text-xs text-gray-600 mt-4">Please enter your address manually below</p>
                     </div>
                   </div>
                 )}
                 <div
                   ref={mapRef}
-                  className="google-map-container"
-                  style={{
-                    width: '100%',
-                    height: '400px',
-                    position: 'relative',
-                    backgroundColor: '#e5e3df'
+                  className="google-map-container w-full h-full"
+                  style={{ 
+                    minHeight: '400px',
+                    height: '100%',
+                    width: '100%'
                   }}
                 />
               </div>
@@ -1151,7 +832,7 @@ const BookSiteVisit = () => {
               )}
 
               {/* Modal Footer */}
-              <div className="p-6 border-t border-gray-200 flex justify-end gap-3 bg-white" style={{ flexShrink: 0 }}>
+              <div className="p-6 border-t border-gray-200 flex justify-end gap-3">
                 <Button
                   variant="outline"
                   onClick={closeMapModal}
@@ -1162,7 +843,7 @@ const BookSiteVisit = () => {
                 <Button
                   onClick={closeMapModal}
                   disabled={!formData.address}
-                  className="bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-gray-900 text-white hover:bg-gray-800"
                 >
                   <Check className="w-4 h-4 mr-2" />
                   Confirm Location
