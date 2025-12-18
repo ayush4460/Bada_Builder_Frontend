@@ -169,11 +169,19 @@ const SearchResults = () => {
                       <span className="area">{property.area}</span>
                     </div>
                     <div className="card-actions">
-                      <Link to={`/projects/${property.id}`} className="view-btn">
+                      <Link 
+                        to={`/property-details/${property.id}`} 
+                        state={{ property, type: 'search' }}
+                        className="view-btn"
+                      >
                         View Details
                       </Link>
-                      <Link to="/booksitevisit" className="book-btn">
-                        Book Visit
+                      <Link 
+                        to="/book-visit" 
+                        state={{ property: { ...property, type: 'search' } }}
+                        className="book-btn"
+                      >
+                        Book Site Visit
                       </Link>
                     </div>
                   </div>

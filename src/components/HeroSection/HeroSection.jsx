@@ -1,15 +1,28 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import './HeroSection.css';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const HeroSection = () => {
   const navigate = useNavigate();
+  const locationState = useLocation();
 
   const [location, setLocation] = useState('');
   const [propertyType, setPropertyType] = useState('');
   const [bhkType, setBhkType] = useState('');
   const [possession, setPossession] = useState('');
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+
+  // Check for success message from booking redirect
+  useEffect(() => {
+    if (locationState.state?.successMessage) {
+      setShowSuccessMessage(true);
+      // Auto-hide after 5 seconds
+      setTimeout(() => {
+        setShowSuccessMessage(false);
+      }, 5000);
+    }
+  }, [locationState]);
 
   // Check if BHK type should be shown
   const showBhkType = ['Flat', 'House', 'Villa'].includes(propertyType);
@@ -39,6 +52,27 @@ const HeroSection = () => {
 
   return (
     <section className="hero-section">
+      {/* Success Message from Booking */}
+      {showSuccessMessage && (
+        <motion.div
+          initial={{ opacity: 0, y: -50 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -50 }}
+          className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg"
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-xl">✓</span>
+            <span>{locationState.state?.successMessage}</span>
+            <button 
+              onClick={() => setShowSuccessMessage(false)}
+              className="ml-4 text-white hover:text-gray-200"
+            >
+              ×
+            </button>
+          </div>
+        </motion.div>
+      )}
+      
       <div className="hero-content">
         <motion.h1
           initial={{ opacity: 0, y: 30 }}

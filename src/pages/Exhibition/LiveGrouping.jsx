@@ -267,6 +267,32 @@ const LiveGrouping = () => {
                   </ul>
                 </div>
 
+                {/* Property Actions */}
+                <div className="property-actions-grouping">
+                  <button 
+                    className="view-details-btn-grouping"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/property-details/${group.id}`, { 
+                        state: { property: group, type: 'grouping' } 
+                      });
+                    }}
+                  >
+                    View Details
+                  </button>
+                  <button 
+                    className="book-visit-btn-grouping"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate('/book-visit', { 
+                        state: { property: { ...group, type: 'grouping' } } 
+                      });
+                    }}
+                  >
+                    Book Site Visit
+                  </button>
+                </div>
+
                 {/* Action Button */}
                 <button 
                   className={`join-group-btn ${group.status}`}

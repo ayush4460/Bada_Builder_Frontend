@@ -427,7 +427,7 @@ const LiveGroupingDetails = () => {
 
               <button 
                 className="contact-btn"
-                onClick={() => navigate('/booksitevisit', { state: { property } })}
+                onClick={() => navigate('/book-visit', { state: { property: { ...property, type: 'grouping-details' } } })}
               >
                 📞 Book Site Visit
               </button>

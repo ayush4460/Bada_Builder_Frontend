@@ -15,12 +15,24 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from || "/";
+  const returnTo = location.state?.returnTo;
+  const property = location.state?.property;
+  const message = location.state?.message;
   
   // For registration, always redirect to home page, not back to login
   const getRedirectPath = (isRegistration = false) => {
     if (isRegistration) {
       return "/"; // Always go to home after registration
     }
+    
+    // If coming from BookSiteVisit, redirect back with property data
+    if (returnTo && returnTo.includes('/book-visit')) {
+      return { 
+        path: '/book-visit', 
+        state: { property } 
+      };
+    }
+    
     return from === "/login" ? "/" : from; // Don't redirect back to login page
   };
 
@@ -126,7 +138,18 @@ const Login = () => {
       );
       
       // Navigate immediately after auth success - don't wait for context updates
-      navigate(getRedirectPath(false), { replace: true });
+      const redirectInfo = getRedirectPath(false);
+      
+      if (typeof redirectInfo === 'object' && redirectInfo.path) {
+        // Special redirect with state (like BookSiteVisit with property data)
+        navigate(redirectInfo.path, { 
+          state: redirectInfo.state, 
+          replace: true 
+        });
+      } else {
+        // Normal redirect
+        navigate(redirectInfo, { replace: true });
+      }
     } catch (error) {
       let msg = "Login failed";
       if (error.code === "auth/user-not-found") msg = "User not found";
@@ -284,6 +307,27 @@ const Login = () => {
         >
           {mode === "login" ? "login" : "Create Account"}
         </motion.h2>
+
+        {/* Message from redirect (e.g., from BookSiteVisit) */}
+        {message && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="redirect-message"
+            style={{
+              backgroundColor: '#fef3c7',
+              color: '#92400e',
+              padding: '12px 16px',
+              borderRadius: '8px',
+              marginBottom: '20px',
+              border: '1px solid #fbbf24',
+              fontSize: '14px',
+              textAlign: 'center'
+            }}
+          >
+            {message}
+          </motion.div>
+        )}
 
         <form onSubmit={handleSubmit} className={`login-form ${loading || registrationStep === 'transitioning' ? 'form-disabled' : ''}`}>
           {mode === "register" && (

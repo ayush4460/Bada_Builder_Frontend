@@ -16,6 +16,7 @@ import Connect from './pages/Connect';
 import SearchResults from './pages/SearchResults';
 import ProjectDetails from './pages/ProjectDetails';
 import BookSiteVisit from './pages/BookSiteVisit';
+import PropertyDetails from './pages/PropertyDetails';
 import Investments from './pages/Investments';
 import Exhibition from './pages/Exhibition';
 import Working from './pages/Working';
@@ -139,7 +140,8 @@ function App() {
 
         <Route path="/login" element={<Login />} />
         <Route path="/search" element={<SearchResults />} />
-        <Route path="/booksitevisit" element={<BookSiteVisit />} />
+        <Route path="/book-visit" element={<BookSiteVisit />} />
+        <Route path="/property-details/:id" element={<PropertyDetails />} />
         <Route path="/projects/:id" element={<ProjectDetails />} />
       </Routes>
       <Footer />

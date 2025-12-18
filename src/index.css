@@ -73,3 +73,40 @@ button:focus-visible {
     background-color: #58335e;
   }
 }
+
+/* Global Google Maps Error Suppression */
+.gm-err-container,
+.gm-err-content,
+.gm-err-icon,
+.gm-err-title,
+.gm-err-message,
+.dismissButton {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Hide Google Maps authentication error dialogs */
+[role="dialog"][aria-labelledby*="gm"],
+[role="dialog"][aria-describedby*="gm"] {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+/* Hide any Google Maps error overlays */
+.gm-style .gm-err-container,
+.gm-style-cc,
+.gm-style-mtc {
+  display: none !important;
+}
+
+/* Suppress specific Google Maps error messages */
+div[jsaction*="dismiss"] {
+  display: none !important;
+}
+
+/* Hide "This page can't load Google Maps correctly" popup */
+div[style*="background-color: white"][style*="border: 1px solid"] {
+  display: none !important;
+}

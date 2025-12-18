@@ -41,10 +41,10 @@ const RecommendedProjects = () => {
                   View Details
                 </Link>
                 <button 
-                  onClick={() => navigate('/booksitevisit', { state: { property: project } })}
+                  onClick={() => navigate('/book-visit', { state: { property: { ...project, type: 'recommended' } } })}
                   className="book-visit-btn"
                 >
-                  Book Visit
+                  Book Site Visit
                 </button>
               </div>
             </div>

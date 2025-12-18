@@ -6,13 +6,13 @@ import { getStorage } from "firebase/storage";
 
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAruIz1wMmd6JXT3DAWVRym7N3vxPWo94A",
-  authDomain: "badabuilder-8cfae.firebaseapp.com",
-  projectId: "badabuilder-8cfae",
-  storageBucket: "badabuilder-8cfae.firebasestorage.app",
-  messagingSenderId: "830903995718",
-  appId: "1:830903995718:web:c8f5839c5b5e501c1da947",
-  measurementId: "G-5W8ZNRYWGP"
+  apiKey: "AIzaSyCJo7eUuF3nm8GoTzOrpFBJb_k00I6v1wg",
+  authDomain: "original-badabuilder.firebaseapp.com",
+  projectId: "original-badabuilder",
+  storageBucket: "original-badabuilder.firebasestorage.app",
+  messagingSenderId: "988327451876",
+  appId: "1:988327451876:web:ee9b8875918495756720f1",
+  measurementId: "G-C5014YM6M6"
 };
 
 // Initialize Firebase

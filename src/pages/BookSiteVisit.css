@@ -578,7 +578,7 @@ button:not([type='submit']):not(.cancel-btn):hover {
   border-radius: 12px;
   width: 90%;
   max-width: 900px;
-  max-height: 95vh;
+  max-height: 85vh;
   display: flex;
   flex-direction: column;
   border: 2px solid #d1c4e9;
@@ -836,8 +836,10 @@ button:not([type='submit']):not(.cancel-btn):hover {
 
 .map-container {
   flex: 1;
-  min-height: 450px;
+  min-height: 400px;
+  max-height: 450px;
   position: relative;
+  overflow: hidden;
 }
 
 .map-overlay-tooltip {
@@ -871,7 +873,8 @@ button:not([type='submit']):not(.cancel-btn):hover {
 .google-map {
   width: 100%;
   height: 100%;
-  min-height: 450px;
+  min-height: 400px;
+  max-height: 450px;
   border-radius: 0;
   cursor: crosshair;
 }
@@ -883,6 +886,8 @@ button:not([type='submit']):not(.cancel-btn):hover {
 .map-modal-footer {
   padding: 1.5rem;
   border-top: 1px solid #444;
+  flex-shrink: 0;
+  background-color: #1a1a2e;
 }
 
 .selected-location-info {
@@ -1060,11 +1065,17 @@ button:not([type='submit']):not(.cancel-btn):hover {
   }
 
   .map-container {
-    min-height: 350px;
+    min-height: 300px;
+    max-height: 350px;
   }
 
   .google-map {
-    min-height: 350px;
+    min-height: 300px;
+    max-height: 350px;
+  }
+
+  .map-modal-content {
+    max-height: 90vh;
   }
 
   .map-modal-actions {
@@ -1080,5 +1091,158 @@ button:not([type='submit']):not(.cancel-btn):hover {
 
   .location-instructions li {
     font-size: 0.8rem;
+  }
+}
+
+/* Authentication loading spinner */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Suppress Google Maps error popups */
+.gm-err-container,
+.gm-err-content,
+.gm-err-icon,
+.gm-err-title,
+.gm-err-message,
+.dismissButton {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Hide Google Maps authentication error dialogs */
+[role="dialog"][aria-labelledby*="gm"] {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+/* Hide any error overlays */
+.gm-style .gm-err-container {
+  display: none !important;
+}
+
+/* Ensure map modal has proper z-index */
+.map-modal-overlay {
+  z-index: 999999 !important;
+}
+
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+/* Authentication loading state */
+.auth-loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  padding: 2rem;
+}
+
+.auth-loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f4f6;
+  border-top: 4px solid #9e4efb;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+.auth-loading-text {
+  color: #6b7280;
+  font-size: 0.875rem;
+  text-align: center;
+}
+/* Property Information Section */
+.property-info-section {
+  background: #1a1a2e;
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  border: 2px solid #d1c4e9;
+}
+
+.property-info-section h3 {
+  color: #9e4efb;
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.selected-property {
+  background: rgba(158, 78, 251, 0.1);
+  padding: 1rem;
+  border-radius: 8px;
+  border-left: 4px solid #9e4efb;
+}
+
+.selected-property h4 {
+  color: #ffffff;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.selected-property p {
+  color: #b0b0b0;
+  margin: 0.25rem 0;
+  font-size: 0.9rem;
+}
+
+.property-location {
+  color: #4ade80 !important;
+}
+
+.property-type {
+  color: #60a5fa !important;
+}
+
+.property-price {
+  color: #fbbf24 !important;
+  font-weight: 600;
+}
+
+.generic-booking {
+  background: rgba(75, 85, 99, 0.3);
+  padding: 1rem;
+  border-radius: 8px;
+  border-left: 4px solid #6b7280;
+}
+
+.generic-booking h4 {
+  color: #ffffff;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.generic-booking p {
+  color: #d1d5db;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .property-info-section {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .property-info-section h3 {
+    font-size: 1.1rem;
+  }
+  
+  .selected-property h4,
+  .generic-booking h4 {
+    font-size: 1rem;
   }
 }

@@ -1,9 +1,10 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import './Exhibition.css';
 
 const ByBadaBuilder = () => {
+  const navigate = useNavigate();
   const curatedProperties = [
     {
       id: 1,
@@ -108,7 +109,30 @@ const ByBadaBuilder = () => {
                 </div>
                 <div className="property-footer">
                   <span className="price">{property.price}</span>
-                  <button className="contact-btn premium">Get Details</button>
+                  <div className="property-actions">
+                    <button 
+                      className="view-details-btn premium"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/property-details/${property.id}`, { 
+                          state: { property, type: 'badabuilder' } 
+                        });
+                      }}
+                    >
+                      View Details
+                    </button>
+                    <button 
+                      className="book-visit-btn premium"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate('/book-visit', { 
+                          state: { property: { ...property, type: 'badabuilder' } } 
+                        });
+                      }}
+                    >
+                      Book Site Visit
+                    </button>
+                  </div>
                 </div>
               </div>
             </motion.div>

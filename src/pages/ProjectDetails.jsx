@@ -67,7 +67,7 @@ const ProjectDetails = () => {
         {/* Book a Site Visit Button */}
         <div className="mt-4 md:mt-0">
           <button
-            onClick={() => navigate('/booksitevisit', { state: { property: project } })}
+            onClick={() => navigate('/book-visit', { state: { property: { ...project, type: 'project-details' } } })}
             className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-lg transition duration-300"
           >
             Book a Site Visit

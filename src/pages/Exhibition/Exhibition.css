@@ -369,3 +369,123 @@
     gap: 20px;
   }
 }
+/* Property Action Buttons */
+.property-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-direction: column;
+  width: 100%;
+}
+
+.view-details-btn,
+.book-visit-btn {
+  padding: 0.6rem 1rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+  flex: 1;
+}
+
+.view-details-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.view-details-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.book-visit-btn {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+  color: white;
+}
+
+.book-visit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+}
+
+/* Premium buttons for Bada Builder */
+.view-details-btn.premium {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.book-visit-btn.premium {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+/* Live Grouping specific buttons */
+.property-actions-grouping {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.view-details-btn-grouping,
+.book-visit-btn-grouping {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex: 1;
+}
+
+.view-details-btn-grouping {
+  background: rgba(255, 255, 255, 0.9);
+  color: #667eea;
+  border: 1px solid #667eea;
+}
+
+.view-details-btn-grouping:hover {
+  background: #667eea;
+  color: white;
+}
+
+.book-visit-btn-grouping {
+  background: #ff6b6b;
+  color: white;
+}
+
+.book-visit-btn-grouping:hover {
+  background: #ee5a24;
+  transform: translateY(-1px);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .property-actions {
+    flex-direction: row;
+    gap: 0.75rem;
+  }
+  
+  .view-details-btn,
+  .book-visit-btn {
+    font-size: 0.8rem;
+    padding: 0.5rem 0.75rem;
+  }
+  
+  .property-actions-grouping {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .property-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .view-details-btn,
+  .book-visit-btn {
+    width: 100%;
+  }
+}

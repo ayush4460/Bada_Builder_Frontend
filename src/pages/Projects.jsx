@@ -15,12 +15,20 @@ const Project = () => {
     ? listings
     : listings.filter(listing => listing.type === selectedCategory);
 
-  const handleBookVisit = (e) => {
+  const handleBookVisit = (e, project = null) => {
     e.preventDefault(); // to prevent <Link> navigation
     if (isAuthenticated) {
-      navigate('/book-site-visit');
+      navigate('/book-visit', { 
+        state: project ? { property: { ...project, type: 'projects' } } : null 
+      });
     } else {
-      navigate('/login');
+      navigate('/login', {
+        state: {
+          returnTo: '/book-visit',
+          property: project,
+          message: 'Please login to book a site visit'
+        }
+      });
     }
   };
 

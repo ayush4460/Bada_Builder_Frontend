@@ -1,9 +1,10 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import './Exhibition.css';
 
 const ByDeveloper = () => {
+  const navigate = useNavigate();
   const projects = [
     {
       id: 1,
@@ -101,7 +102,30 @@ const ByDeveloper = () => {
                 </div>
                 <div className="property-footer">
                   <span className="price">{project.price}</span>
-                  <button className="contact-btn">View Details</button>
+                  <div className="property-actions">
+                    <button 
+                      className="view-details-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/property-details/${project.id}`, { 
+                          state: { property: project, type: 'developer' } 
+                        });
+                      }}
+                    >
+                      View Details
+                    </button>
+                    <button 
+                      className="book-visit-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate('/book-visit', { 
+                          state: { property: { ...project, type: 'developer' } } 
+                        });
+                      }}
+                    >
+                      Book Site Visit
+                    </button>
+                  </div>
                 </div>
               </div>
             </motion.div>
