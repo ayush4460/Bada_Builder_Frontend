@@ -56,7 +56,7 @@ const HeroSection = () => {
     'Just Launched', 'Under Construction', 'Ready to Move'
   ];
 
-  // Custom Select Component with Icon
+  // Custom Select Component
   const CustomSelect = ({ value, placeholder, options, open, setOpen, onChange, icon: Icon }) => (
     <div className="relative">
       <button
@@ -129,7 +129,7 @@ const HeroSection = () => {
           Find Your Dream Property
         </motion.h1>
 
-        {/* Blue Underline Accent */}
+        {/* Underline */}
         <motion.div
           initial={{ scaleX: 0 }}
           animate={{ scaleX: 1 }}
@@ -148,7 +148,7 @@ const HeroSection = () => {
           Your perfect home is just a search away.
         </motion.p>
 
-        {/* Search Bar - Pill shaped container */}
+        {/* Search Bar */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -157,7 +157,7 @@ const HeroSection = () => {
         >
           <div className="bg-white rounded-full p-2 shadow-lg border border-gray-200">
             <div className="flex items-center gap-2">
-              {/* Location Select with MapPin icon */}
+              {/* Location Select */}
               <div className="flex-1" onClick={(e) => e.stopPropagation()}>
                 <CustomSelect
                   value={location}
@@ -170,7 +170,7 @@ const HeroSection = () => {
                 />
               </div>
 
-              {/* Property Type Select with Home icon */}
+              {/* Property Type Select */}
               <div className="flex-1" onClick={(e) => e.stopPropagation()}>
                 <CustomSelect
                   value={propertyType}
