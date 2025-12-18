@@ -816,3 +816,99 @@ body.mobile-menu-open {
     font-size: 13px;
   }
 }
+/* Password Field Styles (matching Login.css) */
+.password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input {
+  width: 100%;
+  padding-right: 35px !important;
+  padding: 8px;
+  font-size: 16px;
+}
+
+.eye-btn {
+  position: absolute;
+  right: 5px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
+  color: #6b7280;
+  transition: color 0.2s ease;
+}
+
+.eye-btn:hover:not(:disabled) {
+  color: #374151;
+}
+
+.eye-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.eye-btn i {
+  font-size: 16px;
+}
+/* Logout Modal Overlay Styles */
+.logout-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeInOverlay 0.2s ease-out;
+}
+
+.logout-modal-content {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  max-width: 28rem;
+  width: 100%;
+  margin: 1rem;
+  padding: 1.5rem;
+  animation: slideInModal 0.3s ease-out;
+  position: relative;
+  z-index: 10000;
+}
+
+@keyframes fadeInOverlay {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInModal {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Ensure modal doesn't interfere with page content */
+body.modal-open {
+  overflow: hidden;
+}
