@@ -4,7 +4,7 @@ import logo from '../../assets/logo.png';
 import UserTypeModal from '../UserTypeModal/UserTypeModal';
 import SearchBar from '../SearchBar/SearchBar';
 import './Header.css';
-import { onAuthStateChanged, signOut, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '../../firebase';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -53,10 +53,7 @@ const Header = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const [logoutPassword, setLogoutPassword] = useState('');
   const [logoutLoading, setLogoutLoading] = useState(false);
-  const [logoutError, setLogoutError] = useState('');
-  const [showLogoutPassword, setShowLogoutPassword] = useState(false);
 
   const timeoutRef = useRef(null);
   const calctimeoutRef = useRef(null);
@@ -112,45 +109,19 @@ const Header = () => {
 
   const handleLogout = () => {
     setShowLogoutModal(true);
-    setLogoutPassword('');
-    setLogoutError('');
-    setShowLogoutPassword(false);
     setShowProfileDropdown(false);
   };
 
   const confirmLogout = async () => {
-    if (!logoutPassword.trim()) {
-      setLogoutError('Please enter your password');
-      return;
-    }
-
     setLogoutLoading(true);
-    setLogoutError('');
 
     try {
-      // Re-authenticate user with password
-      const credential = EmailAuthProvider.credential(
-        currentUser.email,
-        logoutPassword
-      );
-      
-      await reauthenticateWithCredential(currentUser, credential);
-      
-      // If re-authentication successful, proceed with logout
       await signOut(auth);
       navigate('/');
       setIsMobileMenuOpen(false);
       setShowLogoutModal(false);
-      setLogoutPassword('');
     } catch (error) {
       console.error('Logout error:', error);
-      if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-        setLogoutError('Incorrect password. Please try again.');
-      } else if (error.code === 'auth/too-many-requests') {
-        setLogoutError('Too many failed attempts. Please try again later.');
-      } else {
-        setLogoutError('Authentication failed. Please try again.');
-      }
     } finally {
       setLogoutLoading(false);
     }
@@ -158,9 +129,6 @@ const Header = () => {
 
   const cancelLogout = () => {
     setShowLogoutModal(false);
-    setLogoutPassword('');
-    setLogoutError('');
-    setShowLogoutPassword(false);
   };
 
   // Handle login click - reset form if already on login page
@@ -630,8 +598,8 @@ const Header = () => {
       {showLogoutModal && (
         <div className="logout-modal-overlay" onClick={cancelLogout}>
           <div className="logout-modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Confirm Logout</h3>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-semibold text-gray-900">Confirm Logout</h3>
               <button
                 onClick={cancelLogout}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -642,56 +610,32 @@ const Header = () => {
               </button>
             </div>
             
-            <div className="mb-4">
-              <p className="text-gray-600 mb-4">
-                For security reasons, please enter your password to confirm logout.
-              </p>
-              
+            <div className="mb-6 text-center">
               <div className="mb-4">
-                <label htmlFor="logout-password" className="block text-sm font-medium text-gray-700 mb-2">
-                  Password
-                </label>
-                <div className="password-wrapper">
-                  <input
-                    type={showLogoutPassword ? "text" : "password"}
-                    id="logout-password"
-                    value={logoutPassword}
-                    onChange={(e) => setLogoutPassword(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && confirmLogout()}
-                    className="password-input w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#58335e] focus:border-[#58335e]"
-                    placeholder="Enter your password"
-                    disabled={logoutLoading}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowLogoutPassword(!showLogoutPassword)}
-                    className="eye-btn"
-                    disabled={logoutLoading}
-                  >
-                    <i className={`far ${showLogoutPassword ? "fa-eye" : "fa-eye-slash"}`} />
-                  </button>
-                </div>
+                <svg className="w-16 h-16 mx-auto text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
               </div>
-              
-              {logoutError && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
-                  <p className="text-sm text-red-600">{logoutError}</p>
-                </div>
-              )}
+              <p className="text-lg text-gray-700 mb-2">
+                Are you sure you want to logout?
+              </p>
+              <p className="text-sm text-gray-500">
+                You will need to login again to access your account.
+              </p>
             </div>
             
-            <div className="flex gap-3 justify-end">
+            <div className="flex gap-3 justify-center">
               <button
                 onClick={cancelLogout}
-                className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors font-medium"
+                className="px-6 py-2.5 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-medium"
                 disabled={logoutLoading}
               >
                 Cancel
               </button>
               <button
                 onClick={confirmLogout}
-                disabled={logoutLoading || !logoutPassword.trim()}
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-2"
+                disabled={logoutLoading}
+                className="px-6 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-2"
               >
                 {logoutLoading ? (
                   <>
@@ -703,7 +647,7 @@ const Header = () => {
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                     </svg>
-                    Confirm Logout
+                    Yes, Logout
                   </>
                 )}
               </button>
