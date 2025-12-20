@@ -62,6 +62,7 @@ const PostProperty = () => {
   const [editingProperty, setEditingProperty] = useState(null);
   const [subscriptionVerified, setSubscriptionVerified] = useState(false);
   const [currentSubscription, setCurrentSubscription] = useState(null);
+  const [timerRefresh, setTimerRefresh] = useState(0); // For refreshing timers
   
   const [formData, setFormData] = useState({
     title: '',
@@ -117,6 +118,17 @@ const PostProperty = () => {
     fetchExistingProperties();
   }, [selectedPropertyFlow, currentUser]);
 
+  // Effect to refresh timer display every minute
+  useEffect(() => {
+    if (selectedPropertyFlow === 'existing' && existingProperties.length > 0) {
+      const interval = setInterval(() => {
+        setTimerRefresh(prev => prev + 1);
+      }, 60000); // Update every minute
+
+      return () => clearInterval(interval);
+    }
+  }, [selectedPropertyFlow, existingProperties]);
+
   const handleCreateNewProperty = () => {
     console.log('🔍 User wants to create new property...');
     
@@ -138,6 +150,43 @@ const PostProperty = () => {
     threeDaysLater.setDate(creationDate.getDate() + 3);
     const now = new Date();
     return now < threeDaysLater;
+  };
+
+  const getTimeRemaining = (createdAt) => {
+    const creationDate = new Date(createdAt);
+    const threeDaysLater = new Date(creationDate);
+    threeDaysLater.setDate(creationDate.getDate() + 3);
+    const now = new Date();
+    
+    const diffMs = threeDaysLater - now;
+    
+    if (diffMs <= 0) {
+      return { expired: true, text: 'Edit period expired' };
+    }
+    
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    
+    if (diffDays > 0) {
+      return { 
+        expired: false, 
+        text: `${diffDays} day${diffDays > 1 ? 's' : ''} ${diffHours}h remaining`,
+        urgent: diffDays === 0
+      };
+    } else if (diffHours > 0) {
+      return { 
+        expired: false, 
+        text: `${diffHours}h ${diffMinutes}m remaining`,
+        urgent: true
+      };
+    } else {
+      return { 
+        expired: false, 
+        text: `${diffMinutes} minute${diffMinutes > 1 ? 's' : ''} remaining`,
+        urgent: true
+      };
+    }
   };
 
   const handleChange = (e) => {
@@ -168,6 +217,12 @@ const PostProperty = () => {
   };
 
   const handleEditProperty = (property) => {
+    // Double-check if property is still editable
+    if (!isEditable(property.created_at)) {
+      alert('⏰ Edit period has expired!\n\nThis property was posted more than 3 days ago and can no longer be edited.');
+      return;
+    }
+    
     setEditingProperty(property);
     // Populate form with property data for editing
     setFormData({
@@ -191,6 +246,16 @@ const PostProperty = () => {
   const handleUpdateProperty = async (e) => {
     e.preventDefault();
     if (!editingProperty) return;
+
+    // Validate edit period before allowing update
+    if (!isEditable(editingProperty.created_at)) {
+      alert('⏰ Edit period has expired!\n\nThis property was posted more than 3 days ago and can no longer be edited.\n\nPlease refresh the page.');
+      setLoading(false);
+      // Reset editing state
+      setEditingProperty(null);
+      setSelectedPropertyFlow(null);
+      return;
+    }
 
     setLoading(true);
 
@@ -635,10 +700,13 @@ const PostProperty = () => {
               <p>Loading your properties...</p>
             ) : existingProperties.length > 0 ? (
               <div className="existing-properties-list">
-                {existingProperties.map((property) => (
+                {existingProperties.map((property) => {
+                  const timeRemaining = getTimeRemaining(property.created_at);
+                  const editable = isEditable(property.created_at);
+                  return (
                   <motion.div 
                     key={property.id} 
-                    className="property-card"
+                    className={`property-card ${!editable ? 'expired-property' : ''}`}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3 }}
@@ -650,21 +718,34 @@ const PostProperty = () => {
                       <p><strong>Location:</strong> {property.location}</p>
                       <p><strong>Price:</strong> {property.price}</p>
                       <p><strong>Posted On:</strong> {new Date(property.created_at).toLocaleDateString()}</p>
-                      {isEditable(property.created_at) ? (
+                      
+                      {/* Time Remaining Display */}
+                      <div className={`edit-timer ${timeRemaining.expired ? 'expired' : timeRemaining.urgent ? 'urgent' : 'active'}`}>
+                        <span className="timer-icon">⏱️</span>
+                        <span className="timer-text">{timeRemaining.text}</span>
+                      </div>
+                      
+                      {editable ? (
                         <button 
                           className="edit-property-btn" 
                           onClick={() => handleEditProperty(property)}
                         >
-                          Edit Property
+                          ✏️ Edit Property
                         </button>
                       ) : (
-                        <p className="edit-restriction-message">
-                          Editing is allowed only within 3 days of posting this property.
-                        </p>
+                        <div className="edit-locked-section">
+                          <p className="edit-restriction-message">
+                            🔒 Editing Locked
+                          </p>
+                          <p className="edit-restriction-detail">
+                            This property can no longer be edited as the 3-day edit window has expired.
+                          </p>
+                        </div>
                       )}
                     </div>
                   </motion.div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <p>You have not posted any properties yet.</p>
