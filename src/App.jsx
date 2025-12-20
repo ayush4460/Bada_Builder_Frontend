@@ -29,6 +29,7 @@ import ByBadaBuilder from './pages/Exhibition/ByBadaBuilder';
 import LiveGrouping from './pages/Exhibition/LiveGrouping';
 import LiveGroupingDetails from './pages/Exhibition/LiveGroupingDetails';
 import AdminLiveGrouping from './pages/Admin/AdminLiveGrouping';
+import ProfilePage from './pages/ProfilePage';
 import LAM from './pages/Report Data/LAM';
 import MarketInvestmentAnalysis from './pages/Report Data/MarketInvestmentAnalysis';
 import RealEstateFinancialModelling from './pages/Report Data/RealEstateFinancialModelling';
@@ -96,6 +97,7 @@ function App() {
         <Route path="/report" element={<Working />} />
         <Route path="/subscription-plans" element={<SubscriptionPlans />} />
         <Route path="/post-property" element={<PostProperty />} />
+        <Route path="/profile" element={<ProfilePage />} />
         <Route path="/admin/live-grouping" element={<AdminLiveGrouping />} />
 
         {/* Learn */}
