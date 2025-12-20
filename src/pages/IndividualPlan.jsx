@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { doc, updateDoc, collection, addDoc } from 'firebase/firestore';
 import { db } from '../firebase';
+import SubscriptionService from '../services/subscriptionService';
 import './SubscriptionPlans.css';
 
 /* ---------- INDIVIDUAL PLANS (ONLY THESE 3 PLANS) ---------- */
@@ -31,10 +32,15 @@ const individualPlans = [
 
 const IndividualPlan = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { currentUser, isAuthenticated, userProfile } = useAuth();
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
+
+  // Get return path from location state
+  const returnTo = location.state?.returnTo || '/post-property';
+  const userType = location.state?.userType || 'individual';
 
   // User role is always individual for this component
   const userRole = 'individual';
@@ -135,17 +141,31 @@ const IndividualPlan = () => {
           await addDoc(collection(db, 'payments'), paymentData);
           console.log('✅ Payment data stored successfully');
 
-          // Update user subscription in Firestore
-          await updateDoc(doc(db, 'users', currentUser.uid), subscriptionData);
-          console.log('✅ Subscription activated successfully');
+          // Create subscription using the subscription service
+          const subscriptionId = await SubscriptionService.createSubscription(currentUser.uid, {
+            plan_id: plan.id,
+            plan_name: plan.duration,
+            amount: amount,
+            currency: currency,
+            duration_months: months,
+            payment_id: response.razorpay_payment_id
+          });
+
+          console.log('✅ Subscription created successfully:', subscriptionId);
 
           // Show success and redirect
           setPaymentLoading(false);
-          alert(`Successfully subscribed to Individual ${plan.duration} plan! Payment ID: ${response.razorpay_payment_id}`);
+          alert(`Successfully subscribed to Individual ${plan.duration} plan! You can now post your property.`);
           
-          // Redirect to post property page
+          // Redirect back to the original page or post property
           setTimeout(() => {
-            navigate('/post-property', { state: { userType: 'individual' } });
+            navigate(returnTo, { 
+              state: { 
+                userType: userType,
+                subscriptionVerified: true,
+                subscriptionId: subscriptionId
+              } 
+            });
           }, 1000);
 
         } catch (error) {

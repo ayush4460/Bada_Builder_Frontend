@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { collection, addDoc, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import PropertyForm from '../components/PropertyForm/PropertyForm';
+import SubscriptionGuard from '../components/SubscriptionGuard/SubscriptionGuard';
+import SubscriptionService from '../services/subscriptionService';
 import './PostProperty.css';
 
 // --- Cloudinary Configuration ---
@@ -45,18 +47,21 @@ const uploadToCloudinary = async (file) => {
 
 const PostProperty = () => {
   const navigate = useNavigate();
-  const { currentUser, isSubscribed, isAuthenticated } = useAuth();
+  const location = useLocation();
+  const { currentUser, isAuthenticated } = useAuth();
   const [loading, setLoading] = useState(false);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   
-  // Get userType from navigation state if available
-  const locationState = window.history.state?.usr;
-  const [userType, setUserType] = useState(locationState?.userType || null); // 'individual' or 'developer'
-  const [selectedPropertyFlow, setSelectedPropertyFlow] = useState(null); // 'new' or 'existing'
+  // Get userType from navigation state or location state
+  const locationState = location.state || window.history.state?.usr;
+  const [userType, setUserType] = useState(locationState?.userType || null);
+  const [selectedPropertyFlow, setSelectedPropertyFlow] = useState(null);
   const [existingProperties, setExistingProperties] = useState([]);
   const [fetchingProperties, setFetchingProperties] = useState(false);
-  const [editingProperty, setEditingProperty] = useState(null); // State to hold property being edited
+  const [editingProperty, setEditingProperty] = useState(null);
+  const [subscriptionVerified, setSubscriptionVerified] = useState(false);
+  const [currentSubscription, setCurrentSubscription] = useState(null);
   
   const [formData, setFormData] = useState({
     title: '',
@@ -113,27 +118,18 @@ const PostProperty = () => {
   }, [selectedPropertyFlow, currentUser]);
 
   const handleCreateNewProperty = () => {
-    console.log('🔍 Checking subscription for new property creation...');
+    console.log('🔍 User wants to create new property...');
     
-    // Check subscription only when user wants to create new property
-    if (!isSubscribed()) {
-      console.warn('⚠️ User not subscribed, redirecting to appropriate subscription plan');
-      
-      // Redirect to role-specific subscription plan
-      if (userType === 'developer') {
-        console.log('🏢 Redirecting to Developer Plan');
-        alert('Please subscribe to the Developer plan to post properties');
-        navigate('/developer-plan');
-      } else {
-        console.log('👤 Redirecting to Individual Plans');
-        alert('Please subscribe to a plan to post properties');
-        navigate('/individual-plan');
-      }
-      return;
-    }
-    
-    console.log('✅ User is subscribed, proceeding to property form');
+    // Always proceed to the property creation flow
+    // SubscriptionGuard will handle subscription verification for individual users
+    console.log('✅ Proceeding to property creation flow');
     setSelectedPropertyFlow('new');
+  };
+
+  const handleSubscriptionVerified = (subscription) => {
+    console.log('✅ Subscription verified:', subscription);
+    setSubscriptionVerified(true);
+    setCurrentSubscription(subscription);
   };
 
   const isEditable = (createdAt) => {
@@ -245,7 +241,7 @@ const PostProperty = () => {
       const propertyRef = doc(db, 'properties', editingProperty.id);
       await updateDoc(propertyRef, propertyData);
 
-      alert('Property updated successfully!');
+      alert(`Property updated successfully! You can view it in the ${userType === 'developer' ? 'Developer' : 'Individual'} Exhibition.`);
       setLoading(false);
       setEditingProperty(null); // Exit editing mode
       setFormData({ // Reset form data
@@ -261,6 +257,15 @@ const PostProperty = () => {
       const querySnapshot = await getDocs(q);
       const updatedPropertiesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setExistingProperties(updatedPropertiesData);
+
+      // Navigate to exhibition page after a delay
+      setTimeout(() => {
+        if (userType === 'developer') {
+          navigate('/exhibition/developer');
+        } else {
+          navigate('/exhibition/individual');
+        }
+      }, 1500);
 
     } catch (error) {
       console.error("Error updating property:", error);
@@ -282,12 +287,14 @@ const PostProperty = () => {
     console.log('Current User:', currentUser);
     console.log('User Type:', userType);
     console.log('Form Data:', formData);
+    console.log('Selected Property Flow:', selectedPropertyFlow);
     
     // Validate required fields
     const requiredFields = ['title', 'type', 'location', 'price', 'description'];
     const missingFields = requiredFields.filter(field => !formData[field]?.trim());
     
     if (missingFields.length > 0) {
+      console.error('❌ Missing required fields:', missingFields);
       alert(`Please fill in all required fields: ${missingFields.join(', ')}`);
       return;
     }
@@ -303,13 +310,8 @@ const PostProperty = () => {
       }
     }
     
-    // Validate subscription for new properties
-    if (selectedPropertyFlow === 'new' && !isSubscribed()) {
-      console.warn('⚠️ User not subscribed');
-      alert('Your subscription has expired. Please renew to post properties.');
-      navigate('/subscription-plans');
-      return;
-    }
+    // Note: Subscription validation is now handled by SubscriptionGuard component
+    // No need to check subscription here as the form is only accessible after verification
 
     setLoading(true);
 
@@ -355,17 +357,37 @@ const PostProperty = () => {
       console.log('💾 Saving to Firestore...', propertyData);
 
       // Save document to Firestore
-      await addDoc(collection(db, 'properties'), propertyData);
+      const docRef = await addDoc(collection(db, 'properties'), propertyData);
+      const propertyId = docRef.id;
 
-      console.log('✅ Property posted successfully!');
+      console.log('✅ Property posted successfully with ID:', propertyId);
+
+      // For individual users, mark subscription as used
+      if (userType === 'individual' && currentUser?.uid) {
+        console.log('📝 Marking subscription as used...');
+        const subscriptionMarked = await SubscriptionService.markSubscriptionUsed(
+          currentUser.uid, 
+          propertyId
+        );
+        
+        if (subscriptionMarked) {
+          console.log('✅ Subscription marked as used successfully');
+        } else {
+          console.warn('⚠️ Failed to mark subscription as used, but property was posted');
+        }
+      }
       
       setLoading(false);
-      alert('Property posted successfully!');
+      alert(`Property posted successfully! You can now view it in the ${userType === 'developer' ? 'Developer' : 'Individual'} Exhibition.`);
       
-      // Navigate after a short delay
+      // Navigate to the appropriate exhibition page based on user type
       setTimeout(() => {
-        navigate('/');
-      }, 500);
+        if (userType === 'developer') {
+          navigate('/exhibition/developer');
+        } else {
+          navigate('/exhibition/individual');
+        }
+      }, 1000);
       
     } catch (error) {
       console.error('❌ Error posting property:', error);
@@ -487,42 +509,86 @@ const PostProperty = () => {
         {/* Step 3: Property Creation Form */}
         {(userType && selectedPropertyFlow === 'new') || (editingProperty && selectedPropertyFlow === 'existing') ? (
           <>
-            <div className="selected-type-badge">
-              <span>
-                {userType === 'individual' ? '👤 Individual Owner' : '🏢 Developer'}
-              </span>
-              <button 
-                type="button" 
-                className="change-type-btn"
-                onClick={() => {setUserType(null); setSelectedPropertyFlow(null); setEditingProperty(null);}} // Reset all
+            {/* For Individual users creating new properties, enforce subscription */}
+            {userType === 'individual' && selectedPropertyFlow === 'new' && !editingProperty ? (
+              <SubscriptionGuard
+                userType={userType}
+                action="post a property"
+                onSubscriptionVerified={handleSubscriptionVerified}
               >
-                Change User Type
-              </button>
-            </div>
-            <div className="selected-flow-badge">
-              <span>
-                {selectedPropertyFlow === 'new' ? '✨ Create New Property' : '📝 Editing Existing Property'}
-              </span>
-              <button 
-                type="button" 
-                className="change-type-btn"
-                onClick={() => {setSelectedPropertyFlow(null); setEditingProperty(null);}} // Reset flow and editing
-              >
-                Change Flow
-              </button>
-            </div>
-            <p className="subtitle">Fill in the details to list your property</p>
-            <PropertyForm
-              formData={formData}
-              handleChange={handleChange}
-              handleImageChange={handleImageChange}
-              imagePreview={imagePreview}
-              handleSubmit={handleSubmit}
-              loading={loading}
-              userType={userType}
-              showBhkType={showBhkType}
-              editingProperty={editingProperty}
-            />
+                <div className="selected-type-badge">
+                  <span>👤 Individual Owner</span>
+                  <button 
+                    type="button" 
+                    className="change-type-btn"
+                    onClick={() => {setUserType(null); setSelectedPropertyFlow(null); setEditingProperty(null);}}
+                  >
+                    Change User Type
+                  </button>
+                </div>
+                <div className="selected-flow-badge">
+                  <span>✨ Create New Property</span>
+                  <button 
+                    type="button" 
+                    className="change-type-btn"
+                    onClick={() => {setSelectedPropertyFlow(null); setEditingProperty(null);}}
+                  >
+                    Change Flow
+                  </button>
+                </div>
+                <p className="subtitle">Fill in the details to list your property</p>
+                <PropertyForm
+                  formData={formData}
+                  handleChange={handleChange}
+                  handleImageChange={handleImageChange}
+                  imagePreview={imagePreview}
+                  handleSubmit={handleSubmit}
+                  loading={loading}
+                  userType={userType}
+                  showBhkType={showBhkType}
+                  editingProperty={editingProperty}
+                />
+              </SubscriptionGuard>
+            ) : (
+              <>
+                <div className="selected-type-badge">
+                  <span>
+                    {userType === 'individual' ? '👤 Individual Owner' : '🏢 Developer'}
+                  </span>
+                  <button 
+                    type="button" 
+                    className="change-type-btn"
+                    onClick={() => {setUserType(null); setSelectedPropertyFlow(null); setEditingProperty(null);}}
+                  >
+                    Change User Type
+                  </button>
+                </div>
+                <div className="selected-flow-badge">
+                  <span>
+                    {selectedPropertyFlow === 'new' ? '✨ Create New Property' : '📝 Editing Existing Property'}
+                  </span>
+                  <button 
+                    type="button" 
+                    className="change-type-btn"
+                    onClick={() => {setSelectedPropertyFlow(null); setEditingProperty(null);}}
+                  >
+                    Change Flow
+                  </button>
+                </div>
+                <p className="subtitle">Fill in the details to list your property</p>
+                <PropertyForm
+                  formData={formData}
+                  handleChange={handleChange}
+                  handleImageChange={handleImageChange}
+                  imagePreview={imagePreview}
+                  handleSubmit={handleSubmit}
+                  loading={loading}
+                  userType={userType}
+                  showBhkType={showBhkType}
+                  editingProperty={editingProperty}
+                />
+              </>
+            )}
         
         {/* Loading Overlay */}
         {loading && (

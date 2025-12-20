@@ -1,42 +1,66 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
+import { collection, query, where, getDocs, orderBy, onSnapshot } from 'firebase/firestore';
+import { db } from '../../firebase';
 import './Exhibition.css';
 
 const ByIndividual = () => {
   const navigate = useNavigate();
-  const properties = [
-    {
-      id: 1,
-      title: "Modern 3BHK Apartment",
-      owner: "Rajesh Kumar",
-      location: "Alkapuri, Vadodara",
-      price: "₹65 Lakhs",
-      image: "/placeholder-property.jpg",
-      type: "Apartment",
-      area: "1450 sq.ft"
-    },
-    {
-      id: 2,
-      title: "Luxury Villa with Garden",
-      owner: "Priya Sharma",
-      location: "Gotri, Vadodara",
-      price: "₹1.2 Cr",
-      image: "/placeholder-property.jpg",
-      type: "Villa",
-      area: "2800 sq.ft"
-    },
-    {
-      id: 3,
-      title: "Commercial Shop Space",
-      owner: "Amit Patel",
-      location: "RC Dutt Road, Vadodara",
-      price: "₹45 Lakhs",
-      image: "/placeholder-property.jpg",
-      type: "Commercial",
-      area: "800 sq.ft"
-    }
-  ];
+  const [properties, setProperties] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchProperties = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Use real-time listener for immediate updates
+        const propertiesRef = collection(db, 'properties');
+        const q = query(propertiesRef, where('user_type', '==', 'individual'));
+
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+          const propertiesData = [];
+          querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            // Filter active properties on client side
+            if (data.status === 'active') {
+              propertiesData.push({
+                id: doc.id,
+                ...data
+              });
+            }
+          });
+          
+          // Sort by created_at on client side
+          propertiesData.sort((a, b) => {
+            const dateA = new Date(a.created_at || 0);
+            const dateB = new Date(b.created_at || 0);
+            return dateB - dateA;
+          });
+          
+          setProperties(propertiesData);
+          setLoading(false);
+        }, (error) => {
+          console.error('Error fetching individual properties:', error);
+          setError(`Failed to load properties: ${error.message}`);
+          setLoading(false);
+        });
+
+        // Cleanup subscription on unmount
+        return () => unsubscribe();
+
+      } catch (error) {
+        console.error('Error setting up properties listener:', error);
+        setError(`Failed to load properties: ${error.message}`);
+        setLoading(false);
+      }
+    };
+
+    fetchProperties();
+  }, []);
 
   return (
     <div className="exhibition-page">
@@ -73,63 +97,103 @@ const ByIndividual = () => {
           </Link>
         </motion.div>
 
-        {/* Properties Grid */}
-        <div className="properties-grid">
-          {properties.map((property, index) => (
-            <motion.div
-              key={property.id}
-              className="property-card"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              whileHover={{ y: -8 }}
+        {/* Loading State */}
+        {loading && (
+          <motion.div 
+            className="loading-state"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            <div className="spinner"></div>
+            <p>Loading individual properties...</p>
+          </motion.div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <motion.div 
+            className="error-state"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            <h3>⚠️ {error}</h3>
+            <button 
+              className="retry-btn"
+              onClick={() => window.location.reload()}
             >
-              <div className="property-image">
-                <img src={property.image} alt={property.title} />
-                <div className="property-badge">Individual</div>
-              </div>
-              <div className="property-info">
-                <h3>{property.title}</h3>
-                <p className="owner">👤 {property.owner}</p>
-                <p className="location">📍 {property.location}</p>
-                <div className="property-details">
-                  <span className="type">{property.type}</span>
-                  <span className="area">{property.area}</span>
+              Try Again
+            </button>
+          </motion.div>
+        )}
+
+        {/* Properties Grid */}
+        {!loading && !error && (
+          <div className="properties-grid">
+            {properties.map((property, index) => (
+              <motion.div
+                key={property.id}
+                className="property-card"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                whileHover={{ y: -8 }}
+              >
+                <div className="property-image">
+                  <img 
+                    src={property.image_url || "/placeholder-property.jpg"} 
+                    alt={property.title}
+                    onError={(e) => {
+                      e.target.src = "/placeholder-property.jpg";
+                    }}
+                  />
+                  <div className="property-badge">Individual</div>
                 </div>
-                <div className="property-footer">
-                  <span className="price">{property.price}</span>
-                  <div className="property-actions">
-                    <button 
-                      className="view-details-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/property-details/${property.id}`, { 
-                          state: { property, type: 'individual' } 
-                        });
-                      }}
-                    >
-                      View Details
-                    </button>
-                    <button 
-                      className="book-visit-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate('/book-visit', { 
-                          state: { property: { ...property, type: 'individual' } } 
-                        });
-                      }}
-                    >
-                      Book Site Visit
-                    </button>
+                <div className="property-info">
+                  <h3>{property.title}</h3>
+                  <p className="owner">👤 Individual Owner</p>
+                  <p className="location">📍 {property.location}</p>
+                  <div className="property-details">
+                    <span className="type">{property.type}</span>
+                    {property.bhk && <span className="bhk">{property.bhk}</span>}
+                  </div>
+                  {property.description && (
+                    <p className="description">{property.description.substring(0, 100)}...</p>
+                  )}
+                  <div className="property-footer">
+                    <span className="price">{property.price}</span>
+                    <div className="property-actions">
+                      <button 
+                        className="view-details-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/property-details/${property.id}`, { 
+                            state: { property, type: 'individual' } 
+                          });
+                        }}
+                      >
+                        View Details
+                      </button>
+                      <button 
+                        className="book-visit-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate('/book-visit', { 
+                            state: { property: { ...property, type: 'individual' } } 
+                          });
+                        }}
+                      >
+                        Book Site Visit
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
 
         {/* Empty State if no properties */}
-        {properties.length === 0 && (
+        {!loading && !error && properties.length === 0 && (
           <motion.div 
             className="empty-state"
             initial={{ opacity: 0 }}
@@ -137,6 +201,9 @@ const ByIndividual = () => {
           >
             <h3>No properties available yet</h3>
             <p>Check back soon for new listings from individual owners</p>
+            <Link to="/post-property" className="post-property-link">
+              Be the first to post a property!
+            </Link>
           </motion.div>
         )}
       </div>

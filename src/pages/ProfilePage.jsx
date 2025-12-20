@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { FiUser, FiMail, FiPhone, FiHash, FiBriefcase, FiHome, FiUsers, FiCalendar, FiUpload, FiTrash2, FiEdit3 } from 'react-icons/fi';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import './ProfilePage.css';
 
@@ -48,6 +48,12 @@ const ProfilePage = () => {
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activityCounts, setActivityCounts] = useState({
+    propertiesUploaded: 0,
+    joinedLiveGroups: 0,
+    bookedSiteVisits: 0
+  });
+  const [loadingActivity, setLoadingActivity] = useState(true);
   const fileInputRef = useRef(null);
 
   // Load profile photo from Firestore on component mount
@@ -69,6 +75,67 @@ const ProfilePage = () => {
     loadProfilePhoto();
   }, [userProfile]);
 
+  // Fetch activity data
+  useEffect(() => {
+    const fetchActivityData = async () => {
+      if (!currentUser?.uid) return;
+
+      try {
+        setLoadingActivity(true);
+        
+        // Fetch properties uploaded by user
+        const propertiesRef = collection(db, 'properties');
+        const propertiesQuery = query(propertiesRef, where('user_id', '==', currentUser.uid));
+        const propertiesSnapshot = await getDocs(propertiesQuery);
+        const propertiesCount = propertiesSnapshot.size;
+
+        // Fetch site visit bookings from 'bookings' collection
+        let siteVisitsCount = 0;
+        try {
+          const bookingsRef = collection(db, 'bookings');
+          const bookingsQuery = query(bookingsRef, where('userId', '==', currentUser.uid));
+          const bookingsSnapshot = await getDocs(bookingsQuery);
+          siteVisitsCount = bookingsSnapshot.size;
+        } catch (error) {
+          console.log('Bookings collection not found or empty');
+        }
+
+        // For live groups, we'll check if user has any interactions
+        // Since the current structure doesn't track individual participation,
+        // we'll set this to 0 for now and can be updated when the feature is implemented
+        let liveGroupsCount = 0;
+        try {
+          // Check if user has any live group interactions (future implementation)
+          const liveGroupInteractionsRef = collection(db, 'liveGroupInteractions');
+          const liveGroupQuery = query(liveGroupInteractionsRef, where('userId', '==', currentUser.uid));
+          const liveGroupSnapshot = await getDocs(liveGroupQuery);
+          liveGroupsCount = liveGroupSnapshot.size;
+        } catch (error) {
+          console.log('Live group interactions collection not found - feature not implemented yet');
+        }
+
+        setActivityCounts({
+          propertiesUploaded: propertiesCount,
+          joinedLiveGroups: liveGroupsCount,
+          bookedSiteVisits: siteVisitsCount
+        });
+
+        console.log('📊 Activity counts:', {
+          propertiesUploaded: propertiesCount,
+          joinedLiveGroups: liveGroupsCount,
+          bookedSiteVisits: siteVisitsCount
+        });
+
+      } catch (error) {
+        console.error('Error fetching activity data:', error);
+      } finally {
+        setLoadingActivity(false);
+      }
+    };
+
+    fetchActivityData();
+  }, [currentUser]);
+
   // Placeholder data - will be replaced with actual Firebase data
   const userData = {
     name: userProfile?.name || 'John Doe',
@@ -84,7 +151,7 @@ const ProfilePage = () => {
       id: 1,
       title: 'Properties Uploaded',
       icon: <FiHome className="activity-icon" />,
-      count: 0,
+      count: loadingActivity ? '...' : activityCounts.propertiesUploaded,
       path: '/my-properties',
       color: 'blue'
     },
@@ -92,7 +159,7 @@ const ProfilePage = () => {
       id: 2,
       title: 'Joined Live Groups',
       icon: <FiUsers className="activity-icon" />,
-      count: 0,
+      count: loadingActivity ? '...' : activityCounts.joinedLiveGroups,
       path: '/exhibition/live-grouping',
       color: 'purple'
     },
@@ -100,7 +167,7 @@ const ProfilePage = () => {
       id: 3,
       title: 'Booked Site Visits',
       icon: <FiCalendar className="activity-icon" />,
-      count: 0,
+      count: loadingActivity ? '...' : activityCounts.bookedSiteVisits,
       path: '/my-bookings',
       color: 'green'
     }
@@ -109,6 +176,63 @@ const ProfilePage = () => {
   const handleActivityClick = (path) => {
     navigate(path);
   };
+
+  // Function to refresh activity data
+  const refreshActivityData = async () => {
+    if (!currentUser?.uid) return;
+
+    try {
+      setLoadingActivity(true);
+      
+      const propertiesRef = collection(db, 'properties');
+      const propertiesQuery = query(propertiesRef, where('user_id', '==', currentUser.uid));
+      const propertiesSnapshot = await getDocs(propertiesQuery);
+      const propertiesCount = propertiesSnapshot.size;
+
+      let siteVisitsCount = 0;
+      try {
+        const bookingsRef = collection(db, 'bookings');
+        const bookingsQuery = query(bookingsRef, where('userId', '==', currentUser.uid));
+        const bookingsSnapshot = await getDocs(bookingsQuery);
+        siteVisitsCount = bookingsSnapshot.size;
+      } catch (error) {
+        console.log('Bookings collection not found');
+      }
+
+      let liveGroupsCount = 0;
+      try {
+        const liveGroupInteractionsRef = collection(db, 'liveGroupInteractions');
+        const liveGroupQuery = query(liveGroupInteractionsRef, where('userId', '==', currentUser.uid));
+        const liveGroupSnapshot = await getDocs(liveGroupQuery);
+        liveGroupsCount = liveGroupSnapshot.size;
+      } catch (error) {
+        console.log('Live group interactions not implemented yet');
+      }
+
+      setActivityCounts({
+        propertiesUploaded: propertiesCount,
+        joinedLiveGroups: liveGroupsCount,
+        bookedSiteVisits: siteVisitsCount
+      });
+
+    } catch (error) {
+      console.error('Error refreshing activity data:', error);
+    } finally {
+      setLoadingActivity(false);
+    }
+  };
+
+  // Refresh activity data when component becomes visible
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && currentUser?.uid) {
+        refreshActivityData();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [currentUser]);
 
   const handlePhotoClick = () => {
     // Remove click functionality - photo is now just for display
@@ -357,6 +481,12 @@ const ProfilePage = () => {
           <div className="activity-header">
             <h2 className="activity-title">Activity Overview</h2>
             <p className="activity-subtitle">Track your engagement and contributions</p>
+            {loadingActivity && (
+              <div className="activity-loading">
+                <div className="spinner-small"></div>
+                <span>Updating...</span>
+              </div>
+            )}
           </div>
           
           <div className="activity-grid">
