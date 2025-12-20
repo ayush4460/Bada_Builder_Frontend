@@ -501,7 +501,7 @@ const PostProperty = () => {
       }
 
       setLoading(false);
-      alert(`Property posted successfully! You can now view it in the ${userType === 'developer' ? 'Developer' : 'Individual'} Exhibition.`);
+      // alert(`Property posted successfully! You can now view it in the ${userType === 'developer' ? 'Developer' : 'Individual'} Exhibition.`);
 
       // Navigate to the appropriate exhibition page based on user type
       setTimeout(() => {
@@ -510,7 +510,7 @@ const PostProperty = () => {
         } else {
           navigate('/exhibition/individual');
         }
-      }, 1000);
+      }, 500);
 
     } catch (error) {
       console.error('❌ Error posting property:', error);

@@ -131,12 +131,12 @@ const DeveloperPlan = () => {
 
           // Show success and redirect
           setPaymentLoading(false);
-          alert(`Successfully subscribed to Developer ${plan.duration} plan! Payment ID: ${response.razorpay_payment_id}`);
+          // alert(`Successfully subscribed to Developer ${plan.duration} plan! Payment ID: ${response.razorpay_payment_id}`); // Removed blocking alert
 
           // Redirect to post property page
           setTimeout(() => {
             navigate('/post-property', { state: { userType: 'developer' } });
-          }, 1000);
+          }, 500); // reduced delay for smoother transition
 
         } catch (error) {
           console.error('Error saving payment/subscription:', error);

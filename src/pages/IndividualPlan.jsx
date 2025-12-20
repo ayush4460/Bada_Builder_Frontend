@@ -104,10 +104,10 @@ const IndividualPlan = () => {
       order_id: '',
       handler: async function (response) {
         console.log('✅ Payment successful:', response);
-        
+
         // Calculate expiry date
         const expiryDate = calculateExpiryDate(months);
-        
+
         // Prepare payment data
         const paymentData = {
           payment_id: response.razorpay_payment_id,
@@ -155,18 +155,18 @@ const IndividualPlan = () => {
 
           // Show success and redirect
           setPaymentLoading(false);
-          alert(`Successfully subscribed to Individual ${plan.duration} plan! You can now post your property.`);
-          
+          // alert(`Successfully subscribed to Individual ${plan.duration} plan! You can now post your property.`); // Removed blocking alert
+
           // Redirect back to the original page or post property
           setTimeout(() => {
-            navigate(returnTo, { 
-              state: { 
+            navigate(returnTo, {
+              state: {
                 userType: userType,
                 subscriptionVerified: true,
                 subscriptionId: subscriptionId
-              } 
+              }
             });
-          }, 1000);
+          }, 500);
 
         } catch (error) {
           console.error('Error saving payment/subscription:', error);
@@ -191,7 +191,7 @@ const IndividualPlan = () => {
         color: '#58335e'
       },
       modal: {
-        ondismiss: function() {
+        ondismiss: function () {
           console.log('Payment cancelled by user');
           setPaymentLoading(false);
           setSelectedPlan(null);
@@ -221,7 +221,7 @@ const IndividualPlan = () => {
 
     console.log('🚀 Starting Individual subscription payment for plan:', plan.duration);
     console.log('👤 User role:', userRole);
-    
+
     // Initiate Razorpay payment
     const paymentSuccess = await handleRazorpayPayment(plan);
     if (!paymentSuccess) {
@@ -233,7 +233,7 @@ const IndividualPlan = () => {
   return (
     <div className="subscription-page">
       <div className="subscription-container">
-        <motion.div 
+        <motion.div
           className="subscription-header"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -248,8 +248,8 @@ const IndividualPlan = () => {
 
         <div className="plans-grid">
           {individualPlans.map((plan, index) => (
-            <motion.div 
-              key={plan.id} 
+            <motion.div
+              key={plan.id}
               className={`plan-card ${plan.popular ? 'popular' : ''} ${plan.bestValue ? 'best-value' : ''}`}
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -258,7 +258,7 @@ const IndividualPlan = () => {
             >
               {plan.popular && <div className="badge">Most Popular</div>}
               {plan.bestValue && <div className="badge best">Best Value</div>}
-              
+
               <div className="plan-header">
                 <h3>{plan.duration}</h3>
                 <div className="price">
@@ -298,7 +298,7 @@ const IndividualPlan = () => {
           ))}
         </div>
 
-        <motion.div 
+        <motion.div
           className="subscription-note"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

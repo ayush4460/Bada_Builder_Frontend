@@ -117,10 +117,10 @@ const SubscriptionPlans = () => {
       order_id: '', // Will be generated from backend if needed
       handler: async function (response) {
         console.log('✅ Payment successful:', response);
-        
+
         // Calculate expiry date
         const expiryDate = calculateExpiryDate(months);
-        
+
         // Prepare payment data
         const paymentData = {
           payment_id: response.razorpay_payment_id,
@@ -160,12 +160,12 @@ const SubscriptionPlans = () => {
 
           // Show success and redirect
           setPaymentLoading(false);
-          alert(`Successfully subscribed to ${plan.duration} plan! Payment ID: ${response.razorpay_payment_id}`);
-          
+          // alert(`Successfully subscribed to ${plan.duration} plan! Payment ID: ${response.razorpay_payment_id}`); // Removed blocking alert
+
           // Redirect to post property page
           setTimeout(() => {
             navigate('/post-property');
-          }, 1000);
+          }, 500);
 
         } catch (error) {
           console.error('Error saving payment/subscription:', error);
@@ -190,7 +190,7 @@ const SubscriptionPlans = () => {
         color: '#58335e'
       },
       modal: {
-        ondismiss: function() {
+        ondismiss: function () {
           console.log('Payment cancelled by user');
           setPaymentLoading(false);
           setSelectedPlan(null);
@@ -220,7 +220,7 @@ const SubscriptionPlans = () => {
 
     console.log('🚀 Starting subscription payment for plan:', plan.duration);
     console.log('👤 User role:', userRole);
-    
+
     // Initiate Razorpay payment
     const paymentSuccess = await handleRazorpayPayment(plan);
     if (!paymentSuccess) {
@@ -233,7 +233,7 @@ const SubscriptionPlans = () => {
   return (
     <div className="subscription-page">
       <div className="subscription-container">
-        <motion.div 
+        <motion.div
           className="subscription-header"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -241,8 +241,8 @@ const SubscriptionPlans = () => {
         >
           <h1>Choose Your Plan</h1>
           <p>
-            {userRole === 'developer' 
-              ? 'Developer/Builder subscription plan for property listings' 
+            {userRole === 'developer'
+              ? 'Developer/Builder subscription plan for property listings'
               : 'Select a subscription plan to start posting properties'
             }
           </p>
@@ -255,8 +255,8 @@ const SubscriptionPlans = () => {
 
         <div className="plans-grid">
           {plans.map((plan, index) => (
-            <motion.div 
-              key={plan.id} 
+            <motion.div
+              key={plan.id}
               className={`plan-card ${plan.popular ? 'popular' : ''} ${plan.bestValue ? 'best-value' : ''}`}
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -266,7 +266,7 @@ const SubscriptionPlans = () => {
               {plan.popular && <div className="badge">Most Popular</div>}
               {plan.bestValue && userRole === 'developer' && <div className="badge best">Developer Plan</div>}
               {plan.bestValue && userRole !== 'developer' && <div className="badge best">Best Value</div>}
-              
+
               <div className="plan-header">
                 <h3>{plan.duration}</h3>
                 <div className="price">
@@ -306,7 +306,7 @@ const SubscriptionPlans = () => {
           ))}
         </div>
 
-        <motion.div 
+        <motion.div
           className="subscription-note"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
