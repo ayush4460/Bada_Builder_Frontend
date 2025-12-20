@@ -1,8 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase';
+import ViewToggle from '../../components/ViewToggle/ViewToggle';
+import PropertyCard from '../../components/PropertyCard/PropertyCard';
+import useViewPreference from '../../hooks/useViewPreference';
 import './Exhibition.css';
 import './LiveGrouping.css';
 
@@ -11,6 +14,7 @@ const LiveGrouping = () => {
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [liveGroups, setLiveGroups] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [view, setView] = useViewPreference();
 
   useEffect(() => {
     fetchLiveGroups();
@@ -158,6 +162,13 @@ const LiveGrouping = () => {
           </Link>
         </motion.div>
 
+        {/* View Toggle */}
+        {!loading && liveGroups.length > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px' }}>
+            <ViewToggle view={view} onViewChange={setView} />
+          </div>
+        )}
+
         {/* How It Works Section */}
         <motion.div 
           className="how-it-works"
@@ -191,7 +202,7 @@ const LiveGrouping = () => {
         </motion.div>
 
         {/* Live Groups Grid */}
-        <div className="properties-grid">
+        <div className={`properties-grid ${view === 'list' ? 'list-view' : 'grid-view'}`}>
           {loading ? (
             <p style={{ textAlign: 'center', padding: '40px', gridColumn: '1 / -1' }}>
               Loading properties...

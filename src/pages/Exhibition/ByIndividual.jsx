@@ -1,15 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Link, useNavigate } from 'react-router-dom';
-import { collection, query, where, getDocs, orderBy, onSnapshot } from 'firebase/firestore';
+import { Link } from 'react-router-dom';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../../firebase';
+import ViewToggle from '../../components/ViewToggle/ViewToggle';
+import PropertyCard from '../../components/PropertyCard/PropertyCard';
+import useViewPreference from '../../hooks/useViewPreference';
 import './Exhibition.css';
 
 const ByIndividual = () => {
-  const navigate = useNavigate();
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [view, setView] = useViewPreference();
 
   useEffect(() => {
     const fetchProperties = async () => {
@@ -97,6 +100,13 @@ const ByIndividual = () => {
           </Link>
         </motion.div>
 
+        {/* View Toggle */}
+        {!loading && !error && properties.length > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px' }}>
+            <ViewToggle view={view} onViewChange={setView} />
+          </div>
+        )}
+
         {/* Loading State */}
         {loading && (
           <motion.div 
@@ -128,65 +138,25 @@ const ByIndividual = () => {
 
         {/* Properties Grid */}
         {!loading && !error && (
-          <div className="properties-grid">
+          <div className={`properties-grid ${view === 'list' ? 'list-view' : 'grid-view'}`}>
             {properties.map((property, index) => (
               <motion.div
                 key={property.id}
-                className="property-card"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                whileHover={{ y: -8 }}
               >
-                <div className="property-image">
-                  <img 
-                    src={property.image_url || "/placeholder-property.jpg"} 
-                    alt={property.title}
-                    onError={(e) => {
-                      e.target.src = "/placeholder-property.jpg";
-                    }}
-                  />
-                  <div className="property-badge">Individual</div>
-                </div>
-                <div className="property-info">
-                  <h3>{property.title}</h3>
-                  <p className="owner">👤 Individual Owner</p>
-                  <p className="location">📍 {property.location}</p>
-                  <div className="property-details">
-                    <span className="type">{property.type}</span>
-                    {property.bhk && <span className="bhk">{property.bhk}</span>}
-                  </div>
-                  {property.description && (
-                    <p className="description">{property.description.substring(0, 100)}...</p>
-                  )}
-                  <div className="property-footer">
-                    <span className="price">{property.price}</span>
-                    <div className="property-actions">
-                      <button 
-                        className="view-details-btn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/property-details/${property.id}`, { 
-                            state: { property, type: 'individual' } 
-                          });
-                        }}
-                      >
-                        View Details
-                      </button>
-                      <button 
-                        className="book-visit-btn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate('/book-visit', { 
-                            state: { property: { ...property, type: 'individual' } } 
-                          });
-                        }}
-                      >
-                        Book Site Visit
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                <PropertyCard 
+                  property={{
+                    ...property,
+                    image: property.image_url,
+                    area: property.area || property.size,
+                    status: property.status || 'Available',
+                    badge: 'Individual'
+                  }}
+                  viewType={view}
+                  source="individual"
+                />
               </motion.div>
             ))}
           </div>

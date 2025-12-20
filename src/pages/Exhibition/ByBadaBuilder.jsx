@@ -1,10 +1,13 @@
-import React from 'react';
 import { motion } from 'framer-motion';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import ViewToggle from '../../components/ViewToggle/ViewToggle';
+import PropertyCard from '../../components/PropertyCard/PropertyCard';
+import useViewPreference from '../../hooks/useViewPreference';
 import './Exhibition.css';
 
 const ByBadaBuilder = () => {
-  const navigate = useNavigate();
+  const [view, setView] = useViewPreference();
+  
   const curatedProperties = [
     {
       id: 1,
@@ -81,60 +84,31 @@ const ByBadaBuilder = () => {
           </Link>
         </motion.div>
 
+        {/* View Toggle */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px' }}>
+          <ViewToggle view={view} onViewChange={setView} />
+        </div>
+
         {/* Properties Grid */}
-        <div className="properties-grid">
+        <div className={`properties-grid ${view === 'list' ? 'list-view' : 'grid-view'}`}>
           {curatedProperties.map((property, index) => (
             <motion.div
               key={property.id}
-              className="property-card premium"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              whileHover={{ y: -8 }}
             >
-              <div className="property-image">
-                <img src={property.image} alt={property.title} />
-                <div className="property-badge badabuilder">Bada Builder</div>
-                {property.verified && (
-                  <div className="verified-icon">✓ Verified</div>
-                )}
-              </div>
-              <div className="property-info">
-                <h3>{property.title}</h3>
-                <p className="owner">⭐ {property.category}</p>
-                <p className="location">📍 {property.location}</p>
-                <div className="property-details">
-                  <span className="type">{property.type}</span>
-                  <span className="roi">{property.roi}</span>
-                </div>
-                <div className="property-footer">
-                  <span className="price">{property.price}</span>
-                  <div className="property-actions">
-                    <button 
-                      className="view-details-btn premium"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/property-details/${property.id}`, { 
-                          state: { property, type: 'badabuilder' } 
-                        });
-                      }}
-                    >
-                      View Details
-                    </button>
-                    <button 
-                      className="book-visit-btn premium"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate('/book-visit', { 
-                          state: { property: { ...property, type: 'badabuilder' } } 
-                        });
-                      }}
-                    >
-                      Book Site Visit
-                    </button>
-                  </div>
-                </div>
-              </div>
+              <PropertyCard 
+                property={{
+                  ...property,
+                  status: 'Verified',
+                  badge: 'Bada Builder',
+                  owner: property.category,
+                  featured: true
+                }}
+                viewType={view}
+                source="badabuilder"
+              />
             </motion.div>
           ))}
         </div>

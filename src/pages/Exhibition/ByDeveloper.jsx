@@ -1,15 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Link, useNavigate } from 'react-router-dom';
-import { collection, query, where, getDocs, orderBy, onSnapshot } from 'firebase/firestore';
+import { Link } from 'react-router-dom';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../../firebase';
+import ViewToggle from '../../components/ViewToggle/ViewToggle';
+import PropertyCard from '../../components/PropertyCard/PropertyCard';
+import useViewPreference from '../../hooks/useViewPreference';
 import './Exhibition.css';
 
 const ByDeveloper = () => {
-  const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [view, setView] = useViewPreference();
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -97,6 +100,13 @@ const ByDeveloper = () => {
           </Link>
         </motion.div>
 
+        {/* View Toggle */}
+        {!loading && !error && projects.length > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px' }}>
+            <ViewToggle view={view} onViewChange={setView} />
+          </div>
+        )}
+
         {/* Loading State */}
         {loading && (
           <motion.div 
@@ -128,73 +138,26 @@ const ByDeveloper = () => {
 
         {/* Projects Grid */}
         {!loading && !error && (
-          <div className="properties-grid">
+          <div className={`properties-grid ${view === 'list' ? 'list-view' : 'grid-view'}`}>
             {projects.map((project, index) => (
               <motion.div
                 key={project.id}
-                className="property-card"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                whileHover={{ y: -8 }}
               >
-                <div className="property-image">
-                  <img 
-                    src={project.image_url || "/placeholder-property.jpg"} 
-                    alt={project.title}
-                    onError={(e) => {
-                      e.target.src = "/placeholder-property.jpg";
-                    }}
-                  />
-                  <div className="property-badge developer">Developer</div>
-                  <div className="status-badge">Active</div>
-                </div>
-                <div className="property-info">
-                  <h3>{project.title}</h3>
-                  <p className="owner">🏢 {project.company_name || 'Developer'}</p>
-                  <p className="location">📍 {project.location}</p>
-                  <div className="property-details">
-                    <span className="type">{project.type}</span>
-                    {project.total_units && <span className="units">{project.total_units} Units</span>}
-                    {project.bhk && <span className="bhk">{project.bhk}</span>}
-                  </div>
-                  {project.project_name && (
-                    <p className="project-name">🏗️ {project.project_name}</p>
-                  )}
-                  {project.description && (
-                    <p className="description">{project.description.substring(0, 100)}...</p>
-                  )}
-                  {project.rera_number && (
-                    <p className="rera">RERA: {project.rera_number}</p>
-                  )}
-                  <div className="property-footer">
-                    <span className="price">{project.price}</span>
-                    <div className="property-actions">
-                      <button 
-                        className="view-details-btn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/property-details/${project.id}`, { 
-                            state: { property: project, type: 'developer' } 
-                          });
-                        }}
-                      >
-                        View Details
-                      </button>
-                      <button 
-                        className="book-visit-btn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate('/book-visit', { 
-                            state: { property: { ...project, type: 'developer' } } 
-                          });
-                        }}
-                      >
-                        Book Site Visit
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                <PropertyCard 
+                  property={{
+                    ...project,
+                    image: project.image_url,
+                    area: project.area || project.size,
+                    status: project.status || 'Active',
+                    badge: 'Developer',
+                    owner: project.company_name || 'Developer'
+                  }}
+                  viewType={view}
+                  source="developer"
+                />
               </motion.div>
             ))}
           </div>
