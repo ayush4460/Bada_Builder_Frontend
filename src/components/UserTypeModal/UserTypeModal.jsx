@@ -37,17 +37,7 @@ const UserTypeModal = ({ isOpen, onClose }) => {
       return;
     }
 
-    // Check subscription
-    if (!isSubscribed()) {
-      alert('Please subscribe to a plan to post properties');
-      setIsChecking(false);
-      setSelectedType(null);
-      onClose();
-      navigate('/subscription-plans');
-      return;
-    }
-
-    // All checks passed, navigate to post property with user type
+    // Navigate to post property with user type (no subscription check here)
     setIsChecking(false);
     setSelectedType(null);
     onClose();
@@ -121,7 +111,7 @@ const UserTypeModal = ({ isOpen, onClose }) => {
 
           <div className="modal-footer">
             <p className="footer-note">
-              💡 You'll need to be logged in and have an active subscription to post properties
+              💡 You'll need to be logged in to post properties
             </p>
           </div>
         </motion.div>

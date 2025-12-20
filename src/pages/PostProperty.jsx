@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { collection, addDoc, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
+import PropertyForm from '../components/PropertyForm/PropertyForm';
 import './PostProperty.css';
 
 // --- Cloudinary Configuration ---
@@ -53,7 +54,6 @@ const PostProperty = () => {
   const locationState = window.history.state?.usr;
   const [userType, setUserType] = useState(locationState?.userType || null); // 'individual' or 'developer'
   const [selectedPropertyFlow, setSelectedPropertyFlow] = useState(null); // 'new' or 'existing'
-  const [paymentSuccessful, setPaymentSuccessful] = useState(false);
   const [existingProperties, setExistingProperties] = useState([]);
   const [fetchingProperties, setFetchingProperties] = useState(false);
   const [editingProperty, setEditingProperty] = useState(null); // State to hold property being edited
@@ -75,7 +75,7 @@ const PostProperty = () => {
   });
 
   useEffect(() => {
-    console.log('🔍 Checking authentication and subscription...');
+    console.log('🔍 Checking authentication...');
     console.log('Is Authenticated:', isAuthenticated);
     console.log('Current User:', currentUser);
     
@@ -86,18 +86,8 @@ const PostProperty = () => {
       return;
     }
 
-    // Only check subscription after user profile is loaded
-    if (currentUser && !loading) {
-      const subscribed = isSubscribed();
-      console.log('Is Subscribed:', subscribed);
-      
-      if (!subscribed && selectedPropertyFlow === 'new') { // Only enforce subscription for new properties
-        console.warn('⚠️ User not subscribed, redirecting to subscription plans');
-        alert('Please subscribe to a plan to post properties');
-        navigate('/subscription-plans');
-      }
-    }
-  }, [isAuthenticated, isSubscribed, navigate, currentUser, loading, selectedPropertyFlow]);
+    // Note: Subscription check is now handled only when user clicks "Create New Property"
+  }, [isAuthenticated, navigate, currentUser]);
 
   // Effect to fetch existing properties
   useEffect(() => {
@@ -121,6 +111,21 @@ const PostProperty = () => {
 
     fetchExistingProperties();
   }, [selectedPropertyFlow, currentUser]);
+
+  const handleCreateNewProperty = () => {
+    console.log('🔍 Checking subscription for new property creation...');
+    
+    // Check subscription only when user wants to create new property
+    if (!isSubscribed()) {
+      console.warn('⚠️ User not subscribed, redirecting to subscription plans');
+      alert('Please subscribe to a plan to post properties');
+      navigate('/subscription-plans');
+      return;
+    }
+    
+    console.log('✅ User is subscribed, proceeding to property form');
+    setSelectedPropertyFlow('new');
+  };
 
   const isEditable = (createdAt) => {
     const creationDate = new Date(createdAt);
@@ -444,10 +449,10 @@ const PostProperty = () => {
               <motion.div 
                 className="property-flow-card"
                 whileHover={{ y: -8, scale: 1.02 }}
-                onClick={() => setSelectedPropertyFlow('new')}
+                onClick={handleCreateNewProperty}
               >
                 <div className="card-icon">✨</div>
-                <h3>Post New Property</h3>
+                <h3>Create New Property</h3>
                 <p>List a brand new property or project</p>
                 <button type="button" className="select-type-btn">
                   Select
@@ -460,7 +465,7 @@ const PostProperty = () => {
                 onClick={() => setSelectedPropertyFlow('existing')}
               >
                 <div className="card-icon">📝</div>
-                <h3>Manage Existing Properties</h3>
+                <h3>Existing Property</h3>
                 <p>View, edit, or update your listed properties</p>
                 <button type="button" className="select-type-btn">
                   Select
@@ -470,50 +475,8 @@ const PostProperty = () => {
           </div>
         )}
 
-        {/* Step 3 (New Property Flow): Payment Section */}
-        {userType && selectedPropertyFlow === 'new' && !paymentSuccessful && !editingProperty && (
-          <div className="payment-section">
-            <div className="selected-type-badge">
-              <span>
-                {userType === 'individual' ? '👤 Individual Owner' : '🏢 Developer'}
-              </span>
-              <button 
-                type="button" 
-                className="change-type-btn"
-                onClick={() => {setUserType(null); setSelectedPropertyFlow(null);}} // Reset both
-              >
-                Change User Type
-              </button>
-            </div>
-            <div className="selected-flow-badge">
-              <span>
-                ✨ Post New Property
-              </span>
-              <button 
-                type="button" 
-                className="change-type-btn"
-                onClick={() => setSelectedPropertyFlow(null)}
-              >
-                Change Flow
-              </button>
-            </div>
-            <h2>Payment Required to Post New Property</h2>
-            <p>Please complete the payment to proceed with posting your property. This is a placeholder for the actual payment gateway integration.</p>
-            <button 
-              className="submit-btn" 
-              onClick={() => setPaymentSuccessful(true)}
-            >
-              Proceed to Property Form (Simulate Payment)
-            </button>
-          </div>
-        )}
-
-import PropertyForm from '../components/PropertyForm/PropertyForm'; // Import the new component
-
-// ... existing code ...
-
-        {/* Step 4 (New Property Flow): Property Creation Form */}
-        {(userType && selectedPropertyFlow === 'new' && paymentSuccessful) || (editingProperty && selectedPropertyFlow === 'existing') ? (
+        {/* Step 3: Property Creation Form */}
+        {(userType && selectedPropertyFlow === 'new') || (editingProperty && selectedPropertyFlow === 'existing') ? (
           <>
             <div className="selected-type-badge">
               <span>
@@ -522,19 +485,19 @@ import PropertyForm from '../components/PropertyForm/PropertyForm'; // Import th
               <button 
                 type="button" 
                 className="change-type-btn"
-                onClick={() => {setUserType(null); setSelectedPropertyFlow(null); setPaymentSuccessful(false); setEditingProperty(null);}} // Reset all
+                onClick={() => {setUserType(null); setSelectedPropertyFlow(null); setEditingProperty(null);}} // Reset all
               >
                 Change User Type
               </button>
             </div>
             <div className="selected-flow-badge">
               <span>
-                {selectedPropertyFlow === 'new' ? '✨ Post New Property' : '📝 Editing Existing Property'}
+                {selectedPropertyFlow === 'new' ? '✨ Create New Property' : '📝 Editing Existing Property'}
               </span>
               <button 
                 type="button" 
                 className="change-type-btn"
-                onClick={() => {setSelectedPropertyFlow(null); setPaymentSuccessful(false); setEditingProperty(null);}} // Reset flow and editing
+                onClick={() => {setSelectedPropertyFlow(null); setEditingProperty(null);}} // Reset flow and editing
               >
                 Change Flow
               </button>
@@ -582,7 +545,7 @@ import PropertyForm from '../components/PropertyForm/PropertyForm'; // Import th
             </div>
             <div className="selected-flow-badge">
               <span>
-                📝 Manage Existing Properties
+                📝 Existing Property
               </span>
               <button 
                 type="button" 
