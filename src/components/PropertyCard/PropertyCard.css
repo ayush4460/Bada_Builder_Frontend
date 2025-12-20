@@ -35,75 +35,96 @@
   flex: 1;
 }
 
-/* List View - Compact Size */
+/* List View - Thin Horizontal Strips */
 .property-card-wrapper.list-view {
   flex-direction: row;
   height: auto;
-  min-height: 160px;
+  min-height: 100px;
+  max-height: 120px;
 }
 
 .property-card-wrapper.list-view .property-card-image {
-  width: 240px;
-  min-height: 100%;
+  width: 150px;
+  min-width: 150px;
+  height: 100%;
   position: relative;
   overflow: hidden;
   flex-shrink: 0;
 }
 
 .property-card-wrapper.list-view .property-card-content {
-  padding: 16px 20px;
+  padding: 12px 16px;
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
   flex: 1;
   justify-content: space-between;
+  overflow: hidden;
+}
+
+.property-card-wrapper.list-view .property-title {
+  font-size: 15px;
+  -webkit-line-clamp: 1;
+  margin: 0;
+  min-width: 150px;
+  max-width: 200px;
+}
+
+.property-card-wrapper.list-view .property-location {
+  font-size: 12px;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 120px;
+  max-width: 150px;
+}
+
+.property-card-wrapper.list-view .property-price {
+  font-size: 16px;
+  margin: 0;
+  white-space: nowrap;
+  min-width: 100px;
+  text-align: right;
 }
 
 .property-card-wrapper.list-view .property-highlights {
   display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+  gap: 6px;
+  flex-wrap: nowrap;
+  min-width: 150px;
+}
+
+.property-card-wrapper.list-view .highlight-item {
+  padding: 3px 8px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.property-card-wrapper.list-view .property-description {
+  display: none; /* Hide description in thin strip view */
 }
 
 .property-card-wrapper.list-view .property-actions {
   display: flex;
-  gap: 8px;
-  margin-top: 8px;
+  gap: 6px;
+  margin: 0;
   flex-shrink: 0;
 }
 
-.property-card-wrapper.list-view .property-title {
-  font-size: 16px;
-  -webkit-line-clamp: 1;
-  margin-bottom: 2px;
-}
-
-.property-card-wrapper.list-view .property-price {
-  font-size: 18px;
-  margin: 2px 0;
-}
-
-.property-card-wrapper.list-view .property-location {
-  font-size: 13px;
-  margin: 2px 0;
-}
-
-.property-card-wrapper.list-view .highlight-item {
-  padding: 4px 10px;
-  font-size: 12px;
-}
-
-.property-card-wrapper.list-view .property-description {
-  font-size: 13px;
-  -webkit-line-clamp: 1;
-  margin: 4px 0;
-  line-height: 1.4;
-}
-
 .property-card-wrapper.list-view .property-actions button {
-  padding: 8px 12px;
-  font-size: 12px;
+  padding: 6px 12px;
+  font-size: 11px;
   white-space: nowrap;
+  min-width: 80px;
+}
+
+/* Hide badges in list view for cleaner look */
+.property-card-wrapper.list-view .property-status-badge,
+.property-card-wrapper.list-view .featured-badge {
+  padding: 3px 8px;
+  font-size: 10px;
 }
 
 /* Image Styles */
@@ -285,28 +306,92 @@
   flex-shrink: 0;
 }
 
-/* Responsive Design */
+/* Responsive Design - Keep Horizontal Strip on Mobile */
 @media (max-width: 768px) {
   .property-card-wrapper.list-view {
-    flex-direction: column;
-    max-height: none;
+    flex-direction: row;
+    min-height: 110px;
+    max-height: 130px;
   }
 
   .property-card-wrapper.list-view .property-card-image {
-    width: 100%;
-    height: 180px;
+    width: 110px;
+    min-width: 110px;
+    height: 100%;
   }
 
   .property-card-wrapper.list-view .property-card-content {
-    padding: 16px;
+    padding: 10px 12px;
+    gap: 10px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    flex-wrap: nowrap;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+  }
+
+  .property-card-wrapper.list-view .property-card-content::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .property-card-wrapper.list-view .property-card-content::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .property-card-wrapper.list-view .property-card-content::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 2px;
   }
 
   .property-card-wrapper.list-view .property-title {
-    font-size: 18px;
+    font-size: 14px;
+    min-width: 120px;
+    max-width: 150px;
+    flex-shrink: 0;
   }
 
   .property-card-wrapper.list-view .property-price {
-    font-size: 20px;
+    font-size: 15px;
+    min-width: 90px;
+    flex-shrink: 0;
+  }
+
+  .property-card-wrapper.list-view .property-location {
+    font-size: 12px;
+    min-width: 100px;
+    max-width: 120px;
+    flex-shrink: 0;
+  }
+
+  .property-card-wrapper.list-view .highlight-item {
+    padding: 4px 8px;
+    font-size: 11px;
+    flex-shrink: 0;
+  }
+
+  .property-card-wrapper.list-view .property-highlights {
+    gap: 6px;
+    min-width: 120px;
+    flex-shrink: 0;
+  }
+
+  .property-card-wrapper.list-view .property-actions {
+    flex-direction: row;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .property-card-wrapper.list-view .property-actions button {
+    padding: 8px 12px;
+    font-size: 11px;
+    min-width: 70px;
+    flex-shrink: 0;
+  }
+
+  .property-card-wrapper.list-view .property-status-badge,
+  .property-card-wrapper.list-view .featured-badge {
+    padding: 4px 8px;
+    font-size: 10px;
   }
 
   .property-actions {
@@ -315,6 +400,52 @@
 
   .property-actions button {
     width: 100%;
+  }
+}
+
+/* Extra small mobile - even more compact strips */
+@media (max-width: 480px) {
+  .property-card-wrapper.list-view {
+    min-height: 100px;
+    max-height: 120px;
+  }
+
+  .property-card-wrapper.list-view .property-card-image {
+    width: 90px;
+    min-width: 90px;
+  }
+
+  .property-card-wrapper.list-view .property-card-content {
+    padding: 8px 10px;
+    gap: 8px;
+  }
+
+  .property-card-wrapper.list-view .property-title {
+    font-size: 13px;
+    min-width: 100px;
+    max-width: 120px;
+  }
+
+  .property-card-wrapper.list-view .property-price {
+    font-size: 14px;
+    min-width: 80px;
+  }
+
+  .property-card-wrapper.list-view .property-location {
+    font-size: 11px;
+    min-width: 90px;
+    max-width: 110px;
+  }
+
+  .property-card-wrapper.list-view .highlight-item {
+    padding: 3px 6px;
+    font-size: 10px;
+  }
+
+  .property-card-wrapper.list-view .property-actions button {
+    padding: 6px 10px;
+    font-size: 10px;
+    min-width: 65px;
   }
 }
 

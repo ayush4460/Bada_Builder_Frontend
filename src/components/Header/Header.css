@@ -768,6 +768,35 @@ body.mobile-menu-open {
   flex: 1;
 }
 
+/* Mobile View Profile Button */
+.mobile-view-profile-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  margin-top: 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.mobile-view-profile-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.mobile-view-profile-btn:active {
+  transform: translateY(0);
+}
+
 /* Mobile Logout Button */
 .mobile-logout-btn {
   width: 100%;
