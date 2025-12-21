@@ -431,7 +431,7 @@ const Header = () => {
         </div>
 
         {/* Mobile Menu Button */}
-        {/* <div className="lg:hidden flex items-center">
+        <div className="lg:hidden flex items-center">
           <button
             onClick={toggleMobileMenu}
             className="p-2 rounded-md text-gray-700 hover:text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-[#58335e] transition-all duration-200"
@@ -443,7 +443,7 @@ const Header = () => {
               <span className={`bg-current block transition-all duration-300 ease-out h-0.5 w-4 rounded-sm ${isMobileMenuOpen ? '-rotate-45 -translate-y-1' : 'translate-y-0.5'}`}></span>
             </div>
           </button>
-        </div> */}
+        </div>
       </header>
 
       {/* Mobile Menu Overlay */}
