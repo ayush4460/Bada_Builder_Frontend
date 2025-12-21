@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
+import { calculateTokenAmount, formatCurrency, calculateTotalPrice, calculateSavings } from '../../utils/liveGroupingCalculations';
 import './LiveGroupingDetails.css';
 
 const LiveGroupingDetails = () => {
@@ -52,12 +53,12 @@ const LiveGroupingDetails = () => {
       title: "Skyline Towers - Group Buy",
       developer: "Shree Balaji Builders",
       location: "Waghodia Road, Vadodara",
-      originalPrice: "₹75 Lakhs",
-      groupPrice: "₹68 Lakhs",
+      pricePerSqFt: 5172, // Regular price per sq ft
+      groupPricePerSqFt: 4690, // Group discounted price per sq ft
       discount: "9% OFF",
-      savings: "₹7 Lakhs",
       image: "/placeholder-property.jpg",
       type: "3 BHK Apartment",
+      area: "1450 sq.ft",
       totalSlots: 20,
       filledSlots: 14,
       timeLeft: "2 Days 5 Hours",
@@ -65,18 +66,16 @@ const LiveGroupingDetails = () => {
       benefits: ["Free Modular Kitchen", "2 Years Maintenance Free", "Premium Flooring"],
       status: "active",
       images: ["/placeholder-property.jpg", "/placeholder-property.jpg", "/placeholder-property.jpg"],
-      area: "1450 sq.ft",
       possession: "Dec 2025",
       reraNumber: "PR/GJ/VADODARA/123456",
       facilities: ["Swimming Pool", "Gym", "Parking", "Security", "Garden", "Power Backup", "Lift", "Club House"],
-      description: "Skyline Towers offers premium 3 BHK apartments with modern amenities and excellent connectivity. Join the group buy to save ₹7 Lakhs and get exclusive benefits worth ₹5 Lakhs.",
+      description: "Skyline Towers offers premium 3 BHK apartments with modern amenities and excellent connectivity. Join the group buy to save on per sq ft pricing and get exclusive benefits worth ₹5 Lakhs.",
       advantages: [
         { place: "Railway Station", distance: "2.5 km" },
         { place: "Airport", distance: "8 km" },
         { place: "School", distance: "500 m" }
       ],
       groupDetails: {
-        tokenAmount: "₹50,000",
         refundPolicy: "100% refund if group doesn't fill",
         closingDate: "Dec 20, 2025",
         expectedCompletion: "Dec 2025"
@@ -87,12 +86,12 @@ const LiveGroupingDetails = () => {
       title: "Green Valley Phase 2",
       developer: "Prestige Group",
       location: "Manjalpur, Vadodara",
-      originalPrice: "₹85 Lakhs",
-      groupPrice: "₹76 Lakhs",
+      pricePerSqFt: 3864, // Regular price per sq ft
+      groupPricePerSqFt: 3455, // Group discounted price per sq ft
       discount: "11% OFF",
-      savings: "₹9 Lakhs",
       image: "/placeholder-property.jpg",
       type: "4 BHK Villa",
+      area: "2200 sq.ft",
       totalSlots: 15,
       filledSlots: 15,
       timeLeft: "Closing Soon",
@@ -100,7 +99,6 @@ const LiveGroupingDetails = () => {
       benefits: ["Free Club Membership", "Landscaped Garden", "Solar Panels"],
       status: "closing",
       images: ["/placeholder-property.jpg", "/placeholder-property.jpg", "/placeholder-property.jpg"],
-      area: "2200 sq.ft",
       possession: "Ready to Move",
       reraNumber: "PR/GJ/VADODARA/789012",
       facilities: ["Swimming Pool", "Gym", "Parking", "Security", "Garden", "Power Backup", "Club House", "Kids Play Area"],
@@ -111,7 +109,6 @@ const LiveGroupingDetails = () => {
         { place: "Hospital", distance: "2 km" }
       ],
       groupDetails: {
-        tokenAmount: "₹75,000",
         refundPolicy: "100% refund if group doesn't fill",
         closingDate: "Dec 18, 2025",
         expectedCompletion: "Ready to Move"
@@ -122,12 +119,12 @@ const LiveGroupingDetails = () => {
       title: "Royal Heights Premium",
       developer: "Kalpataru Developers",
       location: "Akota, Vadodara",
-      originalPrice: "₹1.2 Cr",
-      groupPrice: "₹1.05 Cr",
+      pricePerSqFt: 3429, // Regular price per sq ft
+      groupPricePerSqFt: 3000, // Group discounted price per sq ft
       discount: "12% OFF",
-      savings: "₹15 Lakhs",
       image: "/placeholder-property.jpg",
       type: "Luxury Penthouse",
+      area: "3500 sq.ft",
       totalSlots: 10,
       filledSlots: 6,
       timeLeft: "5 Days 12 Hours",
@@ -135,7 +132,6 @@ const LiveGroupingDetails = () => {
       benefits: ["Private Terrace", "Smart Home System", "Concierge Service"],
       status: "active",
       images: ["/placeholder-property.jpg", "/placeholder-property.jpg", "/placeholder-property.jpg"],
-      area: "3500 sq.ft",
       possession: "Jun 2026",
       reraNumber: "PR/GJ/VADODARA/345678",
       facilities: ["Swimming Pool", "Gym", "Parking", "Security", "Garden", "Power Backup", "Lift", "Club House", "Spa", "Rooftop Lounge"],
@@ -146,7 +142,6 @@ const LiveGroupingDetails = () => {
         { place: "Metro Station", distance: "800 m" }
       ],
       groupDetails: {
-        tokenAmount: "₹2,00,000",
         refundPolicy: "100% refund if group doesn't fill",
         closingDate: "Dec 25, 2025",
         expectedCompletion: "Jun 2026"
@@ -191,7 +186,10 @@ const LiveGroupingDetails = () => {
   };
 
   const handleJoinGroup = () => {
-    alert(`Joining group for ${property.title}!\n\nToken Amount: ${property.groupDetails.tokenAmount}\nYou'll save ${property.savings} by joining this group buy.`);
+    const tokenAmount = calculateTokenAmount(property.groupPricePerSqFt, property.area);
+    const formattedToken = formatCurrency(tokenAmount);
+    
+    alert(`Joining group for ${property.title}!\n\nToken Amount: ${formattedToken} (0.5% of discounted price)`);
   };
 
   return (
@@ -383,27 +381,27 @@ const LiveGroupingDetails = () => {
               <div className="price-comparison-large">
                 <div className="original-price-large">
                   <span className="label">Regular Price</span>
-                  <span className="amount strikethrough">{property.originalPrice}</span>
+                  <span className="amount strikethrough">₹{property.pricePerSqFt?.toLocaleString() || 'N/A'} / sq ft</span>
                 </div>
                 <div className="group-price-large">
-                  <span className="label">Group Price</span>
-                  <span className="amount">{property.groupPrice}</span>
+                  <span className="label">🎯 Live Grouping Price</span>
+                  <span className="amount group-highlight">₹{property.groupPricePerSqFt?.toLocaleString() || 'N/A'} / sq ft</span>
                 </div>
               </div>
 
-              <div className="savings-highlight">
-                <span className="savings-icon">💰</span>
-                <div>
-                  <p className="savings-label">You Save</p>
-                  <p className="savings-amount">{property.savings}</p>
-                </div>
+              <div className="pricing-note">
+                <p>💡 <strong>Note:</strong> Final price depends on total area selected</p>
+                <p className="area-info">Property Area: {property.area}</p>
               </div>
 
               <div className="group-details">
                 <h4>Group Details</h4>
                 <div className="detail-row">
                   <span className="detail-label">Token Amount:</span>
-                  <span className="detail-value">{property.groupDetails.tokenAmount}</span>
+                  <span className="detail-value token-highlight">
+                    {formatCurrency(calculateTokenAmount(property.groupPricePerSqFt, property.area))}
+                    <span className="token-note">(0.5% of discounted price)</span>
+                  </span>
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">Closing Date:</span>

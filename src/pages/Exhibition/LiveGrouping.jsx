@@ -6,6 +6,7 @@ import { db } from '../../firebase';
 import ViewToggle from '../../components/ViewToggle/ViewToggle';
 import PropertyCard from '../../components/PropertyCard/PropertyCard';
 import useViewPreference from '../../hooks/useViewPreference';
+import { calculateTokenAmount, formatCurrency } from '../../utils/liveGroupingCalculations';
 import './Exhibition.css';
 import './LiveGrouping.css';
 
@@ -50,11 +51,12 @@ const LiveGrouping = () => {
       title: "Skyline Towers - Group Buy",
       developer: "Shree Balaji Builders",
       location: "Waghodia Road, Vadodara",
-      originalPrice: "₹75 Lakhs",
-      groupPrice: "₹68 Lakhs",
+      pricePerSqFt: 5172, // Regular price per sq ft
+      groupPricePerSqFt: 4690, // Group discounted price per sq ft
       discount: "9% OFF",
       image: "/placeholder-property.jpg",
       type: "3 BHK Apartment",
+      area: "1450 sq.ft",
       totalSlots: 20,
       filledSlots: 14,
       timeLeft: "2 Days 5 Hours",
@@ -67,11 +69,12 @@ const LiveGrouping = () => {
       title: "Green Valley Phase 2",
       developer: "Prestige Group",
       location: "Manjalpur, Vadodara",
-      originalPrice: "₹85 Lakhs",
-      groupPrice: "₹76 Lakhs",
+      pricePerSqFt: 3864, // Regular price per sq ft
+      groupPricePerSqFt: 3455, // Group discounted price per sq ft
       discount: "11% OFF",
       image: "/placeholder-property.jpg",
       type: "4 BHK Villa",
+      area: "2200 sq.ft",
       totalSlots: 15,
       filledSlots: 15,
       timeLeft: "Closing Soon",
@@ -84,11 +87,12 @@ const LiveGrouping = () => {
       title: "Royal Heights Premium",
       developer: "Kalpataru Developers",
       location: "Akota, Vadodara",
-      originalPrice: "₹1.2 Cr",
-      groupPrice: "₹1.05 Cr",
+      pricePerSqFt: 3429, // Regular price per sq ft
+      groupPricePerSqFt: 3000, // Group discounted price per sq ft
       discount: "12% OFF",
       image: "/placeholder-property.jpg",
       type: "Luxury Penthouse",
+      area: "3500 sq.ft",
       totalSlots: 10,
       filledSlots: 6,
       timeLeft: "5 Days 12 Hours",
@@ -100,8 +104,11 @@ const LiveGrouping = () => {
 
   const handleJoinGroup = (group) => {
     setSelectedGroup(group);
+    const tokenAmount = calculateTokenAmount(group.groupPricePerSqFt, group.area);
+    const formattedToken = formatCurrency(tokenAmount);
+    
     // In production, this would open a modal or redirect to registration
-    alert(`Joining group for ${group.title}!\n\nYou'll save ${group.discount} by joining this group buy.`);
+    alert(`Joining group for ${group.title}!\n\nToken Amount: ${formattedToken} (0.5% of discounted price)`);
   };
 
   const getProgressPercentage = (filled, total) => {
@@ -251,20 +258,20 @@ const LiveGrouping = () => {
                   </div>
                 </div>
 
-                {/* Pricing */}
+                {/* Pricing - Per Sq Ft Only */}
                 <div className="pricing-section">
                   <div className="price-comparison">
                     <div className="original-price">
                       <span className="label">Regular Price</span>
-                      <span className="amount strikethrough">{group.originalPrice}</span>
+                      <span className="amount strikethrough">₹{group.pricePerSqFt?.toLocaleString() || 'N/A'} / sq ft</span>
                     </div>
                     <div className="group-price">
-                      <span className="label">Group Price</span>
-                      <span className="amount">{group.groupPrice}</span>
+                      <span className="label">🎯 Live Grouping Price</span>
+                      <span className="amount group-highlight">₹{group.groupPricePerSqFt?.toLocaleString() || 'N/A'} / sq ft</span>
                     </div>
                   </div>
-                  <div className="savings">
-                    You Save: ₹{parseInt(group.originalPrice.replace(/[^0-9]/g, '')) - parseInt(group.groupPrice.replace(/[^0-9]/g, ''))} Lakhs
+                  <div className="savings-note">
+                    💡 Final price depends on total area selected
                   </div>
                 </div>
 

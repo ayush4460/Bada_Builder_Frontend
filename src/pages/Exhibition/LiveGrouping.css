@@ -203,35 +203,44 @@
 
 /* Pricing Section */
 .pricing-section {
-  background: #f9fafb;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
   padding: 16px;
   border-radius: 12px;
   margin: 16px 0;
+  border: 2px solid #e0e7ff;
 }
 
 .price-comparison {
   display: flex;
-  justify-content: space-between;
-  gap: 16px;
+  flex-direction: column;
+  gap: 12px;
   margin-bottom: 12px;
 }
 
 .original-price,
 .group-price {
-  flex: 1;
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.original-price .label,
-.group-price .label {
-  display: block;
+.original-price .label {
   font-size: 12px;
-  color: #666;
-  margin-bottom: 4px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #6b7280;
+}
+
+.group-price .label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #10b981;
 }
 
 .original-price .amount {
-  display: block;
   font-size: 18px;
   font-weight: 600;
   color: #9ca3af;
@@ -239,13 +248,31 @@
 
 .strikethrough {
   text-decoration: line-through;
+  opacity: 0.7;
 }
 
 .group-price .amount {
-  display: block;
   font-size: 22px;
-  font-weight: 700;
-  color: #16a34a;
+  font-weight: 800;
+}
+
+.group-highlight {
+  color: #10b981;
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  padding: 8px 12px;
+  border-radius: 8px;
+  display: inline-block;
+}
+
+.savings-note {
+  font-size: 12px;
+  color: #6b7280;
+  font-style: italic;
+  text-align: center;
+  padding: 8px;
+  background: #f0f4ff;
+  border-radius: 6px;
+  border: 1px dashed #c7d2fe;
 }
 
 .savings {

@@ -457,14 +457,14 @@
 }
 
 .price-comparison-large {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .original-price-large,
 .group-price-large {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 8px;
   padding: 16px;
   border-radius: 12px;
   margin-bottom: 12px;
@@ -475,30 +475,71 @@
 }
 
 .group-price-large {
-  background: #f0fdf4;
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border: 2px solid #10b981;
 }
 
-.original-price-large .label,
-.group-price-large .label {
-  font-size: 14px;
-  color: #666;
+.original-price-large .label {
+  font-size: 12px;
+  color: #6b7280;
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.group-price-large .label {
+  font-size: 12px;
+  color: #10b981;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .original-price-large .amount {
   font-size: 20px;
-  font-weight: 700;
-  color: #dc2626;
+  font-weight: 600;
+  color: #9ca3af;
 }
 
 .group-price-large .amount {
-  font-size: 24px;
-  font-weight: 700;
+  font-size: 26px;
+  font-weight: 800;
+}
+
+.group-highlight {
   color: #10b981;
 }
 
 .strikethrough {
   text-decoration: line-through;
+  opacity: 0.7;
+}
+
+.pricing-note {
+  padding: 16px;
+  background: #f0f4ff;
+  border-radius: 10px;
+  border: 1px dashed #c7d2fe;
+  margin-bottom: 24px;
+}
+
+.pricing-note p {
+  font-size: 13px;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.pricing-note p:last-child {
+  margin-bottom: 0;
+}
+
+.pricing-note strong {
+  color: #1a1a1a;
+}
+
+.area-info {
+  font-weight: 600;
+  color: #667eea;
 }
 
 .savings-highlight {
@@ -547,6 +588,35 @@
   justify-content: space-between;
   padding: 8px 0;
   border-bottom: 1px solid #e5e7eb;
+}
+
+.detail-label {
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.detail-value {
+  font-size: 14px;
+  color: #1a1a1a;
+  font-weight: 600;
+  text-align: right;
+}
+
+.token-highlight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  color: #10b981;
+  font-weight: 700;
+}
+
+.token-note {
+  font-size: 11px;
+  color: #6b7280;
+  font-weight: 500;
+  font-style: italic;
 }
 
 .detail-row:last-child {
