@@ -33,6 +33,7 @@ import LiveGroupingDetails from './pages/Exhibition/LiveGroupingDetails';
 import AdminLiveGrouping from './pages/Admin/AdminLiveGrouping';
 import ProfilePage from './pages/ProfilePage';
 import MyProperties from './pages/MyProperties';
+import MyBookings from './pages/MyBookings';
 import LAM from './pages/Report Data/LAM';
 import MarketInvestmentAnalysis from './pages/Report Data/MarketInvestmentAnalysis';
 import RealEstateFinancialModelling from './pages/Report Data/RealEstateFinancialModelling';
@@ -104,6 +105,7 @@ function App() {
         <Route path="/post-property" element={<PostProperty />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/my-properties" element={<MyProperties />} />
+        <Route path="/my-bookings" element={<MyBookings />} />
         <Route path="/admin/live-grouping" element={<AdminLiveGrouping />} />
 
         {/* Learn */}
