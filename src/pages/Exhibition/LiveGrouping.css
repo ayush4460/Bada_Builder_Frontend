@@ -285,7 +285,81 @@
   border-radius: 6px;
 }
 
-/* Benefits List */
+/* Section Titles */
+.section-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.section-title.closed-section {
+  color: #10b981;
+}
+
+.section-subtitle {
+  font-size: 16px;
+  color: #6b7280;
+  margin-bottom: 30px;
+  font-weight: 500;
+}
+
+/* Closed Group Styles */
+.property-card.closed {
+  position: relative;
+}
+
+.closed-badge {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  color: white !important;
+}
+
+.closed-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(16, 185, 129, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 800;
+  color: white;
+  letter-spacing: 2px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.progress-label.success {
+  color: #10b981;
+  font-weight: 700;
+}
+
+.closed-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px;
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  border-radius: 12px;
+  margin-top: 16px;
+  border: 2px solid #10b981;
+}
+
+.closed-icon {
+  font-size: 24px;
+}
+
+.closed-text {
+  font-size: 16px;
+  font-weight: 700;
+  color: #065f46;
+}
 .benefits-list {
   margin: 16px 0;
 }

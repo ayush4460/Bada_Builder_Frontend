@@ -16,10 +16,31 @@ const LiveGrouping = () => {
   const [liveGroups, setLiveGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useViewPreference();
+  const [activeGroups, setActiveGroups] = useState([]);
+  const [closedGroups, setClosedGroups] = useState([]);
 
   useEffect(() => {
     fetchLiveGroups();
   }, []);
+
+  useEffect(() => {
+    // Separate active and closed groups
+    const active = liveGroups.filter(group => {
+      // Auto-close if group is full
+      if (group.filledSlots >= group.totalSlots) {
+        return false; // Move to closed
+      }
+      return group.status !== 'closed';
+    });
+
+    const closed = liveGroups.filter(group => {
+      // Group is closed if full or manually closed
+      return group.filledSlots >= group.totalSlots || group.status === 'closed';
+    });
+
+    setActiveGroups(active);
+    setClosedGroups(closed);
+  }, [liveGroups]);
 
   const fetchLiveGroups = async () => {
     try {
@@ -170,7 +191,7 @@ const LiveGrouping = () => {
         </motion.div>
 
         {/* View Toggle */}
-        {!loading && liveGroups.length > 0 && (
+        {!loading && (activeGroups.length > 0 || closedGroups.length > 0) && (
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px' }}>
             <ViewToggle view={view} onViewChange={setView} />
           </div>
@@ -208,127 +229,217 @@ const LiveGrouping = () => {
           </div>
         </motion.div>
 
-        {/* Live Groups Grid */}
-        <div className={`properties-grid ${view === 'list' ? 'list-view' : 'grid-view'}`}>
-          {loading ? (
-            <p style={{ textAlign: 'center', padding: '40px', gridColumn: '1 / -1' }}>
-              Loading properties...
-            </p>
-          ) : (
-            liveGroups.map((group, index) => (
-            <motion.div
-              key={group.id}
-              className={`property-card live-group-card ${group.status}`}
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              whileHover={{ y: -8 }}
-              onClick={() => navigate(`/exhibition/live-grouping/${group.id}`)}
-              style={{ cursor: 'pointer' }}
-            >
-              <div className="property-image">
-                <img src={group.image} alt={group.title} />
-                <div className="property-badge live">🔴 Live Group</div>
-                <div className="discount-badge">{group.discount}</div>
-                <div className="timer-badge">⏰ {group.timeLeft}</div>
-              </div>
+        {/* Active Live Groups Grid */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+        >
+          <h2 className="section-title">🔴 Active Live Groups</h2>
+          <div className={`properties-grid ${view === 'list' ? 'list-view' : 'grid-view'}`}>
+            {loading ? (
+              <p style={{ textAlign: 'center', padding: '40px', gridColumn: '1 / -1' }}>
+                Loading properties...
+              </p>
+            ) : activeGroups.length === 0 ? (
+              <p style={{ textAlign: 'center', padding: '40px', gridColumn: '1 / -1', color: '#666' }}>
+                No active groups available at the moment. Check back soon!
+              </p>
+            ) : (
+              activeGroups.map((group, index) => (
+              <motion.div
+                key={group.id}
+                className={`property-card live-group-card ${group.status}`}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                whileHover={{ y: -8 }}
+                onClick={() => navigate(`/exhibition/live-grouping/${group.id}`)}
+                style={{ cursor: 'pointer' }}
+              >
+                <div className="property-image">
+                  <img src={group.image} alt={group.title} />
+                  <div className="property-badge live">🔴 Live Group</div>
+                  <div className="discount-badge">{group.discount}</div>
+                  <div className="timer-badge">⏰ {group.timeLeft}</div>
+                </div>
 
-              <div className="property-info">
-                <h3>{group.title}</h3>
-                <p className="owner">🏢 {group.developer}</p>
-                <p className="location">📍 {group.location}</p>
-                <p className="type-info">{group.type}</p>
+                <div className="property-info">
+                  <h3>{group.title}</h3>
+                  <p className="owner">🏢 {group.developer}</p>
+                  <p className="location">📍 {group.location}</p>
+                  <p className="type-info">{group.type}</p>
 
-                {/* Progress Bar */}
-                <div className="group-progress">
-                  <div className="progress-header">
-                    <span className="progress-label">
-                      {group.filledSlots}/{group.totalSlots} Buyers Joined
-                    </span>
-                    <span className="min-buyers">Min: {group.minBuyers}</span>
+                  {/* Progress Bar */}
+                  <div className="group-progress">
+                    <div className="progress-header">
+                      <span className="progress-label">
+                        {group.filledSlots}/{group.totalSlots} Buyers Joined
+                      </span>
+                      <span className="min-buyers">Min: {group.minBuyers}</span>
+                    </div>
+                    <div className="progress-bar">
+                      <div 
+                        className="progress-fill"
+                        style={{ 
+                          width: `${getProgressPercentage(group.filledSlots, group.totalSlots)}%`,
+                          backgroundColor: getStatusColor(group.status)
+                        }}
+                      />
+                    </div>
                   </div>
-                  <div className="progress-bar">
-                    <div 
-                      className="progress-fill"
-                      style={{ 
-                        width: `${getProgressPercentage(group.filledSlots, group.totalSlots)}%`,
-                        backgroundColor: getStatusColor(group.status)
+
+                  {/* Pricing - Per Sq Ft Only */}
+                  <div className="pricing-section">
+                    <div className="price-comparison">
+                      <div className="original-price">
+                        <span className="label">Regular Price</span>
+                        <span className="amount strikethrough">₹{group.pricePerSqFt?.toLocaleString() || 'N/A'} / sq ft</span>
+                      </div>
+                      <div className="group-price">
+                        <span className="label">🎯 Live Grouping Price</span>
+                        <span className="amount group-highlight">₹{group.groupPricePerSqFt?.toLocaleString() || 'N/A'} / sq ft</span>
+                      </div>
+                    </div>
+                    <div className="savings-note">
+                      💡 Final price depends on total area selected
+                    </div>
+                  </div>
+
+                  {/* Benefits */}
+                  <div className="benefits-list">
+                    <h4>Group Benefits:</h4>
+                    <ul>
+                      {group.benefits.map((benefit, idx) => (
+                        <li key={idx}>✓ {benefit}</li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Property Actions */}
+                  <div className="property-actions-grouping">
+                    <button 
+                      className="view-details-btn-grouping"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/property-details/${group.id}`, { 
+                          state: { property: group, type: 'grouping' } 
+                        });
                       }}
-                    />
+                    >
+                      View Details
+                    </button>
+                    <button 
+                      className="book-visit-btn-grouping"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate('/book-visit', { 
+                          state: { property: { ...group, type: 'grouping' } } 
+                        });
+                      }}
+                    >
+                      Book Site Visit
+                    </button>
                   </div>
-                </div>
 
-                {/* Pricing - Per Sq Ft Only */}
-                <div className="pricing-section">
-                  <div className="price-comparison">
-                    <div className="original-price">
-                      <span className="label">Regular Price</span>
-                      <span className="amount strikethrough">₹{group.pricePerSqFt?.toLocaleString() || 'N/A'} / sq ft</span>
-                    </div>
-                    <div className="group-price">
-                      <span className="label">🎯 Live Grouping Price</span>
-                      <span className="amount group-highlight">₹{group.groupPricePerSqFt?.toLocaleString() || 'N/A'} / sq ft</span>
-                    </div>
-                  </div>
-                  <div className="savings-note">
-                    💡 Final price depends on total area selected
-                  </div>
-                </div>
-
-                {/* Benefits */}
-                <div className="benefits-list">
-                  <h4>Group Benefits:</h4>
-                  <ul>
-                    {group.benefits.map((benefit, idx) => (
-                      <li key={idx}>✓ {benefit}</li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Property Actions */}
-                <div className="property-actions-grouping">
+                  {/* Action Button */}
                   <button 
-                    className="view-details-btn-grouping"
+                    className={`join-group-btn ${group.status}`}
                     onClick={(e) => {
                       e.stopPropagation();
-                      navigate(`/property-details/${group.id}`, { 
-                        state: { property: group, type: 'grouping' } 
-                      });
+                      handleJoinGroup(group);
                     }}
+                    disabled={group.status === 'closed'}
                   >
-                    View Details
-                  </button>
-                  <button 
-                    className="book-visit-btn-grouping"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate('/book-visit', { 
-                        state: { property: { ...group, type: 'grouping' } } 
-                      });
-                    }}
-                  >
-                    Book Site Visit
+                    {group.status === 'closing' ? '⚡ Join Now - Closing Soon!' : 
+                     group.status === 'closed' ? '❌ Group Closed' : 
+                     '🤝 Join This Group'}
                   </button>
                 </div>
+              </motion.div>
+              ))
+            )}
+          </div>
+        </motion.div>
 
-                {/* Action Button */}
-                <button 
-                  className={`join-group-btn ${group.status}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleJoinGroup(group);
-                  }}
-                  disabled={group.status === 'closed'}
-                >
-                  {group.status === 'closing' ? '⚡ Join Now - Closing Soon!' : 
-                   group.status === 'closed' ? '❌ Group Closed' : 
-                   '🤝 Join This Group'}
-                </button>
-              </div>
-            </motion.div>
-            ))
-          )}
-        </div>
+        {/* Closed Live Groups Section */}
+        {closedGroups.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.6 }}
+            style={{ marginTop: '60px' }}
+          >
+            <h2 className="section-title closed-section">✅ Closed Live Groups</h2>
+            <p className="section-subtitle">These groups have been successfully filled</p>
+            <div className={`properties-grid ${view === 'list' ? 'list-view' : 'grid-view'}`}>
+              {closedGroups.map((group, index) => (
+              <motion.div
+                key={group.id}
+                className="property-card live-group-card closed"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                onClick={() => navigate(`/exhibition/live-grouping/${group.id}`)}
+                style={{ cursor: 'pointer', opacity: 0.8 }}
+              >
+                <div className="property-image">
+                  <img src={group.image} alt={group.title} />
+                  <div className="property-badge closed-badge">✅ Group Closed</div>
+                  <div className="closed-overlay">
+                    <span>FULLY BOOKED</span>
+                  </div>
+                </div>
+
+                <div className="property-info">
+                  <h3>{group.title}</h3>
+                  <p className="owner">🏢 {group.developer}</p>
+                  <p className="location">📍 {group.location}</p>
+                  <p className="type-info">{group.type}</p>
+
+                  {/* Progress Bar - Full */}
+                  <div className="group-progress">
+                    <div className="progress-header">
+                      <span className="progress-label success">
+                        ✅ {group.totalSlots}/{group.totalSlots} Buyers Joined
+                      </span>
+                    </div>
+                    <div className="progress-bar">
+                      <div 
+                        className="progress-fill"
+                        style={{ 
+                          width: '100%',
+                          backgroundColor: '#10b981'
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Pricing - Per Sq Ft Only */}
+                  <div className="pricing-section">
+                    <div className="price-comparison">
+                      <div className="original-price">
+                        <span className="label">Regular Price</span>
+                        <span className="amount strikethrough">₹{group.pricePerSqFt?.toLocaleString() || 'N/A'} / sq ft</span>
+                      </div>
+                      <div className="group-price">
+                        <span className="label">🎯 Final Group Price</span>
+                        <span className="amount group-highlight">₹{group.groupPricePerSqFt?.toLocaleString() || 'N/A'} / sq ft</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Closed Status */}
+                  <div className="closed-status">
+                    <span className="closed-icon">✅</span>
+                    <span className="closed-text">This group is now closed</span>
+                  </div>
+                </div>
+              </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
 
         {/* FAQ Section */}
         <motion.div 
