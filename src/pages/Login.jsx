@@ -5,11 +5,15 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
+  GoogleAuthProvider,
+  signInWithPopup,
 } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import { useNavigate, useLocation } from "react-router-dom";
 import { performanceMonitor } from "../utils/performance";
+
+const googleProvider = new GoogleAuthProvider();
 
 const Login = () => {
   const navigate = useNavigate();
@@ -18,21 +22,21 @@ const Login = () => {
   const returnTo = location.state?.returnTo;
   const property = location.state?.property;
   const message = location.state?.message;
-  
+
   // For registration, always redirect to home page, not back to login
   const getRedirectPath = (isRegistration = false) => {
     if (isRegistration) {
       return "/"; // Always go to home after registration
     }
-    
+
     // If coming from BookSiteVisit, redirect back with property data
     if (returnTo && returnTo.includes('/book-visit')) {
-      return { 
-        path: '/book-visit', 
-        state: { property } 
+      return {
+        path: '/book-visit',
+        state: { property }
       };
     }
-    
+
     return from === "/login" ? "/" : from; // Don't redirect back to login page
   };
 
@@ -136,15 +140,15 @@ const Login = () => {
         'Login',
         signInWithEmailAndPassword(auth, email, password)
       );
-      
+
       // Navigate immediately after auth success - don't wait for context updates
       const redirectInfo = getRedirectPath(false);
-      
+
       if (typeof redirectInfo === 'object' && redirectInfo.path) {
         // Special redirect with state (like BookSiteVisit with property data)
-        navigate(redirectInfo.path, { 
-          state: redirectInfo.state, 
-          replace: true 
+        navigate(redirectInfo.path, {
+          state: redirectInfo.state,
+          replace: true
         });
       } else {
         // Normal redirect
@@ -174,7 +178,7 @@ const Login = () => {
         'Registration',
         createUserWithEmailAndPassword(auth, email, password)
       );
-      
+
       // Step 2: Create user profile in background (non-blocking)
       const userProfilePromise = performanceMonitor.trackNetworkRequest(
         'Profile Creation',
@@ -189,16 +193,16 @@ const Login = () => {
 
       // Step 3: Show success message briefly, then transition
       setRegistrationStep('success');
-      
+
       // Sign out the user immediately after registration (no auto-login)
       await signOut(auth);
-      
+
       // Show success message briefly, then start transition
       setTimeout(() => {
         setRegistrationStep('transitioning');
         setLoading(true); // Keep loading overlay during transition
       }, 800); // Reduced from 1500ms to 800ms
-      
+
       // Complete transition to login mode
       setTimeout(() => {
         setMode('login');
@@ -230,13 +234,69 @@ const Login = () => {
     }
   }, []);
 
+  // ------------------ GOOGLE LOGIN ------------------
+  const handleGoogleLogin = useCallback(async () => {
+    setLoading(true);
+    setErrors({});
+
+    try {
+      const result = await performanceMonitor.trackNetworkRequest(
+        'Google Login',
+        signInWithPopup(auth, googleProvider)
+      );
+
+      const user = result.user;
+
+      // Check if user document exists in Firestore
+      const userDocRef = doc(db, "users", user.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      if (!userDoc.exists()) {
+        // Create user profile if it doesn't exist
+        await performanceMonitor.trackNetworkRequest(
+          'Google Profile Creation',
+          setDoc(userDocRef, {
+            email: user.email,
+            name: user.displayName || "Google User",
+            is_subscribed: false,
+            subscription_expiry: null,
+            created_at: new Date().toISOString(),
+            login_method: 'google'
+          })
+        );
+      }
+
+      const redirectInfo = getRedirectPath(false);
+
+      if (typeof redirectInfo === 'object' && redirectInfo.path) {
+        navigate(redirectInfo.path, {
+          state: redirectInfo.state,
+          replace: true
+        });
+      } else {
+        navigate(redirectInfo, { replace: true });
+      }
+    } catch (error) {
+      console.error("Google login error:", error);
+      let msg = "Google login failed";
+      if (error.code === "auth/popup-closed-by-user") {
+        msg = "Login popup closed. Please try again.";
+      } else if (error.code === "auth/cancelled-popup-request") {
+        msg = "Multiple login attempts. Please wait.";
+      }
+      setErrors({ submit: msg });
+    } finally {
+      setLoading(false);
+    }
+  }, [navigate, getRedirectPath]);
+
   // ------------------ SUBMIT ------------------
   const handleSubmit = useCallback((e) => {
     e.preventDefault();
-    
+
     // Prevent submission if already loading
     if (loading) return;
-    
+
     if (!validate()) return;
 
     if (mode === "login") {
@@ -250,10 +310,10 @@ const Login = () => {
   const toggleMode = useCallback(() => {
     // Don't allow toggle during transition
     if (registrationStep === 'transitioning') return;
-    
+
     // Switch mode
     setMode((prev) => (prev === "login" ? "register" : "login"));
-    
+
     // Reset all form data
     setFormData({
       name: "",
@@ -261,7 +321,7 @@ const Login = () => {
       password: "",
       confirmPassword: "",
     });
-    
+
     // Reset all states
     setErrors({});
     setShowPassword(false);
@@ -286,9 +346,9 @@ const Login = () => {
             <div className="loading-spinner-large"></div>
             <p className="loading-text">
               {registrationStep === 'transitioning' ? "Switching to login..." :
-               mode === "login" ? "Signing you in..." : 
-               registrationStep === 'creating' ? "Creating your account..." : 
-               "Processing..."}
+                mode === "login" ? "Signing you in..." :
+                  registrationStep === 'creating' ? "Creating your account..." :
+                    "Processing..."}
             </p>
           </div>
         </motion.div>
@@ -390,9 +450,8 @@ const Login = () => {
                   disabled={loading || registrationStep === 'transitioning'}
                 >
                   <i
-                    className={`far ${
-                      showConfirmPassword ? "fa-eye" : "fa-eye-slash"
-                    }`}
+                    className={`far ${showConfirmPassword ? "fa-eye" : "fa-eye-slash"
+                      }`}
                   />
                 </button>
               </div>
@@ -403,17 +462,16 @@ const Login = () => {
           )}
 
           {errors.submit && (
-            <p className={`error submit-error ${
-              errors.submit.includes('successful') ? 'success-login' : 
+            <p className={`error submit-error ${errors.submit.includes('successful') ? 'success-login' :
               errors.submit.includes('reset') ? 'info-message' : ''
-            }`}>
+              }`}>
               {errors.submit}
             </p>
           )}
 
           {/* Registration Success Message */}
           {mode === "register" && registrationStep === 'success' && (
-            <motion.div 
+            <motion.div
               className="success-message"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -422,8 +480,8 @@ const Login = () => {
             </motion.div>
           )}
 
-          <button 
-            className="submit-btn" 
+          <button
+            className="submit-btn"
             disabled={loading || (mode === "register" && (registrationStep === 'success' || registrationStep === 'transitioning'))}
           >
             {loading ? (
@@ -440,12 +498,29 @@ const Login = () => {
               "Register"
             )}
           </button>
+
+          {mode === "login" && (
+            <div className="social-login">
+              <div className="divider">
+                <span>or</span>
+              </div>
+              <button
+                type="button"
+                className="google-btn"
+                onClick={handleGoogleLogin}
+                disabled={loading}
+              >
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" />
+                <span>Login with Google</span>
+              </button>
+            </div>
+          )}
         </form>
 
         <p className="toggle-text">
           {mode === "login" ? "Don't have an account?" : "Already have one?"}{" "}
-          <span 
-            onClick={loading || registrationStep === 'transitioning' ? undefined : toggleMode} 
+          <span
+            onClick={loading || registrationStep === 'transitioning' ? undefined : toggleMode}
             className={`toggle-link ${loading || registrationStep === 'transitioning' ? 'disabled' : ''}`}
           >
             {mode === "login" ? "Register" : "Login"}
