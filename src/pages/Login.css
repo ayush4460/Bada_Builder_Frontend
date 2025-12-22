@@ -24,7 +24,7 @@
   text-align: center;
 }
 
-.login-box>p {
+.login-box > p {
   margin-bottom: 30px;
   color: #666;
   text-align: center;
@@ -98,9 +98,7 @@
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
 .flex {
@@ -210,12 +208,10 @@
     font-size: 15px;
   }
 }
-
 /* Login & Register buttons */
 .submit-btn,
 .register-btn {
-  color: white !important;
-  /* Text color white */
+  color: white !important; /* Text color white */
 }
 
 .password-wrapper {
@@ -276,8 +272,7 @@
   z-index: 9999;
   cursor: wait;
   user-select: none;
-  pointer-events: all;
-  /* Ensure it blocks all clicks */
+  pointer-events: all; /* Ensure it blocks all clicks */
 }
 
 .loading-content {
@@ -349,62 +344,3 @@
   text-decoration: none;
 }
 
-
-/* Social Login Styles */
-.social-login {
-  margin-top: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.divider {
-  display: flex;
-  align-items: center;
-  text-align: center;
-  color: #94a3b8;
-  font-size: 14px;
-}
-
-.divider::before,
-.divider::after {
-  content: "";
-  flex: 1;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.divider span {
-  padding: 0 10px;
-}
-
-.google-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 12px;
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  color: #1a1a1a;
-  font-weight: 600;
-  font-size: 15px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.google-btn img {
-  width: 20px;
-  height: 20px;
-}
-
-.google-btn:hover:not(:disabled) {
-  background: #f8fafc;
-  border-color: #cbd5e1;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.google-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}

@@ -11,13 +11,6 @@ export default defineConfig({
   server: {
     // Enable history fallback for SPA routing
     historyApiFallback: true,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:3002',
-        changeOrigin: true,
-        secure: false,
-      }
-    }
   },
   preview: {
     // Enable history fallback for preview mode
