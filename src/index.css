@@ -9,8 +9,8 @@
   color: rgba(255, 255, 255, 0.87);
 
   background: radial-gradient(circle at 20% 20%, #182649, transparent 60%),
-              radial-gradient(circle at 80% 80%, #140b27, transparent 60%),
-              #000000;
+    radial-gradient(circle at 80% 80%, #140b27, transparent 60%),
+    #000000;
   background-attachment: fixed;
   background-repeat: no-repeat;
   background-size: cover;
@@ -26,6 +26,7 @@ a {
   color: #000000;
   text-decoration: inherit;
 }
+
 a:hover {
   color: #361d68;
 }
@@ -36,6 +37,21 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background: transparent;
+  width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+
+@media (max-width: 768px) {
+  body {
+    overflow-x: hidden;
+  }
 }
 
 h1 {
@@ -53,9 +69,11 @@ button {
   cursor: pointer;
   transition: border-color 0.25s;
 }
+
 button:hover {
   border-color: #d5d5d5;
 }
+
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
@@ -66,9 +84,11 @@ button:focus-visible {
     color: #213547;
     background-color: #ffffff;
   }
+
   a:hover {
     color: #58335e;
   }
+
   button {
     background-color: #58335e;
   }

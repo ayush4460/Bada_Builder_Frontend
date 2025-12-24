@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { collection, addDoc, query, where, getDocs, doc, updateDoc, getDoc, increment, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import PropertyForm from '../components/PropertyForm/PropertyForm';
+import DeveloperForm from '../components/DeveloperForm/DeveloperForm';
 import SubscriptionGuard from '../components/SubscriptionGuard/SubscriptionGuard';
 import SubscriptionService from '../services/subscriptionService';
 import { formatDate } from '../utils/dateFormatter';
@@ -65,6 +66,7 @@ const PostProperty = () => {
   const [currentSubscription, setCurrentSubscription] = useState(null);
   const [developerCredits, setDeveloperCredits] = useState(null); // Add developer credits state
   const [timerRefresh, setTimerRefresh] = useState(0); // For refreshing timers
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -75,12 +77,29 @@ const PostProperty = () => {
     description: '',
     facilities: '',
     // Developer specific fields
-    companyName: '',
+    schemeType: '', // Residential, Commercial, Both
+    residentialOptions: [], // Bungalows, Flats, etc.
+    commercialOptions: [], // Shops, Offices, Both
+    basePrice: '',
+    maxPrice: '',
+    projectLocation: '',
+    amenities: [],
+    ownerName: '',
+    possessionStatus: '',
+    reraStatus: 'No',
+    reraNumber: '',
     projectName: '',
-    totalUnits: '',
-    completionDate: '',
-    reraNumber: ''
+    projectStats: {
+      towers: '',
+      floors: '',
+      units: '',
+      area: ''
+    },
+    contactPhone: ''
   });
+
+  const [projectImages, setProjectImages] = useState([]);
+  const [brochureFile, setBrochureFile] = useState(null);
 
   useEffect(() => {
     console.log('🔍 Checking authentication...');
@@ -295,13 +314,24 @@ const PostProperty = () => {
       bhk: property.bhk || '',
       description: property.description || '',
       facilities: property.facilities ? property.facilities.join(', ') : '',
-      companyName: property.company_name || '',
+      schemeType: property.scheme_type || '',
+      residentialOptions: property.residential_options || [],
+      commercialOptions: property.commercial_options || [],
+      basePrice: property.base_price || '',
+      maxPrice: property.max_price || '',
+      projectLocation: property.project_location || '',
+      amenities: property.amenities || [],
+      ownerName: property.owner_name || '',
+      possessionStatus: property.possession_status || '',
+      reraStatus: property.rera_status || 'No',
+      reraNumber: property.rera_number || '',
       projectName: property.project_name || '',
-      totalUnits: property.total_units || '',
-      completionDate: property.completion_date || '',
-      reraNumber: property.rera_number || ''
+      projectStats: property.project_stats || { towers: '', floors: '', units: '', area: '' },
+      contactPhone: property.contact_phone || '',
+      completionDate: property.completion_date || ''
     });
     setImagePreview(property.image_url || '');
+    // Note: Multiple images logic would need expansion if editing existing ones
     // Scroll to the form or open a modal for editing
   };
 
@@ -410,35 +440,98 @@ const PostProperty = () => {
       return;
     }
 
-    console.log('🚀 Starting property submission...');
+    console.log('🚀 Validating property form...');
+
+    // --- Validation Logic ---
+    if (userType === 'developer') {
+      // Developer Validation
+      const devRequired = [
+        { field: 'projectName', label: 'Project Name' },
+        { field: 'schemeType', label: 'Scheme Type' },
+        { field: 'projectLocation', label: 'Project Location' },
+        { field: 'basePrice', label: 'Min Price' },
+        { field: 'maxPrice', label: 'Max Price' },
+        { field: 'possessionStatus', label: 'Possession Status' },
+        { field: 'contactPhone', label: 'Contact Phone' },
+        { field: 'description', label: 'Project Description' }
+      ];
+
+      const missingDev = devRequired.filter(item => {
+        const value = formData[item.field];
+        return !value || (typeof value === 'string' && !value.trim());
+      });
+
+      if (missingDev.length > 0) {
+        alert(`Please fill in required fields: ${missingDev.map(i => i.label).join(', ')}`);
+        return;
+      }
+
+      if (formData.contactPhone.length !== 10) {
+        alert('Please enter a valid 10-digit phone number');
+        return;
+      }
+
+      if (projectImages.length < 5) {
+        alert(`Please upload at least 5 project images (currently ${projectImages.length})`);
+        return;
+      }
+
+      if (projectImages.length > 30) {
+        alert(`Maximum 30 images allowed (currently ${projectImages.length})`);
+        return;
+      }
+
+      if ((formData.possessionStatus === 'Under Construction' || formData.possessionStatus === 'Just Launched') && !formData.completionDate) {
+        alert('Completion Date is required for the selected possession status');
+        return;
+      }
+
+      if (formData.reraStatus === 'Yes' && !formData.reraNumber?.trim()) {
+        alert('RERA Number is required if RERA Status is "Yes"');
+        return;
+      }
+
+      // If all valid for developer, show disclaimer instead of submitting directly
+      setShowDisclaimer(true);
+      return;
+
+    } else {
+      // Individual Validation
+      const requiredFields = [
+        { field: 'title', label: 'Property Title' },
+        { field: 'type', label: 'Property Type' },
+        { field: 'location', label: 'Location' },
+        { field: 'price', label: 'Price' },
+        { field: 'description', label: 'Description' }
+      ];
+
+      const missingFields = requiredFields.filter(item => !formData[item.field]?.trim());
+
+      if (missingFields.length > 0) {
+        alert(`Please fill in required fields: ${missingFields.map(i => i.label).join(', ')}`);
+        return;
+      }
+
+      if (!imageFile && !editingProperty) {
+        alert('Please upload a property image');
+        return;
+      }
+
+      // For individual, proceed directly or show disclaimer? 
+      // User specifically mentioned Developer Form destination/disclaimer issues.
+      // I'll proceed directly for individual to avoid changing their existing flow,
+      // but developers get the disclaimer.
+    }
+
+    // Proceed to final submission (for Individual)
+    handleFinalSubmit();
+  };
+
+  const handleFinalSubmit = async () => {
+    console.log('🚀 Starting final submission...');
     console.log('Current User:', currentUser);
     console.log('User Type:', userType);
     console.log('Form Data:', formData);
-    console.log('Selected Property Flow:', selectedPropertyFlow);
-
-    // Validate required fields
-    const requiredFields = ['title', 'type', 'location', 'price', 'description'];
-    const missingFields = requiredFields.filter(field => !formData[field]?.trim());
-
-    if (missingFields.length > 0) {
-      console.error('❌ Missing required fields:', missingFields);
-      alert(`Please fill in all required fields: ${missingFields.join(', ')}`);
-      return;
-    }
-
-    // Validate developer fields if user is developer
-    if (userType === 'developer') {
-      const developerRequiredFields = ['companyName', 'projectName'];
-      const missingDeveloperFields = developerRequiredFields.filter(field => !formData[field]?.trim());
-
-      if (missingDeveloperFields.length > 0) {
-        alert(`Please fill in required developer fields: ${missingDeveloperFields.join(', ')}`);
-        return;
-      }
-    }
-
-    // Note: Subscription validation is now handled by SubscriptionGuard component
-    // No need to check subscription here as the form is only accessible after verification
 
     setLoading(true);
 
@@ -452,17 +545,17 @@ const PostProperty = () => {
         console.log('✅ Image uploaded successfully:', imageUrl);
       }
 
-      // Prepare property data for Firestore
+      // Prepare base property data for Firestore
       const propertyData = {
-        title: formData.title,
-        type: formData.type,
-        location: formData.location,
-        price: formData.price,
-        description: formData.description,
+        title: userType === 'developer' ? (formData.projectName || '') : (formData.title || ''),
+        type: userType === 'developer' ? (formData.schemeType || '') : (formData.type || ''),
+        location: userType === 'developer' ? (formData.projectLocation || '') : (formData.location || ''),
+        price: userType === 'developer' ? `₹${formData.basePrice} - ₹${formData.maxPrice}` : (formData.price || ''),
+        description: formData.description || '',
         facilities: formData.facilities ? formData.facilities.split(',').map(f => f.trim()).filter(f => f) : [],
-        image_url: imageUrl, // Save the Cloudinary URL
-        user_id: currentUser.uid,
-        user_type: userType,
+        image_url: imageUrl,
+        user_id: currentUser.uid || '',
+        user_type: userType || 'individual',
         created_at: new Date().toISOString(),
         status: 'active'
       };
@@ -475,24 +568,63 @@ const PostProperty = () => {
           const userData = userDoc.data();
           if (userData.subscription_expiry) {
             propertyData.subscription_expiry = userData.subscription_expiry;
-            console.log('📅 Property subscription expiry set to:', userData.subscription_expiry);
           }
         }
       } catch (error) {
         console.error('Error fetching user subscription:', error);
       }
 
-      // Only add BHK if applicable
+      // Only add BHK if applicable (Individual flow usually)
       if (showBhkType && formData.bhk) {
         propertyData.bhk = formData.bhk;
       }
 
       if (userType === 'developer') {
-        propertyData.company_name = formData.companyName || '';
-        propertyData.project_name = formData.projectName || '';
-        propertyData.total_units = formData.totalUnits || '';
-        propertyData.completion_date = formData.completionDate || '';
+        console.log('📸 Uploading project images...');
+        // Upload multiple project images
+        const projectImageUrls = await Promise.all(
+          projectImages.map(async (file) => {
+            try {
+              return await uploadToCloudinary(file);
+            } catch (err) {
+              console.error('Failed to upload one of the project images:', err);
+              throw new Error('One or more project images failed to upload. Please check your connection.');
+            }
+          })
+        );
+
+        propertyData.project_images = projectImageUrls;
+        propertyData.images = projectImageUrls; // Also save to 'images' for PropertyDetails compatibility
+        propertyData.image_url = projectImageUrls[0] || ''; // Set first image as main thumbnail
+
+        // Brochure (PDF)
+        if (brochureFile) {
+          try {
+            propertyData.brochure_url = await uploadToCloudinary(brochureFile);
+          } catch (err) {
+            console.error('Failed to upload brochure:', err);
+            // Non-critical failure for brochure? User might want it fixed though.
+            throw new Error('Failed to upload brochure. Please try again.');
+          }
+        }
+
+        // Additional Developer specific fields (consistent with existing logic)
+        propertyData.scheme_type = formData.schemeType || '';
+        propertyData.residential_options = formData.residentialOptions || [];
+        propertyData.commercial_options = formData.commercialOptions || [];
+        propertyData.base_price = formData.basePrice || '';
+        propertyData.max_price = formData.maxPrice || '';
+        propertyData.project_location = formData.projectLocation || '';
+        propertyData.amenities = formData.amenities || [];
+        propertyData.owner_name = formData.ownerName || '';
+        propertyData.company_name = formData.ownerName || ''; // For ByDeveloper.jsx compatibility
+        propertyData.possession_status = formData.possessionStatus || '';
+        propertyData.rera_status = formData.reraStatus || 'No';
         propertyData.rera_number = formData.reraNumber || '';
+        propertyData.project_name = formData.projectName || '';
+        propertyData.project_stats = formData.projectStats || { towers: '', floors: '', units: '', area: '' };
+        propertyData.contact_phone = formData.contactPhone || '';
+        propertyData.completion_date = formData.completionDate || '';
 
         // Developer Property Logic: 12 months validity
         const expiryDate = new Date();
@@ -532,6 +664,7 @@ const PostProperty = () => {
       }
 
       setLoading(false);
+      setShowDisclaimer(false); // Close disclaimer if open
       // alert(`Property posted successfully! You can now view it in the ${userType === 'developer' ? 'Developer' : 'Individual'} Exhibition.`);
 
       // Navigate to the appropriate exhibition page based on user type
@@ -753,18 +886,33 @@ const PostProperty = () => {
                   </div>
                 )}
 
-                <PropertyForm
-                  formData={formData}
-                  handleChange={handleChange}
-                  handleImageChange={handleImageChange}
-                  imagePreview={imagePreview}
-                  handleSubmit={handleSubmit}
-                  loading={loading}
-                  userType={userType}
-                  showBhkType={showBhkType}
-                  editingProperty={editingProperty}
-                  disabled={userType === 'developer' && developerCredits !== null && developerCredits <= 0}
-                />
+                {userType === 'developer' ? (
+                  <DeveloperForm
+                    formData={formData}
+                    setFormData={setFormData}
+                    projectImages={projectImages}
+                    setProjectImages={setProjectImages}
+                    brochureFile={brochureFile}
+                    setBrochureFile={setBrochureFile}
+                    handleChange={handleChange}
+                    handleSubmit={handleSubmit}
+                    loading={loading}
+                    disabled={developerCredits !== null && developerCredits <= 0}
+                  />
+                ) : (
+                  <PropertyForm
+                    formData={formData}
+                    handleChange={handleChange}
+                    handleImageChange={handleImageChange}
+                    imagePreview={imagePreview}
+                    handleSubmit={handleSubmit}
+                    loading={loading}
+                    userType={userType}
+                    showBhkType={showBhkType}
+                    editingProperty={editingProperty}
+                    disabled={userType === 'developer' && developerCredits !== null && developerCredits <= 0}
+                  />
+                )}
               </>
             )}
 
@@ -865,6 +1013,72 @@ const PostProperty = () => {
             )}
           </>
         )}
+        {/* Disclaimer Modal */}
+        <AnimatePresence>
+          {showDisclaimer && (
+            <div className="disclaimer-overlay">
+              <motion.div
+                className="disclaimer-content"
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              >
+                <div className="disclaimer-header">
+                  <div className="disclaimer-icon">⚠️</div>
+                  <h2>Post Property Disclaimer</h2>
+                </div>
+                <div className="disclaimer-body">
+                  <p>Please review your project details before posting. By clicking "Confirm & Post", you agree that:</p>
+                  <ul>
+                    <li>The information provided is accurate and authentic.</li>
+                    <li>You have the necessary rights and permissions to list this project.</li>
+                    <li>This project will be listed in the <strong>Developer Exhibition</strong>.</li>
+                    <li>One credit will be deducted from your developer account.</li>
+                  </ul>
+
+                  <div className="project-summary-box">
+                    <h4>Project Summary</h4>
+                    <div className="summary-item">
+                      <span>Project Name:</span>
+                      <strong>{formData.projectName}</strong>
+                    </div>
+                    <div className="summary-item">
+                      <span>Location:</span>
+                      <strong>{formData.projectLocation}</strong>
+                    </div>
+                    <div className="summary-item">
+                      <span>Price Range:</span>
+                      <strong>₹{formData.basePrice} - ₹{formData.maxPrice}</strong>
+                    </div>
+                  </div>
+                </div>
+                <div className="disclaimer-footer">
+                  <button
+                    className="cancel-btn"
+                    onClick={() => setShowDisclaimer(false)}
+                    disabled={loading}
+                  >
+                    Go Back
+                  </button>
+                  <button
+                    className="confirm-btn"
+                    onClick={handleFinalSubmit}
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <span className="flex items-center gap-2">
+                        <span className="spinner"></span>
+                        Posting...
+                      </span>
+                    ) : (
+                      'Confirm & Post'
+                    )}
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
       </motion.div>
     </div>
   );

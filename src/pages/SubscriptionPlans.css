@@ -165,7 +165,9 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .flex {
@@ -200,7 +202,16 @@
 
 @media (max-width: 768px) {
   .subscription-page {
-    padding: 80px 15px 40px;
+    padding: 80px 0 40px;
+    width: 100vw;
+    overflow-x: hidden;
+  }
+
+  .subscription-container {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0 1rem;
   }
 
   .subscription-header h1 {
@@ -218,6 +229,7 @@
 
   .plan-card {
     padding: 30px 20px;
+    border-radius: 12px;
   }
 
   .plan-card.popular {
@@ -232,6 +244,7 @@
     font-size: 14px;
   }
 }
+
 /* Payment Loading Styles */
 .spinner {
   width: 16px;
@@ -244,7 +257,9 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .flex {

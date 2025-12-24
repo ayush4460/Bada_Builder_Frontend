@@ -9,24 +9,7 @@ import { auth } from '../../firebase';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
-const calcdropdownItems = [
-  { label: "Funds from Operations (FFO)", href: "/calculator/FFO" },
-  { label: "Adjusted Funds from Operations (AFFO)", href: "/calculator/AFFO" },
-  { label: "Net Operating Income (NOI)", href: "/calculator/NOI" },
-  { label: "Cap Rate (Capitalization Rate)", href: "/calculator/CapRate" },
-  { label: "Net Asset Value (NAV)", href: "/calculator/NAV" },
-  { label: "Loan-to-Value Ratio (LTV)", href: "/calculator/LTV" },
-  { label: "Dividend Yield", href: "/calculator/DividendYield" },
-  { label: "Payout Ratio (based on AFFO)", href: "/calculator/PayoutRatio" },
-  { label: "Debt Service Coverage Ratio (DSCR)", href: "/calculator/DSCR" },
-  { label: "Internal Rate of Return (IRR)", href: "/calculator/IRR" },
-  { label: "Total Return", href: "/calculator/TotalReturn" },
-  { label: "Occupancy Rate", href: "/calculator/OccupancyRate" },
-  { label: "EBITDAre", href: "/calculator/EBITDAre" },
-  { label: "Price-to-FFO Ratio (P/FFO)", href: "/calculator/PFFO" },
-  { label: "Discounted Cash Flow (DCF)", href: "/calculator/DCF" },
-  { label: "Net Property Value (NPV)", href: "/calculator/NPV" },
-];
+// Real Estate menu removed as per user request
 
 const dropdownItems = [
   { label: 'Lease and asset management', href: '/learn/lease-and-asset-management' },
@@ -44,10 +27,8 @@ const dropdownItems = [
 
 const Header = () => {
   const [showDropdown, setShowDropdown] = useState(false);
-  const [CaclshowDropdown, setCaclShowDropdown] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [mobileLearnOpen, setMobileLearnOpen] = useState(false);
-  const [mobileCalcOpen, setMobileCalcOpen] = useState(false);
   const [isUserTypeModalOpen, setIsUserTypeModalOpen] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -155,27 +136,11 @@ const Header = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
     if (isMobileMenuOpen) {
       setMobileLearnOpen(false);
-      setMobileCalcOpen(false);
     }
   };
 
   const toggleMobileLearn = () => {
     setMobileLearnOpen(!mobileLearnOpen);
-  };
-
-  const toggleMobileCalc = () => {
-    setMobileCalcOpen(!mobileCalcOpen);
-  };
-
-  const calchandleMouseEnter = () => {
-    if (calctimeoutRef.current) clearTimeout(calctimeoutRef.current);
-    setCaclShowDropdown(true);
-  };
-
-  const calchandleMouseLeave = () => {
-    calctimeoutRef.current = setTimeout(() => {
-      setCaclShowDropdown(false);
-    }, 150);
   };
 
   const handleMouseEnter = () => {
@@ -252,15 +217,15 @@ const Header = () => {
 
         {/* Desktop Navigation */}
         <nav className="flex items-center space-x-8 hidden lg:flex font-semibold text-gray-900">
-          <Link 
-            to="/exhibition" 
+          <Link
+            to="/exhibition"
             className="nav-link relative py-2 px-2 text-gray-900 hover:text-[#58335e] transition-all duration-200 after:content-[''] after:absolute after:w-0 after:h-0.5 after:bg-[#58335e] after:left-0 after:bottom-0 after:transition-all after:duration-300 hover:after:w-full"
           >
             Exhibition
           </Link>
-          
-          <Link 
-            to="/services" 
+
+          <Link
+            to="/services"
             className="nav-link relative py-2 px-2 text-gray-900 hover:text-[#58335e] transition-all duration-200 after:content-[''] after:absolute after:w-0 after:h-0.5 after:bg-[#58335e] after:left-0 after:bottom-0 after:transition-all after:duration-300 hover:after:w-full"
           >
             Services
@@ -273,7 +238,7 @@ const Header = () => {
             onMouseLeave={handleMouseLeave}
           >
             <div className={`nav-link cursor-pointer py-2 px-2 text-gray-900 transition-all duration-200 flex items-center gap-1 relative after:content-[''] after:absolute after:w-0 after:h-0.5 after:bg-[#58335e] after:left-0 after:bottom-0 after:transition-all after:duration-300 ${showDropdown ? 'text-[#58335e] after:w-full' : 'hover:text-[#58335e] hover:after:w-full'}`}>
-              Learn Reit's 
+              Learn Reit's
               <span className={`inline-block transition-transform duration-200 ${showDropdown ? 'rotate-180' : ''}`}>
                 ▾
               </span>
@@ -296,45 +261,22 @@ const Header = () => {
             )}
           </div>
 
-          {/* Calculator Dropdown */}
           <div
-            className="relative inline-block text-left"
-            onMouseEnter={calchandleMouseEnter}
-            onMouseLeave={calchandleMouseLeave}
+            onClick={() => alert("Investment feature coming soon!")}
+            className="nav-link relative py-2 px-2 text-gray-900 hover:text-[#58335e] transition-all duration-200 cursor-pointer after:content-[''] after:absolute after:w-0 after:h-0.5 after:bg-[#58335e] after:left-0 after:bottom-0 after:transition-all after:duration-300 hover:after:w-full"
           >
-            <div className={`nav-link cursor-pointer py-2 px-2 text-gray-900 transition-all duration-200 flex items-center gap-1 relative after:content-[''] after:absolute after:w-0 after:h-0.5 after:bg-[#58335e] after:left-0 after:bottom-0 after:transition-all after:duration-300 ${CaclshowDropdown ? 'text-[#58335e] after:w-full' : 'hover:text-[#58335e] hover:after:w-full'}`}>
-              Calculator 
-              <span className={`inline-block transition-transform duration-200 ${CaclshowDropdown ? 'rotate-180' : ''}`}>
-                ▾
-              </span>
-            </div>
-
-            {CaclshowDropdown && (
-              <div className="dropdown-menu absolute left-0 mt-1 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-20 py-2 animate-fadeIn">
-                <div className="max-h-96 overflow-y-auto">
-                  {calcdropdownItems.map((item, index) => (
-                    <Link
-                      key={index}
-                      to={item.href}
-                      className="block px-5 py-3 text-sm text-gray-800 hover:bg-purple-50 hover:text-[#58335e] transition-all duration-150 border-l-4 border-transparent hover:border-[#58335e] font-semibold"
-                    >
-                      {item.label}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
+            Investment
           </div>
 
-          <Link 
-            to="/contact" 
+          <Link
+            to="/contact"
             className="nav-link relative py-2 px-2 text-gray-900 hover:text-[#58335e] transition-all duration-200 after:content-[''] after:absolute after:w-0 after:h-0.5 after:bg-[#58335e] after:left-0 after:bottom-0 after:transition-all after:duration-300 hover:after:w-full"
           >
             Contact Us
           </Link>
-          
-          <Link 
-            to="/about" 
+
+          <Link
+            to="/about"
             className="nav-link relative py-2 px-2 text-gray-900 hover:text-[#58335e] transition-all duration-200 after:content-[''] after:absolute after:w-0 after:h-0.5 after:bg-[#58335e] after:left-0 after:bottom-0 after:transition-all after:duration-300 hover:after:w-full"
           >
             Who are we
@@ -343,14 +285,14 @@ const Header = () => {
 
         {/* Desktop Buttons */}
         <div className="hidden lg:flex items-center gap-3 flex-shrink-0">
-          <button 
+          <button
             onClick={() => setIsUserTypeModalOpen(true)}
             className="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-2.5 rounded-full shadow-md hover:shadow-lg hover:from-green-700 hover:to-green-800 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-opacity-50 font-medium text-sm tracking-wide transform hover:scale-105 active:scale-95 whitespace-nowrap"
           >
             Post Property
           </button>
           {isLoggedIn ? (
-            <div 
+            <div
               className="relative"
               onMouseEnter={handleProfileMouseEnter}
               onMouseLeave={handleProfileMouseLeave}
@@ -360,7 +302,7 @@ const Header = () => {
                   {getUserInitials()}
                 </span>
               </button>
-              
+
               {showProfileDropdown && (
                 <div className="profile-dropdown">
                   <div className="profile-dropdown-header">
@@ -376,9 +318,9 @@ const Header = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="profile-dropdown-divider"></div>
-                  
+
                   <div className="profile-dropdown-details">
                     <div className="profile-detail-item">
                       <span className="profile-detail-label">Name:</span>
@@ -393,10 +335,10 @@ const Header = () => {
                       <span className="profile-detail-value">{getUserPhone()}</span>
                     </div>
                   </div>
-                  
+
                   <div className="profile-dropdown-divider"></div>
-                  
-                  <button 
+
+                  <button
                     onClick={() => {
                       navigate('/profile');
                       setShowProfileDropdown(false);
@@ -408,8 +350,8 @@ const Header = () => {
                     </svg>
                     View Profile
                   </button>
-                  
-                  <button 
+
+                  <button
                     onClick={handleLogout}
                     className="profile-dropdown-logout"
                   >
@@ -449,7 +391,7 @@ const Header = () => {
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
         <div className="lg:hidden fixed inset-0 z-50 bg-black bg-opacity-50" onClick={toggleMobileMenu}>
-          <div 
+          <div
             className="absolute top-0 right-0 w-80 max-w-full h-full bg-white shadow-xl transform transition-transform duration-300 ease-out"
             onClick={(e) => e.stopPropagation()}
           >
@@ -485,7 +427,7 @@ const Header = () => {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="mobile-profile-details">
                       <div className="mobile-profile-detail">
                         <span className="mobile-detail-label">Name:</span>
@@ -500,8 +442,8 @@ const Header = () => {
                         <span className="mobile-detail-value">{getUserPhone()}</span>
                       </div>
                     </div>
-                    
-                    <Link 
+
+                    <Link
                       to="/profile"
                       onClick={toggleMobileMenu}
                       className="mobile-view-profile-btn"
@@ -511,8 +453,8 @@ const Header = () => {
                       </svg>
                       View Profile
                     </Link>
-                    
-                    <button 
+
+                    <button
                       onClick={handleLogout}
                       className="mobile-logout-btn"
                     >
@@ -529,7 +471,7 @@ const Header = () => {
                 )}
 
                 {/* Post Property Button */}
-                <button 
+                <button
                   onClick={() => {
                     toggleMobileMenu();
                     setIsUserTypeModalOpen(true);
@@ -544,7 +486,7 @@ const Header = () => {
                 <Link to="/exhibition" onClick={toggleMobileMenu} className="mobile-menu-item">
                   Exhibition
                 </Link>
-                
+
                 <Link to="/services" onClick={toggleMobileMenu} className="mobile-menu-item">
                   Services
                 </Link>
@@ -557,7 +499,7 @@ const Header = () => {
                       ▾
                     </span>
                   </button>
-                  
+
                   {mobileLearnOpen && (
                     <div className="mobile-dropdown-content">
                       {dropdownItems.map((item, index) => (
@@ -574,35 +516,20 @@ const Header = () => {
                   )}
                 </div>
 
-                {/* Mobile Calculator Dropdown */}
-                <div className="mobile-dropdown">
-                  <button onClick={toggleMobileCalc} className="mobile-dropdown-btn">
-                    <span>Calculator</span>
-                    <span className={`mobile-dropdown-icon ${mobileCalcOpen ? 'rotate' : ''}`}>
-                      ▾
-                    </span>
-                  </button>
-                  
-                  {mobileCalcOpen && (
-                    <div className="mobile-dropdown-content mobile-dropdown-scrollable">
-                      {calcdropdownItems.map((item, index) => (
-                        <Link
-                          key={index}
-                          to={item.href}
-                          onClick={toggleMobileMenu}
-                          className="mobile-dropdown-item"
-                        >
-                          {item.label}
-                        </Link>
-                      ))}
-                    </div>
-                  )}
+                <div
+                  onClick={() => {
+                    alert("Investment feature coming soon!");
+                    toggleMobileMenu();
+                  }}
+                  className="mobile-menu-item cursor-pointer"
+                >
+                  Investment
                 </div>
 
                 <Link to="/contact" onClick={toggleMobileMenu} className="mobile-menu-item">
                   Contact Us
                 </Link>
-                
+
                 <Link to="/about" onClick={toggleMobileMenu} className="mobile-menu-item">
                   Who are we
                 </Link>
@@ -613,9 +540,9 @@ const Header = () => {
       )}
 
       {/* User Type Modal */}
-      <UserTypeModal 
-        isOpen={isUserTypeModalOpen} 
-        onClose={() => setIsUserTypeModalOpen(false)} 
+      <UserTypeModal
+        isOpen={isUserTypeModalOpen}
+        onClose={() => setIsUserTypeModalOpen(false)}
       />
 
       {/* Logout Confirmation Modal */}
@@ -633,7 +560,7 @@ const Header = () => {
                 </svg>
               </button>
             </div>
-            
+
             <div className="mb-6 text-center">
               <div className="mb-4">
                 <svg className="w-16 h-16 mx-auto text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -647,7 +574,7 @@ const Header = () => {
                 You will need to login again to access your account.
               </p>
             </div>
-            
+
             <div className="flex gap-3 justify-center">
               <button
                 onClick={cancelLogout}

@@ -7,7 +7,7 @@ import "./Footer.css";
 const Footer = () => {
   return (
     <footer className="text-white py-10 px-6 md:px-20">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-10">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
 
         {/* Updated Logo Section */}
         <div>
@@ -21,37 +21,37 @@ const Footer = () => {
           </p>
 
           <div className="flex space-x-4 mt-6">
-            <a 
-              href="https://instagram.com" 
-              target="_blank" 
-              rel="noopener noreferrer" 
+            <a
+              href="https://instagram.com"
+              target="_blank"
+              rel="noopener noreferrer"
               className="social-icon hover:scale-110 transition-transform"
               aria-label="Instagram"
             >
               <FaInstagram />
             </a>
-            <a 
-              href="https://facebook.com" 
-              target="_blank" 
-              rel="noopener noreferrer" 
+            <a
+              href="https://facebook.com"
+              target="_blank"
+              rel="noopener noreferrer"
               className="social-icon hover:scale-110 transition-transform"
               aria-label="Facebook"
             >
               <FaFacebookF />
             </a>
-            <a 
-              href="https://linkedin.com" 
-              target="_blank" 
-              rel="noopener noreferrer" 
+            <a
+              href="https://linkedin.com"
+              target="_blank"
+              rel="noopener noreferrer"
               className="social-icon hover:scale-110 transition-transform"
               aria-label="LinkedIn"
             >
               <FaLinkedinIn />
             </a>
-            <a 
-              href="https://youtube.com" 
-              target="_blank" 
-              rel="noopener noreferrer" 
+            <a
+              href="https://youtube.com"
+              target="_blank"
+              rel="noopener noreferrer"
               className="social-icon hover:scale-110 transition-transform"
               aria-label="YouTube"
             >
@@ -64,7 +64,7 @@ const Footer = () => {
         <div>
           <h3 className="text-lg font-medium mb-4">Quick Links</h3>
           <ul className="space-y-2 text-gray-400 text-sm">
-            <li><Link to="/booksitevisit" className="footer-link hover:text-white transition-colors">Book a Site Visit</Link></li>
+            <li><Link to="/book-visit" className="footer-link hover:text-white transition-colors">Book a Site Visit</Link></li>
             <li><Link to="/exhibition/individual" className="footer-link hover:text-white transition-colors">Exhibition</Link></li>
             <li><Link to="/services" className="footer-link hover:text-white transition-colors">Services</Link></li>
             <li><Link to="/subscription-plans" className="footer-link hover:text-white transition-colors">Pricing</Link></li>
@@ -82,6 +82,44 @@ const Footer = () => {
             <li><Link to="/login" className="footer-link hover:text-white transition-colors">Login / Sign Up</Link></li>
             <li><Link to="/about" className="footer-link hover:text-white transition-colors">About Us</Link></li>
           </ul>
+        </div>
+
+        {/* Calculator Links */}
+        <div>
+          <h3 className="text-lg font-medium mb-4">Calculators</h3>
+          <div className="flex flex-col space-y-4">
+            <div>
+              <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Performance</h4>
+              <ul className="space-y-1 text-gray-400 text-xs">
+                <li><Link to="/calculator/FFO" className="footer-link hover:text-white transition-colors">FFO</Link></li>
+                <li><Link to="/calculator/AFFO" className="footer-link hover:text-white transition-colors">AFFO</Link></li>
+                <li><Link to="/calculator/NOI" className="footer-link hover:text-white transition-colors">NOI</Link></li>
+                <li><Link to="/calculator/EBITDAre" className="footer-link hover:text-white transition-colors">EBITDAre</Link></li>
+                <li><Link to="/calculator/OccupancyRate" className="footer-link hover:text-white transition-colors">Occupancy Rate</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Valuation & Finance</h4>
+              <ul className="space-y-1 text-gray-400 text-xs">
+                <li><Link to="/calculator/CapRate" className="footer-link hover:text-white transition-colors">Cap Rate</Link></li>
+                <li><Link to="/calculator/NAV" className="footer-link hover:text-white transition-colors">NAV</Link></li>
+                <li><Link to="/calculator/PFFO" className="footer-link hover:text-white transition-colors">P/FFO Ratio</Link></li>
+                <li><Link to="/calculator/DCF" className="footer-link hover:text-white transition-colors">DCF</Link></li>
+                <li><Link to="/calculator/NPV" className="footer-link hover:text-white transition-colors">NPV</Link></li>
+                <li><Link to="/calculator/LTV" className="footer-link hover:text-white transition-colors">LTV Ratio</Link></li>
+                <li><Link to="/calculator/DSCR" className="footer-link hover:text-white transition-colors">DSCR</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Investment</h4>
+              <ul className="space-y-1 text-gray-400 text-xs">
+                <li><Link to="/calculator/DividendYield" className="footer-link hover:text-white transition-colors">Dividend Yield</Link></li>
+                <li><Link to="/calculator/PayoutRatio" className="footer-link hover:text-white transition-colors">Payout Ratio</Link></li>
+                <li><Link to="/calculator/IRR" className="footer-link hover:text-white transition-colors">IRR</Link></li>
+                <li><Link to="/calculator/TotalReturn" className="footer-link hover:text-white transition-colors">Total Return</Link></li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
 

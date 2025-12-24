@@ -37,17 +37,17 @@ const ByDeveloper = () => {
               });
             }
           });
-          
+
           // Filter out expired properties and mark them as expired
           const activeProjects = await filterAndMarkExpiredProperties(projectsData);
-          
+
           // Sort by created_at on client side
           activeProjects.sort((a, b) => {
             const dateA = new Date(a.created_at || 0);
             const dateB = new Date(b.created_at || 0);
             return dateB - dateA;
           });
-          
+
           setProjects(activeProjects);
           setLoading(false);
         }, (error) => {
@@ -73,7 +73,7 @@ const ByDeveloper = () => {
     <div className="exhibition-page">
       <div className="exhibition-container">
         {/* Header */}
-        <motion.div 
+        <motion.div
           className="exhibition-header"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -84,7 +84,7 @@ const ByDeveloper = () => {
         </motion.div>
 
         {/* Navigation Tabs */}
-        <motion.div 
+        <motion.div
           className="exhibition-tabs"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -113,7 +113,7 @@ const ByDeveloper = () => {
 
         {/* Loading State */}
         {loading && (
-          <motion.div 
+          <motion.div
             className="loading-state"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -125,13 +125,13 @@ const ByDeveloper = () => {
 
         {/* Error State */}
         {error && (
-          <motion.div 
+          <motion.div
             className="error-state"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
           >
             <h3>⚠️ {error}</h3>
-            <button 
+            <button
               className="retry-btn"
               onClick={() => window.location.reload()}
             >
@@ -150,7 +150,7 @@ const ByDeveloper = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
               >
-                <PropertyCard 
+                <PropertyCard
                   property={{
                     ...project,
                     image: project.image_url,
@@ -169,7 +169,7 @@ const ByDeveloper = () => {
 
         {/* Empty State if no projects */}
         {!loading && !error && projects.length === 0 && (
-          <motion.div 
+          <motion.div
             className="empty-state"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

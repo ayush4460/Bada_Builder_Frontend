@@ -31,7 +31,7 @@ const PropertyDetails = () => {
   }
 
   // Prepare dynamic data with fallbacks
-  const propertyImages = property.images || [property.image] || [];
+  const propertyImages = property.images || property.project_images || [property.image_url] || [property.image] || [];
   const propertyTags = property.tags || [property.status, property.type].filter(Boolean);
   const propertyFacilities = property.facilities || property.amenities || [];
   const propertyAdvantages = property.advantages || property.nearbyPlaces || [];
@@ -41,12 +41,12 @@ const PropertyDetails = () => {
     <div className="max-w-7xl mx-auto p-4 sm:p-6">
       <div className="relative">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-          {propertyImages.slice(0, 6).map((img, idx) => (
+          {propertyImages.map((img, idx) => (
             <img
               key={idx}
               src={img}
               alt={`Property Image ${idx + 1}`}
-              className="w-full h-68 object-cover rounded"
+              className={`w-full h-68 object-cover rounded ${idx === 0 ? 'sm:col-span-2 lg:col-span-2 h-96' : 'h-48'}`}
             />
           ))}
         </div>
@@ -187,8 +187,8 @@ const PropertyDetails = () => {
       <div className="mt-10">
         <h2 className="text-xl font-semibold mb-2">More about {property.title}</h2>
         <p className="text-gray-400 leading-relaxed">
-          {property.description || 
-           `This ${property.type} is located in ${property.location} and offers excellent value for money. 
+          {property.description ||
+            `This ${property.type} is located in ${property.location} and offers excellent value for money. 
            Contact us for more details and to schedule a site visit.`}
         </p>
       </div>
