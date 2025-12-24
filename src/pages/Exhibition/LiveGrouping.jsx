@@ -44,21 +44,47 @@ const LiveGrouping = () => {
 
   const fetchLiveGroups = async () => {
     try {
-      const querySnapshot = await getDocs(collection(db, 'live_grouping_properties'));
-      const groupsData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      
-      // If no properties in database, use fallback data
-      if (groupsData.length === 0) {
-        setLiveGroups(fallbackGroups);
+      // Load from LocalStorage (Admin Posted)
+      const storedGroups = JSON.parse(localStorage.getItem('liveGroupingProperties') || '[]');
+
+      if (storedGroups.length > 0) {
+        // Ensure robust structure for display
+        const processedGroups = storedGroups.map(group => {
+          // Parse numeric inputs safely
+          const storedPrice = Number(group.pricePerSqFt);
+          const validPrice = !isNaN(storedPrice) && storedPrice > 0 ? storedPrice : 4500;
+
+          // Calculate group price based on discount
+          const discountStr = group.discount || '10%';
+          const discountVal = parseInt(discountStr.replace(/[^0-9]/g, '')) || 10;
+          const groupPrice = Math.round(validPrice * (1 - (discountVal / 100)));
+
+          return {
+            ...group,
+            // Add defaults if missing to prevent crashes
+            units: group.units || [
+              { name: "Standard Unit", area: 1200 },
+              { name: "Premium Unit", area: 1500 }
+            ],
+            benefits: group.benefits && group.benefits.length > 0 ? group.benefits : ["Group Discount", "Premium Location", "Verified Builder"],
+            filledSlots: parseInt(group.filledSlots) || 0,
+            totalSlots: parseInt(group.totalSlots) || 20,
+            minBuyers: parseInt(group.minBuyers) || 5,
+            pricePerSqFt: validPrice,
+            groupPricePerSqFt: groupPrice,
+            status: group.status || 'active',
+            image: (group.images && group.images.length > 0) ? group.images[0] : (group.imageUrl || '/placeholder-property.jpg'),
+            type: group.type || group.category || '3 BHK Apartment',
+            developer: group.developer || 'Verified Builder',
+            location: group.location || 'Vadodara'
+          };
+        });
+        setLiveGroups(processedGroups);
       } else {
-        setLiveGroups(groupsData);
+        setLiveGroups(fallbackGroups);
       }
     } catch (error) {
       console.error('Error fetching live groups:', error);
-      // Use fallback data on error
       setLiveGroups(fallbackGroups);
     } finally {
       setLoading(false);
@@ -139,7 +165,7 @@ const LiveGrouping = () => {
     setSelectedGroup(group);
     const tokenAmount = calculateTokenAmount(group.groupPricePerSqFt, group.area);
     const formattedToken = formatCurrency(tokenAmount);
-    
+
     // In production, this would open a modal or redirect to registration
     alert(`Joining group for ${group.title}!\n\nToken Amount: ${formattedToken} (0.5% of discounted price)`);
   };
@@ -165,7 +191,7 @@ const LiveGrouping = () => {
     <div className="exhibition-page live-grouping-page">
       <div className="exhibition-container">
         {/* Header */}
-        <motion.div 
+        <motion.div
           className="exhibition-header"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -182,7 +208,7 @@ const LiveGrouping = () => {
         </motion.div>
 
         {/* Navigation Tabs */}
-        <motion.div 
+        <motion.div
           className="exhibition-tabs"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -210,7 +236,7 @@ const LiveGrouping = () => {
         )}
 
         {/* How It Works Section */}
-        <motion.div 
+        <motion.div
           className="how-it-works"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -259,275 +285,279 @@ const LiveGrouping = () => {
               </p>
             ) : (
               activeGroups.map((group, index) => (
-              <motion.div
-                key={group.id}
-                className={`property-card live-group-card ${group.status}`}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                whileHover={{ y: -8 }}
-                onClick={() => navigate(`/exhibition/live-grouping/${group.id}`)}
-                style={{ cursor: 'pointer' }}
-              >
-                <div className="property-image">
-                  <img src={group.image} alt={group.title} />
-                  <div className="property-badge live">🔴 Live Group</div>
-                  <div className="discount-badge">{group.discount}</div>
-                  <div className="timer-badge">⏰ {group.timeLeft}</div>
-                </div>
-
-                <div className="property-info">
-                  <h3>{group.title}</h3>
-                  <p className="owner">🏢 {group.developer}</p>
-                  <p className="location">📍 {group.location}</p>
-                  <p className="type-info">{group.type}</p>
-
-                  {/* Progress Bar */}
-                  <div className="group-progress">
-                    <div className="progress-header">
-                      <span className="progress-label">
-                        {group.filledSlots}/{group.totalSlots} Buyers Joined
-                      </span>
-                      <span className="min-buyers">Min: {group.minBuyers}</span>
-                    </div>
-                    <div className="progress-bar">
-                      <div 
-                        className="progress-fill"
-                        style={{ 
-                          width: `${getProgressPercentage(group.filledSlots, group.totalSlots)}%`,
-                          backgroundColor: getStatusColor(group.status)
-                        }}
-                      />
-                    </div>
+                <motion.div
+                  key={group.id}
+                  className={`property-card live-group-card ${group.status}`}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  whileHover={{ y: -8 }}
+                  onClick={() => navigate(`/exhibition/live-grouping/${group.id}`)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <div className="property-image">
+                    <img src={group.image} alt={group.title} />
+                    <div className="property-badge live">🔴 Live Group</div>
+                    <div className="discount-badge">{group.discount}</div>
+                    <div className="timer-badge">⏰ {group.timeLeft}</div>
                   </div>
 
-                  {/* Pricing - Per Sq Ft & Price Range */}
-                  <div className="pricing-section">
-                    <div className="price-comparison">
-                      <div className="original-price">
-                        <span className="label">Regular Price</span>
-                        <span className="amount strikethrough">₹{group.pricePerSqFt?.toLocaleString() || 'N/A'} / sq ft</span>
+                  <div className="property-info">
+                    <h3>{group.title}</h3>
+                    <p className="owner">🏢 {group.developer}</p>
+                    <p className="location">📍 {group.location}</p>
+                    <p className="type-info">{group.type}</p>
+
+                    {/* Progress Bar */}
+                    <div className="group-progress">
+                      <div className="progress-header">
+                        <span className="progress-label">
+                          {group.filledSlots}/{group.totalSlots} Buyers Joined
+                        </span>
+                        <span className="min-buyers">Min: {group.minBuyers}</span>
                       </div>
-                      <div className="group-price">
-                        <span className="label">🎯 Live Grouping Price</span>
-                        <span className="amount group-highlight">₹{group.groupPricePerSqFt?.toLocaleString() || 'N/A'} / sq ft</span>
+                      <div className="progress-bar">
+                        <div
+                          className="progress-fill"
+                          style={{
+                            width: `${getProgressPercentage(group.filledSlots, group.totalSlots)}%`,
+                            backgroundColor: getStatusColor(group.status)
+                          }}
+                        />
                       </div>
                     </div>
-                    
-                    {/* Price Range for Multiple Units */}
-                    {group.units && group.units.length > 0 && (
-                      <div className="price-range-section">
-                        <div className="range-item">
-                          <span className="range-label">Regular Price Range:</span>
-                          <span className="range-value">
-                            {formatPriceRange(calculatePriceRange(group.pricePerSqFt, group.units))}
-                          </span>
+
+                    {/* Pricing - Per Sq Ft & Price Range */}
+                    <div className="pricing-section">
+                      <div className="price-comparison">
+                        <div className="original-price">
+                          <span className="label">Regular Price</span>
+                          <span className="amount strikethrough">₹{group.pricePerSqFt?.toLocaleString() || 'N/A'} / sq ft</span>
                         </div>
-                        
-                        {/* Visual Range Bar */}
-                        <div className="range-bar-container">
-                          <div className="range-bar">
-                            <div className="range-bar-fill regular"></div>
-                          </div>
-                          <div className="range-labels">
-                            <span className="range-min">
-                              {formatCurrency(calculatePriceRange(group.pricePerSqFt, group.units).min)}
-                            </span>
-                            <span className="range-max">
-                              {formatCurrency(calculatePriceRange(group.pricePerSqFt, group.units).max)}
-                            </span>
-                          </div>
+                        <div className="group-price">
+                          <span className="label">🎯 Live Grouping Price</span>
+                          <span className="amount group-highlight">₹{group.groupPricePerSqFt?.toLocaleString() || 'N/A'} / sq ft</span>
                         </div>
-                        
-                        <div className="range-item group-range">
-                          <span className="range-label">🎯 Group Price Range:</span>
-                          <span className="range-value highlight">
-                            {formatPriceRange(calculatePriceRange(group.groupPricePerSqFt, group.units))}
-                          </span>
-                        </div>
-                        
-                        {/* Visual Range Bar for Group Price */}
-                        <div className="range-bar-container">
-                          <div className="range-bar">
-                            <div className="range-bar-fill group"></div>
-                          </div>
-                          <div className="range-labels">
-                            <span className="range-min group">
-                              {formatCurrency(calculatePriceRange(group.groupPricePerSqFt, group.units).min)}
-                            </span>
-                            <span className="range-max group">
-                              {formatCurrency(calculatePriceRange(group.groupPricePerSqFt, group.units).max)}
+                      </div>
+
+                      {/* Price Range for Multiple Units */}
+                      {group.units && group.units.length > 0 && (
+                        <div className="price-range-section">
+                          <div className="range-item">
+                            <span className="range-label">Regular Price Range:</span>
+                            <span className="range-value">
+                              {formatPriceRange(calculatePriceRange(group.pricePerSqFt, group.units))}
                             </span>
                           </div>
-                        </div>
-                        
-                        <div className="units-info">
-                          <span className="units-label">Available Units:</span>
-                          <div className="units-list">
-                            {group.units.map((unit, idx) => (
-                              <span key={idx} className="unit-badge">
-                                {unit.name} ({unit.area} sq ft)
+
+                          {/* Visual Range Bar */}
+                          <div className="range-bar-container">
+                            <div className="range-bar">
+                              <div className="range-bar-fill regular"></div>
+                            </div>
+                            <div className="range-labels">
+                              <span className="range-min">
+                                {formatCurrency(calculatePriceRange(group.pricePerSqFt, group.units).min)}
                               </span>
-                            ))}
+                              <span className="range-max">
+                                {formatCurrency(calculatePriceRange(group.pricePerSqFt, group.units).max)}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="range-item group-range">
+                            <span className="range-label">🎯 Group Price Range:</span>
+                            <span className="range-value highlight">
+                              {formatPriceRange(calculatePriceRange(group.groupPricePerSqFt, group.units))}
+                            </span>
+                          </div>
+
+                          {/* Visual Range Bar for Group Price */}
+                          <div className="range-bar-container">
+                            <div className="range-bar">
+                              <div className="range-bar-fill group"></div>
+                            </div>
+                            <div className="range-labels">
+                              <span className="range-min group">
+                                {formatCurrency(calculatePriceRange(group.groupPricePerSqFt, group.units).min)}
+                              </span>
+                              <span className="range-max group">
+                                {formatCurrency(calculatePriceRange(group.groupPricePerSqFt, group.units).max)}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="units-info">
+                            <span className="units-label">Available Units:</span>
+                            <div className="units-list">
+                              {group.units.map((unit, idx) => (
+                                <span key={idx} className="unit-badge">
+                                  {unit.name} ({unit.area} sq ft)
+                                </span>
+                              ))}
+                            </div>
                           </div>
                         </div>
+                      )}
+
+                      <div className="savings-note">
+                        💡 Final price depends on unit & area selected
                       </div>
-                    )}
-                    
-                    <div className="savings-note">
-                      💡 Final price depends on unit & area selected
                     </div>
-                  </div>
 
-                  {/* Benefits */}
-                  <div className="benefits-list">
-                    <h4>Group Benefits:</h4>
-                    <ul>
-                      {group.benefits.map((benefit, idx) => (
-                        <li key={idx}>✓ {benefit}</li>
-                      ))}
-                    </ul>
-                  </div>
+                    {/* Benefits */}
+                    <div className="benefits-list">
+                      <h4>Group Benefits:</h4>
+                      <ul>
+                        {group.benefits.map((benefit, idx) => (
+                          <li key={idx}>✓ {benefit}</li>
+                        ))}
+                      </ul>
+                    </div>
 
-                  {/* Property Actions */}
-                  <div className="property-actions-grouping">
-                    <button 
-                      className="view-details-btn-grouping"
+                    {/* Property Actions */}
+                    <div className="property-actions-grouping">
+                      <button
+                        className="view-details-btn-grouping"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/property-details/${group.id}`, {
+                            state: { property: group, type: 'grouping' }
+                          });
+                        }}
+                      >
+                        View Details
+                      </button>
+                      <button
+                        className="book-visit-btn-grouping"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate('/book-visit', {
+                            state: { property: { ...group, type: 'grouping' } }
+                          });
+                        }}
+                      >
+                        Book Site Visit
+                      </button>
+                    </div>
+
+
+
+                    {/* Action Button - Navigate to 3D View */}
+                    <button
+                      className={`join-group-btn ${group.status}`}
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigate(`/property-details/${group.id}`, { 
-                          state: { property: group, type: 'grouping' } 
-                        });
+                        navigate('/3d-view', { state: { property: group } });
                       }}
+                      disabled={group.status === 'closed'}
                     >
-                      View Details
-                    </button>
-                    <button 
-                      className="book-visit-btn-grouping"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate('/book-visit', { 
-                          state: { property: { ...group, type: 'grouping' } } 
-                        });
-                      }}
-                    >
-                      Book Site Visit
+                      {group.status === 'closing' ? '⚡ Join Now - Closing Soon!' :
+                        group.status === 'closed' ? '❌ Group Closed' :
+                          '🤝 Join This Group'}
                     </button>
                   </div>
-
-                  {/* Action Button */}
-                  <button 
-                    className={`join-group-btn ${group.status}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleJoinGroup(group);
-                    }}
-                    disabled={group.status === 'closed'}
-                  >
-                    {group.status === 'closing' ? '⚡ Join Now - Closing Soon!' : 
-                     group.status === 'closed' ? '❌ Group Closed' : 
-                     '🤝 Join This Group'}
-                  </button>
-                </div>
-              </motion.div>
+                </motion.div>
               ))
             )}
           </div>
         </motion.div>
 
         {/* Closed Live Groups Section */}
-        {closedGroups.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.6 }}
-            style={{ marginTop: '60px' }}
-          >
-            <h2 className="section-title closed-section">✅ Closed Live Groups</h2>
-            <p className="section-subtitle">These groups have been successfully filled</p>
-            <div className={`properties-grid ${view === 'list' ? 'list-view' : 'grid-view'}`}>
-              {closedGroups.map((group, index) => (
-              <motion.div
-                key={group.id}
-                className="property-card live-group-card closed"
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                onClick={() => navigate(`/exhibition/live-grouping/${group.id}`)}
-                style={{ cursor: 'pointer', opacity: 0.8 }}
-              >
-                <div className="property-image">
-                  <img src={group.image} alt={group.title} />
-                  <div className="property-badge closed-badge">✅ Group Closed</div>
-                  <div className="closed-overlay">
-                    <span>FULLY BOOKED</span>
-                  </div>
-                </div>
-
-                <div className="property-info">
-                  <h3>{group.title}</h3>
-                  <p className="owner">🏢 {group.developer}</p>
-                  <p className="location">📍 {group.location}</p>
-                  <p className="type-info">{group.type}</p>
-
-                  {/* Progress Bar - Full */}
-                  <div className="group-progress">
-                    <div className="progress-header">
-                      <span className="progress-label success">
-                        ✅ {group.totalSlots}/{group.totalSlots} Buyers Joined
-                      </span>
-                    </div>
-                    <div className="progress-bar">
-                      <div 
-                        className="progress-fill"
-                        style={{ 
-                          width: '100%',
-                          backgroundColor: '#10b981'
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Pricing - Per Sq Ft & Price Range */}
-                  <div className="pricing-section">
-                    <div className="price-comparison">
-                      <div className="original-price">
-                        <span className="label">Regular Price</span>
-                        <span className="amount strikethrough">₹{group.pricePerSqFt?.toLocaleString() || 'N/A'} / sq ft</span>
-                      </div>
-                      <div className="group-price">
-                        <span className="label">🎯 Final Group Price</span>
-                        <span className="amount group-highlight">₹{group.groupPricePerSqFt?.toLocaleString() || 'N/A'} / sq ft</span>
+        {
+          closedGroups.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.6 }}
+              style={{ marginTop: '60px' }}
+            >
+              <h2 className="section-title closed-section">✅ Closed Live Groups</h2>
+              <p className="section-subtitle">These groups have been successfully filled</p>
+              <div className={`properties-grid ${view === 'list' ? 'list-view' : 'grid-view'}`}>
+                {closedGroups.map((group, index) => (
+                  <motion.div
+                    key={group.id}
+                    className="property-card live-group-card closed"
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                    onClick={() => navigate(`/exhibition/live-grouping/${group.id}`)}
+                    style={{ cursor: 'pointer', opacity: 0.8 }}
+                  >
+                    <div className="property-image">
+                      <img src={group.image} alt={group.title} />
+                      <div className="property-badge closed-badge">✅ Group Closed</div>
+                      <div className="closed-overlay">
+                        <span>FULLY BOOKED</span>
                       </div>
                     </div>
-                    
-                    {/* Price Range for Multiple Units */}
-                    {group.units && group.units.length > 0 && (
-                      <div className="price-range-section">
-                        <div className="range-item group-range">
-                          <span className="range-label">🎯 Final Price Range:</span>
-                          <span className="range-value highlight">
-                            {formatPriceRange(calculatePriceRange(group.groupPricePerSqFt, group.units))}
+
+                    <div className="property-info">
+                      <h3>{group.title}</h3>
+                      <p className="owner">🏢 {group.developer}</p>
+                      <p className="location">📍 {group.location}</p>
+                      <p className="type-info">{group.type}</p>
+
+                      {/* Progress Bar - Full */}
+                      <div className="group-progress">
+                        <div className="progress-header">
+                          <span className="progress-label success">
+                            ✅ {group.totalSlots}/{group.totalSlots} Buyers Joined
                           </span>
                         </div>
+                        <div className="progress-bar">
+                          <div
+                            className="progress-fill"
+                            style={{
+                              width: '100%',
+                              backgroundColor: '#10b981'
+                            }}
+                          />
+                        </div>
                       </div>
-                    )}
-                  </div>
 
-                  {/* Closed Status */}
-                  <div className="closed-status">
-                    <span className="closed-icon">✅</span>
-                    <span className="closed-text">This group is now closed</span>
-                  </div>
-                </div>
-              </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        )}
+                      {/* Pricing - Per Sq Ft & Price Range */}
+                      <div className="pricing-section">
+                        <div className="price-comparison">
+                          <div className="original-price">
+                            <span className="label">Regular Price</span>
+                            <span className="amount strikethrough">₹{group.pricePerSqFt?.toLocaleString() || 'N/A'} / sq ft</span>
+                          </div>
+                          <div className="group-price">
+                            <span className="label">🎯 Final Group Price</span>
+                            <span className="amount group-highlight">₹{group.groupPricePerSqFt?.toLocaleString() || 'N/A'} / sq ft</span>
+                          </div>
+                        </div>
+
+                        {/* Price Range for Multiple Units */}
+                        {group.units && group.units.length > 0 && (
+                          <div className="price-range-section">
+                            <div className="range-item group-range">
+                              <span className="range-label">🎯 Final Price Range:</span>
+                              <span className="range-value highlight">
+                                {formatPriceRange(calculatePriceRange(group.groupPricePerSqFt, group.units))}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Closed Status */}
+                      <div className="closed-status">
+                        <span className="closed-icon">✅</span>
+                        <span className="closed-text">This group is now closed</span>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )
+        }
 
         {/* FAQ Section */}
-        <motion.div 
+        <motion.div
           className="faq-section"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -554,8 +584,8 @@ const LiveGrouping = () => {
             </div>
           </div>
         </motion.div>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 };
 

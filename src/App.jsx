@@ -30,6 +30,7 @@ import ByDeveloper from './pages/Exhibition/ByDeveloper';
 import ByBadaBuilder from './pages/Exhibition/ByBadaBuilder';
 import LiveGrouping from './pages/Exhibition/LiveGrouping';
 import LiveGroupingDetails from './pages/Exhibition/LiveGroupingDetails';
+import ThreeDView from './pages/Exhibition/ThreeDView';
 import AdminLiveGrouping from './pages/Admin/AdminLiveGrouping';
 import ProfilePage from './pages/ProfilePage';
 import MyProperties from './pages/MyProperties';
@@ -64,6 +65,11 @@ import NPVCalculator from './pages/calculator/NPVCalculator';
 
 
 
+import AdminLogin from './pages/AdminPanel/AdminLogin';
+import AdminLayout from './pages/AdminPanel/AdminLayout';
+import AdminPostProperty from './pages/AdminPanel/PostProperty';
+import AdminManageProperties from './pages/AdminPanel/ManageProperties';
+
 function App() {
   const [showLeadModal, setShowLeadModal] = useState(false);
 
@@ -97,6 +103,7 @@ function App() {
         <Route path="/exhibition/developer" element={<ByDeveloper />} />
         <Route path="/exhibition/live-grouping" element={<LiveGrouping />} />
         <Route path="/exhibition/live-grouping/:id" element={<LiveGroupingDetails />} />
+        <Route path="/3d-view" element={<ThreeDView />} />
         <Route path="/exhibition/badabuilder" element={<ByBadaBuilder />} />
         <Route path="/report" element={<Working />} />
         <Route path="/subscription-plans" element={<SubscriptionPlans />} />
@@ -107,6 +114,14 @@ function App() {
         <Route path="/my-properties" element={<MyProperties />} />
         <Route path="/my-bookings" element={<MyBookings />} />
         <Route path="/admin/live-grouping" element={<AdminLiveGrouping />} />
+
+        {/* Admin Panel Routes */}
+        <Route path="/admin-panel/login" element={<AdminLogin />} />
+        <Route path="/admin-panel" element={<AdminLayout />}>
+          <Route index element={<AdminPostProperty />} /> {/* Default to Post Property */}
+          <Route path="post-property" element={<AdminPostProperty />} />
+          <Route path="manage-properties" element={<AdminManageProperties />} />
+        </Route>
 
         {/* Learn */}
         <Route path="/learn/lease-and-asset-management" element={<LAM />}></Route>

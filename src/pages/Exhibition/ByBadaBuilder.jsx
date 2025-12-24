@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import ViewToggle from '../../components/ViewToggle/ViewToggle';
@@ -7,8 +8,12 @@ import './Exhibition.css';
 
 const ByBadaBuilder = () => {
   const [view, setView] = useViewPreference();
-  
-  const curatedProperties = [
+
+  const [properties, setProperties] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fallback data
+  const fallbackProperties = [
     {
       id: 1,
       title: "Premium Investment Opportunity",
@@ -44,11 +49,32 @@ const ByBadaBuilder = () => {
     }
   ];
 
+  useEffect(() => {
+    const stored = JSON.parse(localStorage.getItem('badaBuilderProperties') || '[]');
+    if (stored.length > 0) {
+      // Ensure robust structure
+      const processed = stored.map(p => ({
+        ...p,
+        verified: true,
+        roi: 'High ROI', // Default for posted ones
+        image: (p.images && p.images.length > 0) ? p.images[0] : (p.imageUrl || '/placeholder-property.jpg'),
+        price: p.price || 'Price on Request',
+        // Map correct fields for PropertyCard
+        owner: p.developer || 'Bada Builder Curated',
+        type: p.type || p.category || 'Premium Property'
+      }));
+      setProperties(processed);
+    } else {
+      setProperties(fallbackProperties);
+    }
+    setLoading(false);
+  }, []);
+
   return (
     <div className="exhibition-page">
       <div className="exhibition-container">
         {/* Header */}
-        <motion.div 
+        <motion.div
           className="exhibition-header"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -64,7 +90,7 @@ const ByBadaBuilder = () => {
         </motion.div>
 
         {/* Navigation Tabs */}
-        <motion.div 
+        <motion.div
           className="exhibition-tabs"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -91,14 +117,14 @@ const ByBadaBuilder = () => {
 
         {/* Properties Grid */}
         <div className={`properties-grid ${view === 'list' ? 'list-view' : 'grid-view'}`}>
-          {curatedProperties.map((property, index) => (
+          {properties.map((property, index) => (
             <motion.div
               key={property.id}
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
             >
-              <PropertyCard 
+              <PropertyCard
                 property={{
                   ...property,
                   status: 'Verified',
@@ -114,7 +140,7 @@ const ByBadaBuilder = () => {
         </div>
 
         {/* Why Choose Bada Builder Section */}
-        <motion.div 
+        <motion.div
           className="why-choose-section"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
