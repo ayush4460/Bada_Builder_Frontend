@@ -18,7 +18,7 @@ const UNIT_DEPTH = 2;
 const SHOP_HEIGHT = 1.5;
 
 // Colors
-const COLOR_AVAILABLE = '#22c55e'; // Green
+const COLOR_AVAILABLE = '#22c55e'; // Greenssss
 const COLOR_BOOKED = '#ef4444';    // Red
 const COLOR_HOLD = '#eab308';      // Yellow
 const COLOR_SHOP = '#f59e0b';      // Amber
