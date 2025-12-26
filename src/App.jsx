@@ -18,6 +18,7 @@ import ProjectDetails from './pages/ProjectDetails';
 import BookSiteVisit from './pages/BookSiteVisit';
 import PropertyDetails from './pages/PropertyDetails';
 import Investments from './pages/Investments';
+import InvestmentDetails from './pages/InvestmentDetails';
 import Exhibition from './pages/Exhibition';
 import Working from './pages/Working';
 import Services from './pages/Services';
@@ -114,6 +115,7 @@ function App() {
         <Route path="/my-properties" element={<MyProperties />} />
         <Route path="/my-bookings" element={<MyBookings />} />
         <Route path="/admin/live-grouping" element={<AdminLiveGrouping />} />
+        <Route path="/investment-details/:type" element={<InvestmentDetails />} />
 
         {/* Admin Panel Routes */}
         <Route path="/admin-panel/login" element={<AdminLogin />} />

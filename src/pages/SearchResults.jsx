@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import SearchBar from '../components/SearchBar/SearchBar';
+import DetailedSearchBar from '../components/DetailedSearchBar/DetailedSearchBar';
 import './SearchResults.css';
 
 // Sample data - replace with actual database query
@@ -68,6 +68,7 @@ const SearchResults = () => {
   const [loading, setLoading] = useState(true);
 
   const query = searchParams.get('q') || '';
+  const category = searchParams.get('category') || '';
   const type = searchParams.get('type') || '';
   const location = searchParams.get('location') || '';
 
@@ -87,7 +88,23 @@ const SearchResults = () => {
 
       // Filter by type
       if (type) {
+        // Handle comma-separated types if needed, or simple exact match
         filtered = filtered.filter(prop => prop.type === type);
+      }
+
+      // Filter by category
+      if (category) {
+        const lowerCat = category.toLowerCase();
+        if (lowerCat === 'commercial') {
+          filtered = filtered.filter(prop => ['shop', 'office', 'godown', 'warehouse', 'showroom', 'commercial'].includes(prop.type));
+        } else if (lowerCat === 'residential') {
+          filtered = filtered.filter(prop => ['flat', 'bungalow', 'villa', 'house', 'residential'].includes(prop.type));
+        } else if (lowerCat === 'land') {
+          filtered = filtered.filter(prop => ['land', 'plot'].includes(prop.type));
+        } else {
+          // Fallback: try to match type directly or just pass if no specific logic
+          filtered = filtered.filter(prop => prop.type === lowerCat || prop.type.includes(lowerCat));
+        }
       }
 
       // Filter by location
@@ -100,7 +117,7 @@ const SearchResults = () => {
       setResults(filtered);
       setLoading(false);
     }, 500);
-  }, [query, type, location]);
+  }, [query, type, location, category]);
 
   return (
     <div className="search-results-page">
@@ -108,7 +125,7 @@ const SearchResults = () => {
       <div className="search-section">
         <div className="search-container">
           <h1>Find Your Dream Property</h1>
-          <SearchBar variant="full" />
+          <DetailedSearchBar />
         </div>
       </div>
 
@@ -118,9 +135,10 @@ const SearchResults = () => {
           {/* Search Info */}
           <div className="search-info">
             <h2>Search Results</h2>
-            {(query || type || location) && (
+            {(query || type || location || category) && (
               <div className="search-filters">
                 {query && <span className="filter-tag">Query: {query}</span>}
+                {category && <span className="filter-tag">Category: {category}</span>}
                 {type && <span className="filter-tag">Type: {type}</span>}
                 {location && <span className="filter-tag">Location: {location}</span>}
               </div>
@@ -137,7 +155,7 @@ const SearchResults = () => {
               <p>Searching properties...</p>
             </div>
           ) : results.length > 0 ? (
-            <motion.div 
+            <motion.div
               className="results-grid"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -169,15 +187,15 @@ const SearchResults = () => {
                       <span className="area">{property.area}</span>
                     </div>
                     <div className="card-actions">
-                      <Link 
-                        to={`/property-details/${property.id}`} 
+                      <Link
+                        to={`/property-details/${property.id}`}
                         state={{ property, type: 'search' }}
                         className="view-btn"
                       >
                         View Details
                       </Link>
-                      <Link 
-                        to="/book-visit" 
+                      <Link
+                        to="/book-visit"
                         state={{ property: { ...property, type: 'search' } }}
                         className="book-btn"
                       >

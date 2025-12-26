@@ -261,12 +261,12 @@ const Header = () => {
             )}
           </div>
 
-          <div
-            onClick={() => alert("Investment feature coming soon!")}
+          <Link
+            to="/investments"
             className="nav-link relative py-2 px-2 text-gray-900 hover:text-[#58335e] transition-all duration-200 cursor-pointer after:content-[''] after:absolute after:w-0 after:h-0.5 after:bg-[#58335e] after:left-0 after:bottom-0 after:transition-all after:duration-300 hover:after:w-full"
           >
             Investment
-          </div>
+          </Link>
 
           <Link
             to="/contact"
@@ -516,15 +516,13 @@ const Header = () => {
                   )}
                 </div>
 
-                <div
-                  onClick={() => {
-                    alert("Investment feature coming soon!");
-                    toggleMobileMenu();
-                  }}
+                <Link
+                  to="/investments"
+                  onClick={toggleMobileMenu}
                   className="mobile-menu-item cursor-pointer"
                 >
                   Investment
-                </div>
+                </Link>
 
                 <Link to="/contact" onClick={toggleMobileMenu} className="mobile-menu-item">
                   Contact Us
