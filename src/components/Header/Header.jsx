@@ -1,29 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import logo from '../../assets/logo.png';
 import UserTypeModal from '../UserTypeModal/UserTypeModal';
-import SearchBar from '../SearchBar/SearchBar';
-import './Header.css';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { auth } from '../../firebase';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-
-// Real Estate menu removed as per user request
-
-const dropdownItems = [
-  { label: 'Lease and asset management', href: '/learn/lease-and-asset-management' },
-  { label: 'Market and investment analysis', href: '/learn/market-and-investment-analysis' },
-  { label: 'Real estate financial modelling', href: '/learn/real-estate-financial-modelling' },
-  { label: 'Real estate market research', href: '/learn/real-estate-market-research' },
-  { label: 'Reit valuation and compliance', href: '/learn/reit-valuation-and-compliance' },
-  { label: 'Risk assessment & due diligence', href: '/learn/risk-assessment-due-diligence' },
-  { label: 'Stakeholder communication in Reit', href: '/learn/stakeholder-communication' },
-  { label: 'Types of Reits in India', href: '/learn/types-of-reits-india' },
-  { label: 'Taxation in Reits', href: '/learn/taxation-in-reits' },
-  { label: 'Types Job profiles in Reits', href: '/learn/job-profiles-in-reits' },
-  { label: 'Work of Different job profiles', href: '/learn/work-of-job-profiles' }
-];
 
 const Header = () => {
   const [showDropdown, setShowDropdown] = useState(false);
@@ -37,13 +16,11 @@ const Header = () => {
   const [logoutLoading, setLogoutLoading] = useState(false);
 
   const timeoutRef = useRef(null);
-  const calctimeoutRef = useRef(null);
   const profileTimeoutRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const { currentUser, userProfile, loading: authLoading } = useAuth();
+  const { currentUser, userProfile, loading: authLoading, logout } = useAuth();
 
-  // Use AuthContext instead of direct Firebase listener
   useEffect(() => {
     setIsLoggedIn(!!currentUser);
     setLoading(authLoading);
@@ -52,41 +29,19 @@ const Header = () => {
   useEffect(() => {
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      if (calctimeoutRef.current) clearTimeout(calctimeoutRef.current);
       if (profileTimeoutRef.current) clearTimeout(profileTimeoutRef.current);
     };
   }, []);
 
-  // Manage body class for modal
   useEffect(() => {
-    if (showLogoutModal) {
-      document.body.classList.add('modal-open');
+    if (showLogoutModal || isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
     } else {
-      document.body.classList.remove('modal-open');
+      document.body.style.overflow = 'unset';
     }
+    return () => { document.body.style.overflow = 'unset'; };
+  }, [showLogoutModal, isMobileMenuOpen]);
 
-    // Cleanup on unmount
-    return () => {
-      document.body.classList.remove('modal-open');
-    };
-  }, [showLogoutModal]);
-
-  // Handle ESC key to close modal
-  useEffect(() => {
-    const handleEscKey = (event) => {
-      if (event.key === 'Escape' && showLogoutModal) {
-        cancelLogout();
-      }
-    };
-
-    if (showLogoutModal) {
-      document.addEventListener('keydown', handleEscKey);
-    }
-
-    return () => {
-      document.removeEventListener('keydown', handleEscKey);
-    };
-  }, [showLogoutModal]);
 
   const handleLogout = () => {
     setShowLogoutModal(true);
@@ -95,9 +50,8 @@ const Header = () => {
 
   const confirmLogout = async () => {
     setLogoutLoading(true);
-
     try {
-      await signOut(auth);
+      await logout();
       navigate('/');
       setIsMobileMenuOpen(false);
       setShowLogoutModal(false);
@@ -108,39 +62,19 @@ const Header = () => {
     }
   };
 
-  const cancelLogout = () => {
-    setShowLogoutModal(false);
-  };
+  const cancelLogout = () => setShowLogoutModal(false);
 
-  // Handle login click - reset form if already on login page
   const handleLoginClick = (e) => {
     if (location.pathname === '/login') {
       e.preventDefault();
-      // Trigger form reset by navigating with state
       navigate('/login', { state: { resetForm: true } });
     }
     setIsMobileMenuOpen(false);
   };
 
-  if (loading) {
-    return (
-      <header className="custom-header flex justify-between items-center px-4 md:px-8 py-4 bg-white shadow-sm sticky top-0 z-50">
-        <div className="flex-1 flex justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#58335e]"></div>
-        </div>
-      </header>
-    );
-  }
-
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
-    if (isMobileMenuOpen) {
-      setMobileLearnOpen(false);
-    }
-  };
-
-  const toggleMobileLearn = () => {
-    setMobileLearnOpen(!mobileLearnOpen);
+    if (isMobileMenuOpen) setMobileLearnOpen(false);
   };
 
   const handleMouseEnter = () => {
@@ -149,390 +83,254 @@ const Header = () => {
   };
 
   const handleMouseLeave = () => {
-    timeoutRef.current = setTimeout(() => {
-      setShowDropdown(false);
-    }, 150);
+    timeoutRef.current = setTimeout(() => setShowDropdown(false), 150);
   };
 
-  // Profile dropdown handlers
   const handleProfileMouseEnter = () => {
     if (profileTimeoutRef.current) clearTimeout(profileTimeoutRef.current);
     setShowProfileDropdown(true);
   };
 
   const handleProfileMouseLeave = () => {
-    profileTimeoutRef.current = setTimeout(() => {
-      setShowProfileDropdown(false);
-    }, 150);
+    profileTimeoutRef.current = setTimeout(() => setShowProfileDropdown(false), 150);
   };
 
-  // Generate user initials for avatar
   const getUserInitials = () => {
-    if (userProfile?.name) {
-      return userProfile.name
-        .split(' ')
-        .map(name => name.charAt(0))
-        .join('')
-        .toUpperCase()
-        .slice(0, 2);
-    }
-    if (currentUser?.displayName) {
-      return currentUser.displayName
-        .split(' ')
-        .map(name => name.charAt(0))
-        .join('')
-        .toUpperCase()
-        .slice(0, 2);
-    }
-    if (currentUser?.email) {
-      return currentUser.email.charAt(0).toUpperCase();
-    }
-    return 'U';
+    if (userProfile?.name) return userProfile.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    if (currentUser?.displayName) return currentUser.displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    return currentUser?.email?.[0]?.toUpperCase() || 'U';
   };
 
-  // Get user display name
-  const getUserDisplayName = () => {
-    return userProfile?.name || currentUser?.displayName || 'User';
-  };
+  const getUserDisplayName = () => userProfile?.name || currentUser?.displayName || 'User';
+  const getUserEmail = () => userProfile?.email || currentUser?.email || '';
 
-  // Get user email
-  const getUserEmail = () => {
-    return userProfile?.email || currentUser?.email || '';
-  };
+  const dropdownItems = [
+    { label: 'Lease and asset management', href: '/learn/lease-and-asset-management' },
+    { label: 'Market and investment analysis', href: '/learn/market-and-investment-analysis' },
+    { label: 'Real estate financial modelling', href: '/learn/real-estate-financial-modelling' },
+    { label: 'Real estate market research', href: '/learn/real-estate-market-research' },
+    { label: 'Reit valuation and compliance', href: '/learn/reit-valuation-and-compliance' },
+    { label: 'Risk assessment & due diligence', href: '/learn/risk-assessment-due-diligence' },
+    { label: 'Stakeholder communication in Reit', href: '/learn/stakeholder-communication' },
+    { label: 'Types of Reits in India', href: '/learn/types-of-reits-india' },
+    { label: 'Taxation in Reits', href: '/learn/taxation-in-reits' },
+    { label: 'Job profiles in Reits', href: '/learn/job-profiles-in-reits' },
+    { label: 'Work of Different job profiles', href: '/learn/work-of-job-profiles' }
+  ];
 
-  // Get user phone
-  const getUserPhone = () => {
-    return userProfile?.phone || 'Not provided';
-  };
+  if (loading) {
+    return (
+      <header className="h-20 bg-white/95 backdrop-blur-md shadow-sm flex justify-center items-center sticky top-0 z-50">
+        <div className="w-8 h-8 border-4 border-[#58335e] border-t-transparent rounded-full animate-spin"></div>
+      </header>
+    );
+  }
 
   return (
     <>
-      <header className="custom-header flex justify-between items-center px-4 md:px-8 py-4 bg-white shadow-sm sticky top-0 z-50 backdrop-blur-sm bg-opacity-95">
-        {/* Logo */}
-        <div className="logo-container flex-shrink-0">
-          <Link to="/" className="logo-link inline-block transition-transform duration-200 hover:scale-105">
-            <img src={logo} alt="Logo" className="logo-image h-10 md:h-12 w-auto" />
-          </Link>
-        </div>
-
-        {/* Desktop Navigation */}
-        <nav className="flex items-center space-x-8 hidden lg:flex font-semibold text-gray-900">
-          <Link
-            to="/exhibition"
-            className="nav-link relative py-2 px-2 text-gray-900 hover:text-[#58335e] transition-all duration-200 after:content-[''] after:absolute after:w-0 after:h-0.5 after:bg-[#58335e] after:left-0 after:bottom-0 after:transition-all after:duration-300 hover:after:w-full"
-          >
-            Exhibition
-          </Link>
-
-          <Link
-            to="/services"
-            className="nav-link relative py-2 px-2 text-gray-900 hover:text-[#58335e] transition-all duration-200 after:content-[''] after:absolute after:w-0 after:h-0.5 after:bg-[#58335e] after:left-0 after:bottom-0 after:transition-all after:duration-300 hover:after:w-full"
-          >
-            Services
-          </Link>
-
-          {/* Learn Reit's Dropdown */}
-          <div
-            className="relative inline-block text-left"
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
-          >
-            <div className={`nav-link cursor-pointer py-2 px-2 text-gray-900 transition-all duration-200 flex items-center gap-1 relative after:content-[''] after:absolute after:w-0 after:h-0.5 after:bg-[#58335e] after:left-0 after:bottom-0 after:transition-all after:duration-300 ${showDropdown ? 'text-[#58335e] after:w-full' : 'hover:text-[#58335e] hover:after:w-full'}`}>
-              Learn Reit's
-              <span className={`inline-block transition-transform duration-200 ${showDropdown ? 'rotate-180' : ''}`}>
-                ▾
-              </span>
+      <header className="bg-white/95 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100 transition-all duration-300">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-20">
+            
+            {/* Logo */}
+            <div className="flex-shrink-0 flex items-center">
+              <Link to="/" className="block">
+                <img className="h-10 w-auto md:h-12 hover:scale-105 transition-transform duration-200" src={logo} alt="Bada Builder" />
+              </Link>
             </div>
 
-            {showDropdown && (
-              <div className="dropdown-menu absolute left-0 mt-1 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-20 py-2 animate-fadeIn">
-                <div className="max-h-96 overflow-y-auto">
-                  {dropdownItems.map((item, index) => (
-                    <Link
-                      key={index}
-                      to={item.href}
-                      className="block px-5 py-3 text-sm text-gray-800 hover:bg-purple-50 hover:text-[#58335e] transition-all duration-150 border-l-4 border-transparent hover:border-[#58335e] font-semibold"
-                    >
-                      {item.label}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+            {/* Desktop Navigation */}
+            <nav className="hidden lg:flex items-center space-x-8">
+              <Link to="/exhibition" className="text-gray-700 hover:text-[#58335e] font-medium transition-colors relative group py-2">
+                Exhibition
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#58335e] transition-all duration-300 group-hover:w-full"></span>
+              </Link>
+              <Link to="/services" className="text-gray-700 hover:text-[#58335e] font-medium transition-colors relative group py-2">
+                Services
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#58335e] transition-all duration-300 group-hover:w-full"></span>
+              </Link>
 
-          <Link
-            to="/investments"
-            className="nav-link relative py-2 px-2 text-gray-900 hover:text-[#58335e] transition-all duration-200 cursor-pointer after:content-[''] after:absolute after:w-0 after:h-0.5 after:bg-[#58335e] after:left-0 after:bottom-0 after:transition-all after:duration-300 hover:after:w-full"
-          >
-            Investment
-          </Link>
-
-          <Link
-            to="/contact"
-            className="nav-link relative py-2 px-2 text-gray-900 hover:text-[#58335e] transition-all duration-200 after:content-[''] after:absolute after:w-0 after:h-0.5 after:bg-[#58335e] after:left-0 after:bottom-0 after:transition-all after:duration-300 hover:after:w-full"
-          >
-            Contact Us
-          </Link>
-
-          <Link
-            to="/about"
-            className="nav-link relative py-2 px-2 text-gray-900 hover:text-[#58335e] transition-all duration-200 after:content-[''] after:absolute after:w-0 after:h-0.5 after:bg-[#58335e] after:left-0 after:bottom-0 after:transition-all after:duration-300 hover:after:w-full"
-          >
-            Who are we
-          </Link>
-        </nav>
-
-        {/* Desktop Buttons */}
-        <div className="hidden lg:flex items-center gap-3 flex-shrink-0">
-          <button
-            onClick={() => setIsUserTypeModalOpen(true)}
-            className="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-2.5 rounded-full shadow-md hover:shadow-lg hover:from-green-700 hover:to-green-800 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-opacity-50 font-medium text-sm tracking-wide transform hover:scale-105 active:scale-95 whitespace-nowrap"
-          >
-            Post Property
-          </button>
-          {isLoggedIn ? (
-            <div
-              className="relative"
-              onMouseEnter={handleProfileMouseEnter}
-              onMouseLeave={handleProfileMouseLeave}
-            >
-              <button className="profile-avatar">
-                <span className="profile-initials">
-                  {getUserInitials()}
-                </span>
-              </button>
-
-              {showProfileDropdown && (
-                <div className="profile-dropdown">
-                  <div className="profile-dropdown-header">
-                    <div className="profile-dropdown-avatar">
-                      {getUserInitials()}
-                    </div>
-                    <div className="profile-dropdown-info">
-                      <div className="profile-dropdown-name">
-                        {getUserDisplayName()}
-                      </div>
-                      <div className="profile-dropdown-email">
-                        {getUserEmail()}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="profile-dropdown-divider"></div>
-
-                  <div className="profile-dropdown-details">
-                    <div className="profile-detail-item">
-                      <span className="profile-detail-label">Name:</span>
-                      <span className="profile-detail-value">{getUserDisplayName()}</span>
-                    </div>
-                    <div className="profile-detail-item">
-                      <span className="profile-detail-label">Email:</span>
-                      <span className="profile-detail-value">{getUserEmail()}</span>
-                    </div>
-                    <div className="profile-detail-item">
-                      <span className="profile-detail-label">Phone:</span>
-                      <span className="profile-detail-value">{getUserPhone()}</span>
-                    </div>
-                  </div>
-
-                  <div className="profile-dropdown-divider"></div>
-
-                  <button
-                    onClick={() => {
-                      navigate('/profile');
-                      setShowProfileDropdown(false);
-                    }}
-                    className="profile-dropdown-link"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                    View Profile
-                  </button>
-
-                  <button
-                    onClick={handleLogout}
-                    className="profile-dropdown-logout"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                    Logout
-                  </button>
-                </div>
-              )}
-            </div>
-          ) : (
-            <Link to="/login" onClick={handleLoginClick}>
-              <button className="bg-[#58335e] text-white px-6 py-2.5 rounded-full shadow-md hover:shadow-lg hover:bg-opacity-90 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#58335e] focus:ring-opacity-50 font-medium text-sm tracking-wide transform hover:scale-105 active:scale-95 whitespace-nowrap">
-                Login
-              </button>
-            </Link>
-          )}
-        </div>
-
-        {/* Mobile Menu Button */}
-        <div className="lg:hidden flex items-center">
-          <button
-            onClick={toggleMobileMenu}
-            className="p-2 rounded-md text-gray-700 hover:text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-[#58335e] transition-all duration-200"
-            aria-label="Toggle mobile menu"
-          >
-            <div className="w-6 h-6 flex flex-col justify-center items-center">
-              <span className={`bg-current block transition-all duration-300 ease-out h-0.5 w-4 rounded-sm ${isMobileMenuOpen ? 'rotate-45 translate-y-1' : '-translate-y-0.5'}`}></span>
-              <span className={`bg-current block transition-all duration-300 ease-out h-0.5 w-4 rounded-sm my-0.5 ${isMobileMenuOpen ? 'opacity-0' : 'opacity-100'}`}></span>
-              <span className={`bg-current block transition-all duration-300 ease-out h-0.5 w-4 rounded-sm ${isMobileMenuOpen ? '-rotate-45 -translate-y-1' : 'translate-y-0.5'}`}></span>
-            </div>
-          </button>
-        </div>
-      </header>
-
-      {/* Mobile Menu Overlay */}
-      {isMobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 bg-black bg-opacity-50" onClick={toggleMobileMenu}>
-          <div
-            className="absolute top-0 right-0 w-80 max-w-full h-full bg-white shadow-xl transform transition-transform duration-300 ease-out"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Mobile Menu Header */}
-            <div className="flex justify-between items-center px-6 py-5 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Menu</h2>
-              <button
-                onClick={toggleMobileMenu}
-                className="p-2 rounded-md text-gray-700 hover:text-gray-900 hover:bg-gray-100 focus:outline-none"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            {/* Mobile Menu Content */}
-            <div className="mobile-menu-content">
-              <nav className="mobile-nav">
-                {/* Mobile Login/Profile */}
-                {isLoggedIn ? (
-                  <div className="mobile-profile-section">
-                    <div className="mobile-profile-header">
-                      <div className="mobile-profile-avatar">
-                        {getUserInitials()}
-                      </div>
-                      <div className="mobile-profile-info">
-                        <div className="mobile-profile-name">
-                          {getUserDisplayName()}
-                        </div>
-                        <div className="mobile-profile-email">
-                          {getUserEmail()}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="mobile-profile-details">
-                      <div className="mobile-profile-detail">
-                        <span className="mobile-detail-label">Name:</span>
-                        <span className="mobile-detail-value">{getUserDisplayName()}</span>
-                      </div>
-                      <div className="mobile-profile-detail">
-                        <span className="mobile-detail-label">Email:</span>
-                        <span className="mobile-detail-value">{getUserEmail()}</span>
-                      </div>
-                      <div className="mobile-profile-detail">
-                        <span className="mobile-detail-label">Phone:</span>
-                        <span className="mobile-detail-value">{getUserPhone()}</span>
-                      </div>
-                    </div>
-
-                    <Link
-                      to="/profile"
-                      onClick={toggleMobileMenu}
-                      className="mobile-view-profile-btn"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                      View Profile
-                    </Link>
-
-                    <button
-                      onClick={handleLogout}
-                      className="mobile-logout-btn"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                      </svg>
-                      Logout
-                    </button>
-                  </div>
-                ) : (
-                  <Link to="/login" onClick={handleLoginClick} className="mobile-login-btn">
-                    🔐 Login / Sign Up
-                  </Link>
-                )}
-
-                {/* Post Property Button */}
-                <button
-                  onClick={() => {
-                    toggleMobileMenu();
-                    setIsUserTypeModalOpen(true);
-                  }}
-                  className="mobile-post-btn"
-                >
-                  <span className="mobile-btn-icon">📝</span>
-                  <span>Post Property</span>
+              {/* Learn Dropdown */}
+              <div className="relative group" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+                <button className={`flex items-center gap-1 text-gray-700 font-medium hover:text-[#58335e] transition-colors py-2 group ${showDropdown ? 'text-[#58335e]' : ''}`}>
+                  <span>Learn Reit's</span>
+                  <svg className={`w-4 h-4 transition-transform duration-200 ${showDropdown ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                  <span className={`absolute bottom-0 left-0 h-0.5 bg-[#58335e] transition-all duration-300 ${showDropdown ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
                 </button>
-
-                {/* Regular Menu Items */}
-                <Link to="/exhibition" onClick={toggleMobileMenu} className="mobile-menu-item">
-                  Exhibition
-                </Link>
-
-                <Link to="/services" onClick={toggleMobileMenu} className="mobile-menu-item">
-                  Services
-                </Link>
-
-                {/* Mobile Learn Reit's Dropdown */}
-                <div className="mobile-dropdown">
-                  <button onClick={toggleMobileLearn} className="mobile-dropdown-btn">
-                    <span>Learn Reit's</span>
-                    <span className={`mobile-dropdown-icon ${mobileLearnOpen ? 'rotate' : ''}`}>
-                      ▾
-                    </span>
-                  </button>
-
-                  {mobileLearnOpen && (
-                    <div className="mobile-dropdown-content">
-                      {dropdownItems.map((item, index) => (
+                
+                {showDropdown && (
+                  <div className="absolute left-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-gray-100 ring-1 ring-black ring-opacity-5 overflow-hidden origin-top-right transition-all duration-200 z-50">
+                    <div className="py-2 max-h-[80vh] overflow-y-auto custom-scrollbar">
+                      {dropdownItems.map((item, idx) => (
                         <Link
-                          key={index}
+                          key={idx}
                           to={item.href}
-                          onClick={toggleMobileMenu}
-                          className="mobile-dropdown-item"
+                          className="block px-4 py-3 text-sm text-gray-700 hover:bg-purple-50 hover:text-[#58335e] transition-colors border-l-4 border-transparent hover:border-[#58335e]"
                         >
                           {item.label}
                         </Link>
                       ))}
                     </div>
+                  </div>
+                )}
+              </div>
+
+              <Link to="/investments" className="text-gray-700 hover:text-[#58335e] font-medium transition-colors relative group py-2">
+                Investment
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#58335e] transition-all duration-300 group-hover:w-full"></span>
+              </Link>
+              <Link to="/contact" className="text-gray-700 hover:text-[#58335e] font-medium transition-colors relative group py-2">
+                Contact Us
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#58335e] transition-all duration-300 group-hover:w-full"></span>
+              </Link>
+            </nav>
+
+            {/* Desktop Actions */}
+            <div className="hidden lg:flex items-center gap-4">
+              <button
+                onClick={() => setIsUserTypeModalOpen(true)}
+                className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-full shadow-md transition-all duration-300 transform hover:scale-105 font-medium text-sm flex items-center gap-2"
+              >
+                <span>Post Property</span>
+              </button>
+
+              {isLoggedIn ? (
+                <div className="relative" onMouseEnter={handleProfileMouseEnter} onMouseLeave={handleProfileMouseLeave}>
+                  <button className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-[#58335e] to-[#8a4f94] text-white font-semibold shadow-md ring-2 ring-transparent hover:ring-[#58335e] transition-all duration-200">
+                    {getUserInitials()}
+                  </button>
+
+                  {showProfileDropdown && (
+                    <div className="absolute right-0 mt-4 w-72 bg-white rounded-xl shadow-2xl border border-gray-100 ring-1 ring-black ring-opacity-5 overflow-hidden z-50 origin-top-right animate-in fade-in slide-in-from-top-2 duration-200">
+                      <div className="p-4 bg-gray-50 border-b border-gray-100 flex items-center gap-3">
+                        <div className="flex-shrink-0 w-12 h-12 rounded-full bg-gradient-to-br from-[#58335e] to-[#8a4f94] flex items-center justify-center text-white font-bold text-lg shadow-sm">
+                           {getUserInitials()}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-gray-900 truncate">{getUserDisplayName()}</p>
+                          <p className="text-xs text-gray-500 truncate">{getUserEmail()}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="p-2">
+                         <div className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Account</div>
+                         <Link to="/profile" className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-50 transition-colors" onClick={() => setShowProfileDropdown(false)}>
+                            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                            View Profile
+                         </Link>
+                         <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2 text-sm text-red-600 rounded-lg hover:bg-red-50 transition-colors text-left mt-1">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                            Logout
+                         </button>
+                      </div>
+                    </div>
                   )}
                 </div>
-
-                <Link
-                  to="/investments"
-                  onClick={toggleMobileMenu}
-                  className="mobile-menu-item cursor-pointer"
-                >
-                  Investment
+              ) : (
+                <Link to="/login" onClick={handleLoginClick} className="bg-[#58335e] hover:bg-[#46284b] text-white px-6 py-2.5 rounded-full shadow-md transition-all duration-300 transform hover:scale-105 font-medium text-sm">
+                  Login
                 </Link>
-
-                <Link to="/contact" onClick={toggleMobileMenu} className="mobile-menu-item">
-                  Contact Us
-                </Link>
-
-                <Link to="/about" onClick={toggleMobileMenu} className="mobile-menu-item">
-                  Who are we
-                </Link>
-              </nav>
+              )}
             </div>
+
+            {/* Mobile Menu Button */}
+            <div className="flex lg:hidden">
+              <button
+                onClick={toggleMobileMenu}
+                className="p-2 rounded-md text-gray-600 hover:text-[#58335e] hover:bg-purple-50 focus:outline-none transition-colors"
+              >
+                <div className="w-6 h-6 flex flex-col justify-center gap-1.5">
+                   <span className={`block w-6 h-0.5 bg-current transform transition-all duration-300 ${isMobileMenuOpen ? 'rotate-45 translate-y-2' : ''}`}></span>
+                   <span className={`block w-6 h-0.5 bg-current transition-all duration-300 ${isMobileMenuOpen ? 'opacity-0' : ''}`}></span>
+                   <span className={`block w-6 h-0.5 bg-current transform transition-all duration-300 ${isMobileMenuOpen ? '-rotate-45 -translate-y-2' : ''}`}></span>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 z-[60] lg:hidden">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onClick={toggleMobileMenu}></div>
+          <div className="absolute inset-y-0 right-0 w-full max-w-sm bg-white shadow-2xl transform transition-transform duration-300 flex flex-col overflow-hidden">
+             
+             {/* Mobile Header */}
+             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+               <h2 className="text-lg font-bold text-gray-900">Menu</h2>
+               <button onClick={toggleMobileMenu} className="p-2 bg-white rounded-full shadow-sm text-gray-500 hover:text-gray-900 transition-colors">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+               </button>
+             </div>
+
+             {/* Mobile Content */}
+             <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
+                
+                {/* Profile Section */}
+                {isLoggedIn ? (
+                  <div className="bg-gradient-to-br from-gray-50 to-white border border-gray-100 rounded-2xl p-4 shadow-sm">
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="w-12 h-12 rounded-full bg-[#58335e] text-white flex items-center justify-center font-bold text-lg">
+                        {getUserInitials()}
+                      </div>
+                      <div className="min-w-0">
+                         <h3 className="font-semibold text-gray-900 truncate">{getUserDisplayName()}</h3>
+                         <p className="text-xs text-gray-500 truncate">{getUserEmail()}</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                       <Link to="/profile" onClick={toggleMobileMenu} className="flex items-center justify-center gap-2 py-2.5 text-sm font-medium text-[#58335e] bg-purple-50 rounded-xl hover:bg-purple-100 transition-colors">
+                         View Profile
+                       </Link>
+                       <button onClick={handleLogout} className="flex items-center justify-center gap-2 py-2.5 text-sm font-medium text-red-600 bg-red-50 rounded-xl hover:bg-red-100 transition-colors">
+                         Logout
+                       </button>
+                    </div>
+                  </div>
+                ) : (
+                   <Link to="/login" onClick={handleLoginClick} className="flex items-center justify-center w-full py-3.5 bg-[#58335e] text-white rounded-xl font-semibold shadow-lg shadow-purple-200 active:scale-95 transition-all">
+                      Login / Sign Up
+                   </Link>
+                )}
+
+                {/* Main Links */}
+                <div className="space-y-2">
+                   <button 
+                      onClick={() => { toggleMobileMenu(); setIsUserTypeModalOpen(true); }}
+                      className="w-full flex items-center justify-between p-3.5 bg-green-50 text-green-700 rounded-xl hover:bg-green-100 transition-colors font-medium border border-green-100"
+                   >
+                     <span>Post Property</span>
+                     <span className="text-xl">✨</span>
+                   </button>
+
+                   <Link to="/exhibition" onClick={toggleMobileMenu} className="block p-3.5 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition-colors">Exhibition</Link>
+                   <Link to="/services" onClick={toggleMobileMenu} className="block p-3.5 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition-colors">Services</Link>
+                   
+                   {/* Mobile Dropdown */}
+                   <div className="overflow-hidden">
+                      <button 
+                        onClick={() => setMobileLearnOpen(!mobileLearnOpen)}
+                        className="w-full flex items-center justify-between p-3.5 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition-colors"
+                      >
+                        <span>Learn Reit's</span>
+                        <svg className={`w-5 h-5 text-gray-400 transition-transform ${mobileLearnOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                      </button>
+                      <div className={`space-y-1 pl-4 pr-2 overflow-hidden transition-all duration-300 ${mobileLearnOpen ? 'max-h-[500px] opacity-100 pt-2' : 'max-h-0 opacity-0'}`}>
+                         {dropdownItems.map((item, idx) => (
+                           <Link key={idx} to={item.href} onClick={toggleMobileMenu} className="block px-4 py-2.5 text-sm text-gray-600 hover:text-[#58335e] border-l-2 border-transparent hover:border-[#58335e] bg-gray-50/50 rounded-r-lg">
+                             {item.label}
+                           </Link>
+                         ))}
+                      </div>
+                   </div>
+
+                   <Link to="/investments" onClick={toggleMobileMenu} className="block p-3.5 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition-colors">Investment</Link>
+                   <Link to="/contact" onClick={toggleMobileMenu} className="block p-3.5 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition-colors">Contact Us</Link>
+                </div>
+             </div>
           </div>
         </div>
       )}
@@ -543,65 +341,26 @@ const Header = () => {
         onClose={() => setIsUserTypeModalOpen(false)}
       />
 
-      {/* Logout Confirmation Modal */}
+      {/* Logout Modal */}
       {showLogoutModal && (
-        <div className="logout-modal-overlay" onClick={cancelLogout}>
-          <div className="logout-modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-gray-900">Confirm Logout</h3>
-              <button
-                onClick={cancelLogout}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <div className="mb-6 text-center">
-              <div className="mb-4">
-                <svg className="w-16 h-16 mx-auto text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+           <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 transform transition-all scale-100">
+              <div className="text-center mb-6">
+                 <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500">
+                   <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                 </div>
+                 <h3 className="text-xl font-bold text-gray-900 mb-2">Confirm Logout</h3>
+                 <p className="text-gray-500">Are you sure you want to end your session?</p>
               </div>
-              <p className="text-lg text-gray-700 mb-2">
-                Are you sure you want to logout?
-              </p>
-              <p className="text-sm text-gray-500">
-                You will need to login again to access your account.
-              </p>
-            </div>
-
-            <div className="flex gap-3 justify-center">
-              <button
-                onClick={cancelLogout}
-                className="px-6 py-2.5 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-medium"
-                disabled={logoutLoading}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmLogout}
-                disabled={logoutLoading}
-                className="px-6 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-2"
-              >
-                {logoutLoading ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Logging out...
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                    Yes, Logout
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
+              <div className="flex gap-3">
+                 <button onClick={cancelLogout} disabled={logoutLoading} className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors">
+                    Cancel
+                 </button>
+                 <button onClick={confirmLogout} disabled={logoutLoading} className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-xl shadow-lg shadow-red-200 transition-colors flex items-center justify-center gap-2">
+                    {logoutLoading ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/> : 'Logout'}
+                 </button>
+              </div>
+           </div>
         </div>
       )}
     </>

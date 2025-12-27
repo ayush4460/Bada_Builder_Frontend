@@ -1,30 +1,22 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
 import "./Login.css";
-import {
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut,
-} from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
-import { auth, db } from "../firebase";
-import { useNavigate, useLocation } from "react-router-dom";
+import { authService } from "../services/api";
+import { useAuth } from "../context/AuthContext";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { performanceMonitor } from "../utils/performance";
 
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { login } = useAuth(); // Get login function from context
   const from = location.state?.from || "/";
   const returnTo = location.state?.returnTo;
   const property = location.state?.property;
   const message = location.state?.message;
   
-  // For registration, always redirect to home page, not back to login
-  const getRedirectPath = (isRegistration = false) => {
-    if (isRegistration) {
-      return "/"; // Always go to home after registration
-    }
-    
+  // Login redirect logic
+  const getRedirectPath = useCallback(() => {
     // If coming from BookSiteVisit, redirect back with property data
     if (returnTo && returnTo.includes('/book-visit')) {
       return { 
@@ -34,37 +26,27 @@ const Login = () => {
     }
     
     return from === "/login" ? "/" : from; // Don't redirect back to login page
-  };
+  }, [from, returnTo, property]);
 
-  const [mode, setMode] = useState("login");
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [formData, setFormData] = useState({
-    name: "",
     email: "",
     password: "",
-    confirmPassword: "",
   });
 
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const [registrationStep, setRegistrationStep] = useState('form'); // 'form', 'creating', 'success', 'transitioning'
 
   // ------------------ RESET FORM FUNCTION ------------------
   const resetForm = useCallback(() => {
-    setMode("login");
     setShowPassword(false);
-    setShowConfirmPassword(false);
     setFormData({
-      name: "",
       email: "",
       password: "",
-      confirmPassword: "",
     });
     setErrors({});
     setLoading(false);
-    setRegistrationStep('form');
   }, []);
 
   // ------------------ HANDLE HEADER LOGIN CLICK ------------------
@@ -76,7 +58,7 @@ const Login = () => {
       setErrors({ submit: "Form has been reset. Please enter your credentials." });
       setTimeout(() => {
         setErrors({});
-      }, 2000); // Reduced from 3000ms to 2000ms
+      }, 2000); 
       // Clear the state to prevent repeated resets
       navigate(location.pathname, { replace: true, state: {} });
     }
@@ -97,10 +79,6 @@ const Login = () => {
     return () => {
       const newErrors = {};
 
-      if (mode === "register" && !formData.name.trim()) {
-        newErrors.name = "Name is required.";
-      }
-
       if (!formData.email) {
         newErrors.email = "Email is required.";
       } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
@@ -109,36 +87,42 @@ const Login = () => {
 
       if (!formData.password) {
         newErrors.password = "Password is required.";
-      } else if (formData.password.length < 6) {
-        newErrors.password = "Password should be at least 6 characters.";
-      }
-
-      if (mode === "register") {
-        if (!formData.confirmPassword) {
-          newErrors.confirmPassword = "Please confirm your password.";
-        } else if (formData.password !== formData.confirmPassword) {
-          newErrors.confirmPassword = "Passwords do not match.";
-        }
       }
 
       setErrors(newErrors);
       return Object.keys(newErrors).length === 0;
     };
-  }, [mode, formData]);
+  }, [formData]);
 
   // ------------------ LOGIN ------------------
-  const loginUser = useCallback(async (email, password) => {
+  const loginUser = useCallback(async (e) => {
+    e.preventDefault();
+    if (loading) return;
+    if (!validate()) return;
+
     setLoading(true);
     setErrors({});
 
     try {
       await performanceMonitor.trackNetworkRequest(
         'Login',
-        signInWithEmailAndPassword(auth, email, password)
+        (async () => {
+          const response = await authService.login({ 
+             email: formData.email, 
+             password: formData.password 
+          });
+          if (response.data.success) {
+            // Update AuthContext state
+            login(response.data.token, response.data.user);
+            return response.data;
+          } else {
+            throw new Error(response.data.message || 'Login failed');
+          }
+        })()
       );
       
-      // Navigate immediately after auth success - don't wait for context updates
-      const redirectInfo = getRedirectPath(false);
+      // Navigate immediately after auth success
+      const redirectInfo = getRedirectPath();
       
       if (typeof redirectInfo === 'object' && redirectInfo.path) {
         // Special redirect with state (like BookSiteVisit with property data)
@@ -152,129 +136,22 @@ const Login = () => {
       }
     } catch (error) {
       let msg = "Login failed";
-      if (error.code === "auth/user-not-found") msg = "User not found";
-      if (error.code === "auth/wrong-password") msg = "Wrong password";
-      if (error.code === "auth/invalid-credential") msg = "Invalid email or password";
-      if (error.code === "auth/too-many-requests") msg = "Too many attempts. Try again later";
+      if (error.response && error.response.data && error.response.data.message) {
+        msg = error.response.data.message;
+      } else if (error.message) {
+        msg = error.message;
+      }
       setErrors({ submit: msg });
     } finally {
       setLoading(false);
     }
-  }, [navigate, getRedirectPath]);
-
-  // ------------------ REGISTER ------------------
-  const createUser = useCallback(async (email, password, name) => {
-    setLoading(true);
-    setErrors({});
-    setRegistrationStep('creating');
-
-    try {
-      // Step 1: Create user account (fast)
-      const userCredential = await performanceMonitor.trackNetworkRequest(
-        'Registration',
-        createUserWithEmailAndPassword(auth, email, password)
-      );
-      
-      // Step 2: Create user profile in background (non-blocking)
-      const userProfilePromise = performanceMonitor.trackNetworkRequest(
-        'Profile Creation',
-        setDoc(doc(db, "users", userCredential.user.uid), {
-          email,
-          name,
-          is_subscribed: false,
-          subscription_expiry: null,
-          created_at: new Date().toISOString(),
-        })
-      );
-
-      // Step 3: Show success message briefly, then transition
-      setRegistrationStep('success');
-      
-      // Sign out the user immediately after registration (no auto-login)
-      await signOut(auth);
-      
-      // Show success message briefly, then start transition
-      setTimeout(() => {
-        setRegistrationStep('transitioning');
-        setLoading(true); // Keep loading overlay during transition
-      }, 800); // Reduced from 1500ms to 800ms
-      
-      // Complete transition to login mode
-      setTimeout(() => {
-        setMode('login');
-        setRegistrationStep('form');
-        setLoading(false); // Remove loading overlay after UI transition is complete
-        setFormData({ name: "", email: "", password: "", confirmPassword: "" });
-        setErrors({ submit: "Registration successful! Please login with your credentials." });
-      }, 1200); // Reduced from 2000ms to 1200ms
-
-      // Handle profile creation in background
-      userProfilePromise.catch((profileError) => {
-        console.warn('Profile creation delayed:', profileError);
-        // Profile creation failed, but user registration was successful
-        // Profile will be created on first login via AuthContext
-      });
-
-    } catch (error) {
-      setRegistrationStep('form');
-      setLoading(false);
-      let msg = "Registration failed";
-      if (error.code === "auth/email-already-in-use") {
-        msg = "Email already registered";
-      } else if (error.code === "auth/weak-password") {
-        msg = "Password is too weak";
-      } else if (error.code === "auth/network-request-failed") {
-        msg = "Network error. Please check your connection";
-      }
-      setErrors({ submit: msg });
-    }
-  }, []);
-
-  // ------------------ SUBMIT ------------------
-  const handleSubmit = useCallback((e) => {
-    e.preventDefault();
-    
-    // Prevent submission if already loading
-    if (loading) return;
-    
-    if (!validate()) return;
-
-    if (mode === "login") {
-      loginUser(formData.email, formData.password);
-    } else {
-      createUser(formData.email, formData.password, formData.name);
-    }
-  }, [mode, formData, validate, loginUser, createUser, loading]);
-
-  // ------------------ TOGGLE ------------------
-  const toggleMode = useCallback(() => {
-    // Don't allow toggle during transition
-    if (registrationStep === 'transitioning') return;
-    
-    // Switch mode
-    setMode((prev) => (prev === "login" ? "register" : "login"));
-    
-    // Reset all form data
-    setFormData({
-      name: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
-    });
-    
-    // Reset all states
-    setErrors({});
-    setShowPassword(false);
-    setShowConfirmPassword(false);
-    setRegistrationStep('form');
-    setLoading(false);
-  }, [registrationStep]);
+  }, [navigate, formData, validate, login, getRedirectPath, loading]);
 
   // ------------------ UI ------------------
   return (
     <div className="login-page">
       {/* Full-screen loading overlay */}
-      {(loading && registrationStep !== 'success') || registrationStep === 'transitioning' ? (
+      {loading ? (
         <motion.div
           className="fullscreen-loading-overlay"
           initial={{ opacity: 0 }}
@@ -284,12 +161,7 @@ const Login = () => {
         >
           <div className="loading-content">
             <div className="loading-spinner-large"></div>
-            <p className="loading-text">
-              {registrationStep === 'transitioning' ? "Switching to login..." :
-               mode === "login" ? "Signing you in..." : 
-               registrationStep === 'creating' ? "Creating your account..." : 
-               "Processing..."}
-            </p>
+            <p className="loading-text">Signing you in...</p>
           </div>
         </motion.div>
       ) : null}
@@ -301,26 +173,25 @@ const Login = () => {
         transition={{ duration: 0.3 }}
       >
         <motion.h2
-          key={mode}
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
         >
-          {mode === "login" ? "login" : "Create Account"}
+          Login
         </motion.h2>
 
-        {/* Message from redirect (e.g., from BookSiteVisit) */}
+        {/* Message from redirect (e.g., from Register or BookSiteVisit) */}
         {message && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             className="redirect-message"
             style={{
-              backgroundColor: '#fef3c7',
-              color: '#92400e',
+              backgroundColor: message.toLowerCase().includes('success') ? '#dcfce7' : '#fef3c7',
+              color: message.toLowerCase().includes('success') ? '#166534' : '#92400e',
               padding: '12px 16px',
               borderRadius: '8px',
               marginBottom: '20px',
-              border: '1px solid #fbbf24',
+              border: message.toLowerCase().includes('success') ? '1px solid #bbf7d0' : '1px solid #fbbf24',
               fontSize: '14px',
               textAlign: 'center'
             }}
@@ -329,22 +200,15 @@ const Login = () => {
           </motion.div>
         )}
 
-        <form onSubmit={handleSubmit} className={`login-form ${loading || registrationStep === 'transitioning' ? 'form-disabled' : ''}`}>
-          {mode === "register" && (
-            <>
-              <label>Name</label>
-              <input name="name" value={formData.name} onChange={handleChange} disabled={loading || registrationStep === 'transitioning'} />
-              {errors.name && <p className="error">{errors.name}</p>}
-            </>
-          )}
-
+        <form onSubmit={loginUser} className={`login-form ${loading ? 'form-disabled' : ''}`}>
+          
           <label>Email</label>
           <input
             name="email"
             type="email"
             value={formData.email}
             onChange={handleChange}
-            disabled={loading || registrationStep === 'transitioning'}
+            disabled={loading}
           />
           {errors.email && <p className="error">{errors.email}</p>}
 
@@ -356,51 +220,18 @@ const Login = () => {
               value={formData.password}
               onChange={handleChange}
               className="password-input"
-              disabled={loading || registrationStep === 'transitioning'}
+              disabled={loading}
             />
             <button
               type="button"
               className="eye-btn"
               onClick={() => setShowPassword((prev) => !prev)}
-              disabled={loading || registrationStep === 'transitioning'}
+              disabled={loading}
             >
               <i className={`far ${showPassword ? "fa-eye" : "fa-eye-slash"}`} />
             </button>
           </div>
           {errors.password && <p className="error">{errors.password}</p>}
-
-          {mode === "register" && (
-            <>
-              <label>Confirm Password</label>
-              <div className="password-wrapper">
-                <input
-                  name="confirmPassword"
-                  type={showConfirmPassword ? "text" : "password"}
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  className="password-input"
-                  disabled={loading || registrationStep === 'transitioning'}
-                />
-                <button
-                  type="button"
-                  className="eye-btn"
-                  onClick={() =>
-                    setShowConfirmPassword((prev) => !prev)
-                  }
-                  disabled={loading || registrationStep === 'transitioning'}
-                >
-                  <i
-                    className={`far ${
-                      showConfirmPassword ? "fa-eye" : "fa-eye-slash"
-                    }`}
-                  />
-                </button>
-              </div>
-              {errors.confirmPassword && (
-                <p className="error">{errors.confirmPassword}</p>
-              )}
-            </>
-          )}
 
           {errors.submit && (
             <p className={`error submit-error ${
@@ -411,45 +242,19 @@ const Login = () => {
             </p>
           )}
 
-          {/* Registration Success Message */}
-          {mode === "register" && registrationStep === 'success' && (
-            <motion.div 
-              className="success-message"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
-              <p className="success">✓ Registration successful! Please login with your credentials.</p>
-            </motion.div>
-          )}
-
           <button 
             className="submit-btn" 
-            disabled={loading || (mode === "register" && (registrationStep === 'success' || registrationStep === 'transitioning'))}
+            disabled={loading}
           >
-            {loading ? (
-              <span className="spinner"></span>
-            ) : mode === "register" && registrationStep === 'success' ? (
-              "Registration successful!"
-            ) : mode === "register" && registrationStep === 'transitioning' ? (
-              "Switching to login..."
-            ) : mode === "register" && registrationStep === 'creating' ? (
-              "Creating account..."
-            ) : mode === "login" ? (
-              "Login"
-            ) : (
-              "Register"
-            )}
+            {loading ? <span className="spinner"></span> : "Login"}
           </button>
         </form>
 
         <p className="toggle-text">
-          {mode === "login" ? "Don't have an account?" : "Already have one?"}{" "}
-          <span 
-            onClick={loading || registrationStep === 'transitioning' ? undefined : toggleMode} 
-            className={`toggle-link ${loading || registrationStep === 'transitioning' ? 'disabled' : ''}`}
-          >
-            {mode === "login" ? "Register" : "Login"}
-          </span>
+          Don't have an account?{" "}
+          <Link to="/register" className="toggle-link">
+            Register
+          </Link>
         </p>
       </motion.div>
     </div>
@@ -457,3 +262,4 @@ const Login = () => {
 };
 
 export default Login;
+

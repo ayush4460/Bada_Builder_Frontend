@@ -15,6 +15,9 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
+export const API_URL = "http://localhost:5000/api";
+
+
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
