@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { doc, updateDoc, collection, addDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+// import { doc, updateDoc, collection, addDoc } from 'firebase/firestore';
+// import { db } from '../firebase';
+import SubscriptionService from '../services/subscriptionService';
 import './SubscriptionPlans.css';
 
 /* ---------- DEVELOPER / BUILDER PLAN (ONLY ONE PLAN) ---------- */
@@ -59,11 +60,7 @@ const DeveloperPlan = () => {
     loadRazorpay();
   }, []);
 
-  const calculateExpiryDate = (months) => {
-    const date = new Date();
-    date.setMonth(date.getMonth() + months);
-    return date.toISOString();
-  };
+
 
   // Razorpay payment handler (reusing exact logic from SubscriptionPlans)
   const handleRazorpayPayment = async (plan) => {
@@ -87,61 +84,30 @@ const DeveloperPlan = () => {
       handler: async function (response) {
         console.log('✅ Payment successful:', response);
 
-        // Calculate expiry date
-        const expiryDate = calculateExpiryDate(months);
-
-        // Prepare payment data
-        const paymentData = {
-          payment_id: response.razorpay_payment_id,
-          amount: amount,
-          plan_name: plan.duration,
-          user_id: currentUser.uid,
-          payment_status: 'success',
-          created_at: new Date().toISOString(),
-          razorpay_order_id: response.razorpay_order_id || '',
-          razorpay_signature: response.razorpay_signature || '',
-          payment_currency: currency,
-          payment_timestamp: new Date().toISOString(),
-          user_role: userRole
-        };
-
-        // Prepare subscription data
-        const subscriptionData = {
-          active_plan: plan.id,
-          plan_start_date: new Date().toISOString(),
-          plan_status: 'active',
-          is_subscribed: true,
-          subscription_expiry: expiryDate,
-          subscription_plan: plan.id,
-          subscription_price: plan.price,
-          subscribed_at: new Date().toISOString(),
-          user_type: userRole,
-          property_credits: 20, // Set 20 credits for developer plan
-          total_credits_purchased: 20 // Reset/Set total credits (simplified logic)
-        };
-
+        // Create subscription via backend service
         try {
-          // Store payment details in database
-          await addDoc(collection(db, 'payments'), paymentData);
-          console.log('✅ Payment data stored successfully');
-
-          // Update user subscription in Firestore
-          await updateDoc(doc(db, 'users', currentUser.uid), subscriptionData);
-          console.log('✅ Subscription activated successfully');
-
-          // Show success and redirect
+          await SubscriptionService.createSubscription({
+             planId: plan.id,
+             paymentId: response.razorpay_payment_id,
+             orderId: response.razorpay_order_id,
+             signature: response.razorpay_signature,
+             amount: amount,
+             userType: userRole,
+             planDuration: months
+          });
+          
+          console.log('✅ Subscription activated successfully via Service');
           setPaymentLoading(false);
-          // alert(`Successfully subscribed to Developer ${plan.duration} plan! Payment ID: ${response.razorpay_payment_id}`); // Removed blocking alert
-
+          
           // Redirect to post property page
           setTimeout(() => {
             navigate('/post-property', { state: { userType: 'developer' } });
-          }, 500); // reduced delay for smoother transition
-
+          }, 500);
+          
         } catch (error) {
-          console.error('Error saving payment/subscription:', error);
-          alert('Payment successful but subscription activation failed. Please contact support with payment ID: ' + response.razorpay_payment_id);
-          setPaymentLoading(false);
+             console.error('Error creating subscription:', error);
+             alert('Payment successful but subscription activation failed. Please contact support.');
+             setPaymentLoading(false);
         }
       },
       prefill: {

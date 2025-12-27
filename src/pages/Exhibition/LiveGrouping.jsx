@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../../firebase';
+// import { collection, getDocs } from 'firebase/firestore';
+// import { db } from '../../firebase';
+import api from '../../services/api';
 import ViewToggle from '../../components/ViewToggle/ViewToggle';
 import PropertyCard from '../../components/PropertyCard/PropertyCard';
 import useViewPreference from '../../hooks/useViewPreference';
@@ -44,43 +45,58 @@ const LiveGrouping = () => {
 
   const fetchLiveGroups = async () => {
     try {
-      // Load from LocalStorage (Admin Posted)
-      const storedGroups = JSON.parse(localStorage.getItem('liveGroupingProperties') || '[]');
+      setLoading(true);
+      // Fetch properties from backend
+      const response = await api.get('/properties');
+      const allProperties = response.data.properties || [];
 
-      if (storedGroups.length > 0) {
-        // Ensure robust structure for display
-        const processedGroups = storedGroups.map(group => {
+      // Filter for live grouping properties
+      const liveGroupingProps = allProperties.filter(p => p.is_live_grouping === true);
+
+      if (liveGroupingProps.length > 0) {
+        // Map backend data to component format
+        const processedGroups = liveGroupingProps.map(group => {
           // Parse numeric inputs safely
-          const storedPrice = Number(group.pricePerSqFt);
-          const validPrice = !isNaN(storedPrice) && storedPrice > 0 ? storedPrice : 4500;
+          const storedPrice = Number(group.price?.replace(/[^0-9]/g, '')) || 0; // Assuming price is string like "5000"
+          const config = group.live_group_config || {};
+          
+          const validPrice = !isNaN(storedPrice) && storedPrice > 0 ? storedPrice : (config.pricePerSqFt || 4500);
 
           // Calculate group price based on discount
-          const discountStr = group.discount || '10%';
+          const discountStr = config.discount || '10%';
           const discountVal = parseInt(discountStr.replace(/[^0-9]/g, '')) || 10;
           const groupPrice = Math.round(validPrice * (1 - (discountVal / 100)));
 
           return {
-            ...group,
-            // Add defaults if missing to prevent crashes
-            units: group.units || [
+            id: group.id,
+            title: group.title,
+            developer: (group.developer_info && group.developer_info.name) || 'Verified Builder',
+            location: group.location,
+            pricePerSqFt: validPrice,
+            groupPricePerSqFt: groupPrice,
+            discount: discountStr,
+            image: group.image_url || '/placeholder-property.jpg',
+            type: group.type || '3 BHK Apartment',
+            units: config.units || [
               { name: "Standard Unit", area: 1200 },
               { name: "Premium Unit", area: 1500 }
             ],
-            benefits: group.benefits && group.benefits.length > 0 ? group.benefits : ["Group Discount", "Premium Location", "Verified Builder"],
-            filledSlots: parseInt(group.filledSlots) || 0,
-            totalSlots: parseInt(group.totalSlots) || 20,
-            minBuyers: parseInt(group.minBuyers) || 5,
-            pricePerSqFt: validPrice,
-            groupPricePerSqFt: groupPrice,
+            totalSlots: parseInt(config.totalSlots) || 20,
+            filledSlots: parseInt(config.filledSlots) || 0,
+            timeLeft: config.timeLeft || "Limited Time",
+            minBuyers: parseInt(config.minBuyers) || 5,
+            benefits: config.benefits || ["Group Discount", "Premium Location", "Verified Builder"],
             status: group.status || 'active',
-            image: (group.images && group.images.length > 0) ? group.images[0] : (group.imageUrl || '/placeholder-property.jpg'),
-            type: group.type || group.category || '3 BHK Apartment',
-            developer: group.developer || 'Verified Builder',
-            location: group.location || 'Vadodara'
+            images: [group.image_url], // Component expects array
+            description: group.description
           };
         });
         setLiveGroups(processedGroups);
       } else {
+        // If no backend groups, fallback (or empty)
+        // For development/demo, maybe keep fallbackGroups if response is empty?
+        // Or strictly show backend data?
+        // Let's use fallbackGroups if backend returns empty, to maintain UI during migration
         setLiveGroups(fallbackGroups);
       }
     } catch (error) {

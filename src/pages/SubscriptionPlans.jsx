@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { doc, updateDoc, collection, addDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+// import { doc, updateDoc, collection, addDoc } from 'firebase/firestore';
+// import { db } from '../firebase';
+import SubscriptionService from '../services/subscriptionService';
 import './SubscriptionPlans.css';
 
 /* ---------- BASE PLANS (Individual) ---------- */
@@ -86,11 +87,11 @@ const SubscriptionPlans = () => {
   /* ---------- ROLE-BASED PLAN FILTERING ---------- */
   const plans = userRole === 'developer' ? developerPlan : individualPlans;
 
-  const calculateExpiryDate = (months) => {
-    const date = new Date();
-    date.setMonth(date.getMonth() + months);
-    return date.toISOString();
-  };
+  // const calculateExpiryDate = (months) => {
+  //   const date = new Date();
+  //   date.setMonth(date.getMonth() + months);
+  //   return date.toISOString();
+  // };
 
   // Razorpay payment handler (reusing exact logic from BookSiteVisit)
   const handleRazorpayPayment = async (plan) => {
@@ -118,49 +119,27 @@ const SubscriptionPlans = () => {
       handler: async function (response) {
         console.log('✅ Payment successful:', response);
 
-        // Calculate expiry date
-        const expiryDate = calculateExpiryDate(months);
 
-        // Prepare payment data
-        const paymentData = {
-          payment_id: response.razorpay_payment_id,
-          amount: amount,
-          plan_name: plan.duration,
-          user_id: currentUser.uid,
-          payment_status: 'success',
-          created_at: new Date().toISOString(),
-          razorpay_order_id: response.razorpay_order_id || '',
-          razorpay_signature: response.razorpay_signature || '',
-          payment_currency: currency,
-          payment_timestamp: new Date().toISOString(),
-          user_role: userRole // Store user role with payment
-        };
 
-        // Prepare subscription data
-        const subscriptionData = {
-          active_plan: plan.id,
-          plan_start_date: new Date().toISOString(),
-          plan_status: 'active',
-          is_subscribed: true,
-          subscription_expiry: expiryDate,
-          subscription_plan: plan.id,
-          subscription_price: plan.price,
-          subscribed_at: new Date().toISOString(),
-          user_type: userRole // Store user role in profile
-        };
-
+        // Prepare payment and subscription data handled by backend now
         try {
-          // Store payment details in database
-          await addDoc(collection(db, 'payments'), paymentData);
-          console.log('✅ Payment data stored successfully');
-
-          // Update user subscription in Firestore
-          await updateDoc(doc(db, 'users', currentUser.uid), subscriptionData);
-          console.log('✅ Subscription activated successfully');
+          // Create subscription using the subscription service
+          const subscriptionId = await SubscriptionService.createSubscription(currentUser.uid, {
+            plan_id: plan.id,
+            plan_name: plan.duration,
+            amount: amount,
+            currency: currency,
+            duration_months: months,
+            payment_id: response.razorpay_payment_id,
+            razorpay_order_id: response.razorpay_order_id || '',
+            razorpay_signature: response.razorpay_signature || '',
+            user_role: userRole
+          });
+          
+          console.log('✅ Subscription activated successfully:', subscriptionId);
 
           // Show success and redirect
           setPaymentLoading(false);
-          // alert(`Successfully subscribed to ${plan.duration} plan! Payment ID: ${response.razorpay_payment_id}`); // Removed blocking alert
 
           // Redirect to post property page
           setTimeout(() => {

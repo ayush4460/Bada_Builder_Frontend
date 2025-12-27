@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from 'firebase/firestore';
-import { db } from '../../firebase';
+// import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+// import { db } from '../../firebase';
+import api from '../../services/api';
 import './AdminLiveGrouping.css';
 
 // --- Cloudinary Configuration ---
@@ -44,7 +44,7 @@ const uploadToCloudinary = async (file) => {
 
 const AdminLiveGrouping = () => {
   const navigate = useNavigate();
-  const { currentUser, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [loading, setLoading] = useState(false);
   const [properties, setProperties] = useState([]);
   const [showForm, setShowForm] = useState(false);
@@ -91,12 +91,47 @@ const AdminLiveGrouping = () => {
 
   const fetchProperties = async () => {
     try {
-      const querySnapshot = await getDocs(collection(db, 'live_grouping_properties'));
-      const propertiesData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setProperties(propertiesData);
+      // Fetch all properties
+      const response = await api.get('/properties');
+      const allProps = response.data.properties || [];
+      
+      // Filter for live grouping only and map to form structure for display handles
+      const liveGroupingProps = allProps
+        .filter(p => p.is_live_grouping === true)
+        .map(p => {
+            const config = p.live_group_config || {};
+            const devInfo = p.developer_info || {};
+            
+            return {
+                id: p.id,
+                title: p.title,
+                developer: devInfo.name || '',
+                location: p.location,
+                originalPrice: p.price,
+                groupPrice: config.groupPrice || '',
+                discount: config.discount || '',
+                type: p.type,
+                totalSlots: config.totalSlots || 0,
+                filledSlots: config.filledSlots || 0,
+                timeLeft: config.timeLeft || '',
+                minBuyers: config.minBuyers || 0,
+                benefits: config.benefits || [],
+                status: p.status,
+                area: config.area || '',
+                possession: config.possession || '',
+                reraNumber: devInfo.rera || '',
+                facilities: p.facilities || [],
+                description: p.description,
+                advantages: config.advantages || [],
+                groupDetails: config.groupDetails || {
+                    tokenAmount: '', refundPolicy: '', closingDate: '', expectedCompletion: ''
+                },
+                images: p.image_url ? [p.image_url] : [],
+                image: p.image_url
+            };
+        });
+        
+      setProperties(liveGroupingProps);
     } catch (error) {
       console.error('Error fetching properties:', error);
     }
@@ -141,67 +176,59 @@ const AdminLiveGrouping = () => {
       }
 
       // Calculate savings
-      const originalPriceNum = parseFloat(formData.originalPrice.replace(/[^0-9.]/g, ''));
-      const groupPriceNum = parseFloat(formData.groupPrice.replace(/[^0-9.]/g, ''));
+      const originalPriceNum = parseFloat(formData.originalPrice.replace(/[^0-9.]/g, '')) || 0;
+      const groupPriceNum = parseFloat(formData.groupPrice.replace(/[^0-9.]/g, '')) || 0;
       const savings = `₹${(originalPriceNum - groupPriceNum).toFixed(0)} Lakhs`;
 
-      // Prepare property data
-      const propertyData = {
+      // Prepare property data for Backend
+      const propertyPayload = {
         title: formData.title,
-        developer: formData.developer,
         location: formData.location,
-        originalPrice: formData.originalPrice,
-        groupPrice: formData.groupPrice,
-        discount: formData.discount,
-        savings: savings,
         type: formData.type,
-        totalSlots: parseInt(formData.totalSlots),
-        filledSlots: parseInt(formData.filledSlots),
-        timeLeft: formData.timeLeft,
-        minBuyers: parseInt(formData.minBuyers),
-        benefits: formData.benefits.split(',').map(b => b.trim()),
-        status: formData.status,
-        area: formData.area,
-        possession: formData.possession,
-        reraNumber: formData.reraNumber,
-        facilities: formData.facilities.split(',').map(f => f.trim()),
+        price: formData.originalPrice, // Storing original price in main column
         description: formData.description,
-        advantages: formData.advantages.split('|').map(adv => {
-          const [place, distance] = adv.split(':');
-          return { place: place.trim(), distance: distance.trim() };
-        }),
-        groupDetails: {
-          tokenAmount: formData.tokenAmount,
-          refundPolicy: formData.refundPolicy,
-          closingDate: formData.closingDate,
-          expectedCompletion: formData.expectedCompletion
+        status: formData.status,
+        image_url: imageUrls.length > 0 ? imageUrls[0] : (editingId ? undefined : '/placeholder-property.jpg'), // Keep existing if undefined on edit?
+        facilities: formData.facilities.split(',').map(f => f.trim()),
+        
+        is_live_grouping: true,
+        
+        developer_info: {
+            name: formData.developer,
+            rera: formData.reraNumber
         },
-        // Use Cloudinary URLs. If editing and no new images, this field won't be updated.
-        ...(imageUrls.length > 0 && { 
-            images: imageUrls,
-            image: imageUrls[0] 
-        }),
-        created_at: new Date().toISOString(),
-        created_by: currentUser.uid
+        
+        live_group_config: {
+            groupPrice: formData.groupPrice,
+            discount: formData.discount,
+            savings: savings,
+            totalSlots: parseInt(formData.totalSlots) || 20,
+            filledSlots: parseInt(formData.filledSlots) || 0,
+            timeLeft: formData.timeLeft,
+            minBuyers: parseInt(formData.minBuyers) || 5,
+            benefits: formData.benefits.split(',').map(b => b.trim()),
+            area: formData.area,
+            possession: formData.possession,
+            advantages: formData.advantages.split('|').map(adv => {
+              const [place, distance] = adv.split(':');
+              return { place: (place || '').trim(), distance: (distance || '').trim() };
+            }),
+            groupDetails: {
+              tokenAmount: formData.tokenAmount,
+              refundPolicy: formData.refundPolicy,
+              closingDate: formData.closingDate,
+              expectedCompletion: formData.expectedCompletion
+            }
+        }
       };
 
       if (editingId) {
-        // If editing, don't overwrite images unless new ones are uploaded
-        const docRef = doc(db, 'live_grouping_properties', editingId);
-        if (imageUrls.length === 0) {
-            // Keep existing images if none are uploaded
-            delete propertyData.images;
-            delete propertyData.image;
-        }
-        await updateDoc(docRef, propertyData);
+        // Update existing property
+        await api.put(`/properties/${editingId}`, propertyPayload);
         alert('Property updated successfully!');
       } else {
-        // Add new property, ensuring placeholder if no images
-        if (imageUrls.length === 0) {
-            propertyData.images = ['/placeholder-property.jpg'];
-            propertyData.image = '/placeholder-property.jpg';
-        }
-        await addDoc(collection(db, 'live_grouping_properties'), propertyData);
+        // Create new property
+        await api.post('/properties', propertyPayload);
         alert('Property added successfully!');
       }
 
@@ -211,7 +238,7 @@ const AdminLiveGrouping = () => {
       setShowForm(false);
     } catch (error) {
       console.error('Error saving property:', error);
-      alert('Error saving property: ' + error.message);
+      alert('Error saving property: ' + (error.response?.data?.message || error.message));
     } finally {
       setLoading(false);
     }
@@ -231,18 +258,18 @@ const AdminLiveGrouping = () => {
       filledSlots: property.filledSlots.toString(),
       timeLeft: property.timeLeft,
       minBuyers: property.minBuyers.toString(),
-      benefits: property.benefits.join(', '),
+      benefits: Array.isArray(property.benefits) ? property.benefits.join(', ') : '',
       status: property.status,
       area: property.area,
       possession: property.possession,
       reraNumber: property.reraNumber,
-      facilities: property.facilities.join(', '),
+      facilities: Array.isArray(property.facilities) ? property.facilities.join(', ') : '',
       description: property.description,
-      advantages: property.advantages.map(a => `${a.place}: ${a.distance}`).join(' | '),
-      tokenAmount: property.groupDetails.tokenAmount,
-      refundPolicy: property.groupDetails.refundPolicy,
-      closingDate: property.groupDetails.closingDate,
-      expectedCompletion: property.groupDetails.expectedCompletion
+      advantages: Array.isArray(property.advantages) ? property.advantages.map(a => `${a.place}: ${a.distance}`).join(' | ') : '',
+      tokenAmount: property.groupDetails?.tokenAmount || '',
+      refundPolicy: property.groupDetails?.refundPolicy || "100% refund if group doesn't fill",
+      closingDate: property.groupDetails?.closingDate || '',
+      expectedCompletion: property.groupDetails?.expectedCompletion || ''
     });
     // Set image previews from existing images if available
     setImagePreviews(property.images || []);
@@ -254,12 +281,12 @@ const AdminLiveGrouping = () => {
     if (!window.confirm('Are you sure you want to delete this property?')) return;
 
     try {
-      await deleteDoc(doc(db, 'live_grouping_properties', id));
+      await api.delete(`/properties/${id}`);
       alert('Property deleted successfully!');
       fetchProperties();
     } catch (error) {
       console.error('Error deleting property:', error);
-      alert('Error deleting property: ' + error.message);
+      alert('Error deleting property: ' + (error.response?.data?.message || error.message));
     }
   };
 
@@ -312,11 +339,8 @@ const AdminLiveGrouping = () => {
 
         {/* Add/Edit Form */}
         {showForm && (
-          <motion.div 
+          <div 
             className="property-form-container"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
           >
             <h2>{editingId ? 'Edit Property' : 'Add New Property'}</h2>
             <form onSubmit={handleSubmit} className="admin-form">
@@ -639,7 +663,7 @@ const AdminLiveGrouping = () => {
                 </button>
               </div>
             </form>
-          </motion.div>
+          </div>
         )}
 
         {/* Properties List */}
@@ -650,12 +674,9 @@ const AdminLiveGrouping = () => {
           ) : (
             <div className="properties-grid-admin">
               {properties.map((property) => (
-                <motion.div
+                <div
                   key={property.id}
                   className="property-card-admin"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
                 >
                   <div className="property-image-admin">
                     <img src={property.image} alt={property.title} />
@@ -696,7 +717,7 @@ const AdminLiveGrouping = () => {
                       </button>
                     </div>
                   </div>
-                </motion.div>
+                </div>
               ))}
             </div>
           )}

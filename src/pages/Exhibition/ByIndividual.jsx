@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
-import { db } from '../../firebase';
+// import { collection, query, where, onSnapshot } from 'firebase/firestore';
+// import { db } from '../../firebase';
+import api from '../../services/api';
 import ViewToggle from '../../components/ViewToggle/ViewToggle';
 import PropertyCard from '../../components/PropertyCard/PropertyCard';
 import useViewPreference from '../../hooks/useViewPreference';
@@ -21,46 +22,30 @@ const ByIndividual = () => {
         setLoading(true);
         setError(null);
 
-        // Use real-time listener for immediate updates
-        const propertiesRef = collection(db, 'properties');
-        const q = query(propertiesRef, where('user_type', '==', 'individual'));
+        // Fetch using backend API
+        const response = await api.get('/properties');
+        const allProperties = response.data.properties || [];
 
-        const unsubscribe = onSnapshot(q, async (querySnapshot) => {
-          const propertiesData = [];
-          querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            // Filter active properties on client side
-            if (data.status === 'active') {
-              propertiesData.push({
-                id: doc.id,
-                ...data
-              });
-            }
-          });
-          
-          // Filter out expired properties and mark them as expired
-          const activeProperties = await filterAndMarkExpiredProperties(propertiesData);
-          
-          // Sort by created_at on client side
-          activeProperties.sort((a, b) => {
-            const dateA = new Date(a.created_at || 0);
-            const dateB = new Date(b.created_at || 0);
-            return dateB - dateA;
-          });
-          
-          setProperties(activeProperties);
-          setLoading(false);
-        }, (error) => {
-          console.error('Error fetching individual properties:', error);
-          setError(`Failed to load properties: ${error.message}`);
-          setLoading(false);
+        // Filter active properties and by user_type 'individual'
+        const propertiesData = allProperties.filter(p => 
+          p.status === 'active' && p.user_type === 'individual'
+        );
+
+        // Filter out expired properties and mark them as expired
+        const activeProperties = await filterAndMarkExpiredProperties(propertiesData);
+        
+        // Sort by created_at on client side
+        activeProperties.sort((a, b) => {
+          const dateA = new Date(a.created_at || 0);
+          const dateB = new Date(b.created_at || 0);
+          return dateB - dateA;
         });
-
-        // Cleanup subscription on unmount
-        return () => unsubscribe();
+        
+        setProperties(activeProperties);
+        setLoading(false);
 
       } catch (error) {
-        console.error('Error setting up properties listener:', error);
+        console.error('Error fetching individual properties:', error);
         setError(`Failed to load properties: ${error.message}`);
         setLoading(false);
       }

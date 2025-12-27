@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { collection, addDoc } from 'firebase/firestore';
-import { db } from '../../firebase';
+// import { collection, addDoc } from 'firebase/firestore';
+// import { db } from '../../firebase';
+import api from '../../services/api';
 import './LeadModal.css';
 
 const LeadModal = ({ isOpen, onClose }) => {
@@ -141,14 +142,14 @@ const LeadModal = ({ isOpen, onClose }) => {
     setError('');
 
     try {
-      // Save to Firestore
+      // Save to Backend
       const leadData = {
         name: formData.name,
         requirement_type: formData.requirementType,
         budget: formData.budget,
         location: formData.location,
         phone: formData.phone,
-        created_at: new Date().toISOString()
+        // created_at will be handled by backend or defaults
       };
 
       // Only add BHK type if applicable
@@ -156,7 +157,7 @@ const LeadModal = ({ isOpen, onClose }) => {
         leadData.bhk_type = formData.bhkType;
       }
 
-      await addDoc(collection(db, 'leads'), leadData);
+      await api.post('/leads', leadData);
 
       console.log('✅ Lead saved successfully:', formData);
       setSuccess(true);

@@ -2,8 +2,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '../firebase';
+// import { collection, query, where, getDocs } from 'firebase/firestore';
+// import { db } from '../firebase';
+import api from '../services/api';
 import { formatDate } from '../utils/dateFormatter';
 import './MyBookings.css';
 
@@ -23,74 +24,48 @@ const MyBookings = () => {
       return;
     }
 
+    const fetchBookings = async () => {
+      try {
+        setLoading(true);
+        console.log('🔍 Fetching bookings for user:', currentUser.uid);
+        
+        const response = await api.get('/bookings/my');
+        const allBookings = response.data || [];
+        
+        // ... filtering and sorting ...
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const activeBookings = allBookings.filter(booking => {
+          if (booking.visit_date) {
+            const visitDate = new Date(booking.visit_date);
+            visitDate.setHours(0, 0, 0, 0);
+            return visitDate >= today;
+          }
+          return true;
+        });
+
+        activeBookings.sort((a, b) => {
+          const dateA = a.created_at ? new Date(a.created_at) : new Date(0);
+          const dateB = b.created_at ? new Date(b.created_at) : new Date(0);
+          return dateB - dateA;
+        });
+
+        console.log('✅ Active bookings loaded:', activeBookings.length);
+        setBookings(activeBookings);
+        setAllBookingsCount(allBookings.length);
+      } catch (error) {
+        console.error('❌ Error fetching bookings:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     if (currentUser?.uid) {
       console.log('✅ User authenticated, fetching bookings');
       fetchBookings();
     }
   }, [currentUser, isAuthenticated, navigate]);
-
-  const fetchBookings = async () => {
-    try {
-      setLoading(true);
-      console.log('🔍 Fetching bookings for user:', currentUser.uid);
-      
-      const bookingsRef = collection(db, 'bookings');
-      
-      // Fetch ALL bookings (including past ones for stats)
-      const q = query(
-        bookingsRef,
-        where('user_id', '==', currentUser.uid)
-      );
-
-      const querySnapshot = await getDocs(q);
-      console.log('📊 Found bookings:', querySnapshot.size);
-      
-      const today = new Date();
-      today.setHours(0, 0, 0, 0); // Set to start of day for comparison
-      
-      const allBookings = querySnapshot.docs.map(doc => {
-        const data = doc.data();
-        console.log('📄 Booking data:', data);
-        return {
-          id: doc.id,
-          ...data
-        };
-      });
-
-      // Filter to show only active bookings (today and future)
-      const activeBookings = allBookings.filter(booking => {
-        if (booking.visit_date) {
-          const visitDate = new Date(booking.visit_date);
-          visitDate.setHours(0, 0, 0, 0);
-          
-          // Keep only bookings that are today or in the future
-          if (visitDate < today) {
-            console.log('🗑️ Filtering out past booking:', booking.id, booking.visit_date);
-            return false;
-          }
-        }
-        return true;
-      });
-
-      // Sort manually by created_at
-      activeBookings.sort((a, b) => {
-        const dateA = a.created_at ? new Date(a.created_at) : new Date(0);
-        const dateB = b.created_at ? new Date(b.created_at) : new Date(0);
-        return dateB - dateA;
-      });
-
-      console.log('✅ Active bookings loaded:', activeBookings.length);
-      console.log('📊 Total bookings (including past):', allBookings.length);
-      setBookings(activeBookings);
-      setAllBookingsCount(allBookings.length);
-    } catch (error) {
-      console.error('❌ Error fetching bookings:', error);
-      console.error('Error details:', error.message);
-      alert('Error loading bookings. Check console for details.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const formatDateDisplay = (dateString) => {
     return formatDate(dateString);

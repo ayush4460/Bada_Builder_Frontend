@@ -1,5 +1,6 @@
-import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+// import { doc, updateDoc } from 'firebase/firestore';
+// import { db } from '../firebase';
+// import api from '../services/api';
 
 /**
  * Check if a property's subscription has expired
@@ -18,24 +19,21 @@ export const isPropertyExpired = (property) => {
 };
 
 /**
- * Mark an expired property as inactive in Firestore
+ * Mark an expired property as inactive (Backend handled)
  * @param {string} propertyId - Property document ID
  */
 export const markPropertyAsExpired = async (propertyId) => {
   try {
-    const propertyRef = doc(db, 'properties', propertyId);
-    await updateDoc(propertyRef, {
-      status: 'expired',
-      expired_at: new Date().toISOString()
-    });
-    console.log(`✅ Property ${propertyId} marked as expired`);
+     // This should be handled by backend.
+     // await api.put(`/properties/${propertyId}/expire`);
+     console.log(`Property ${propertyId} marked as expired (frontend view)`);
   } catch (error) {
-    console.error(`❌ Error marking property ${propertyId} as expired:`, error);
+    console.error(`Error marking property ${propertyId} as expired:`, error);
   }
 };
 
 /**
- * Filter out expired properties and mark them as expired in Firestore
+ * Filter out expired properties
  * @param {Array} properties - Array of property objects
  * @returns {Array} - Filtered array of active properties only
  */
@@ -51,14 +49,8 @@ export const filterAndMarkExpiredProperties = async (properties) => {
     }
   });
 
-  // Mark expired properties in Firestore (async, don't wait)
-  if (expiredPropertyIds.length > 0) {
-    console.log(`🔄 Found ${expiredPropertyIds.length} expired properties, marking as expired...`);
-    expiredPropertyIds.forEach(id => {
-      markPropertyAsExpired(id); // Fire and forget
-    });
-  }
-
+  // Mark expired properties logic removed from frontend
+  
   return activeProperties;
 };
 

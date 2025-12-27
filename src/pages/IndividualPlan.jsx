@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { doc, updateDoc, collection, addDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+// import { doc, updateDoc, collection, addDoc } from 'firebase/firestore';
+// import { db } from '../firebase';
 import SubscriptionService from '../services/subscriptionService';
 import './SubscriptionPlans.css';
 
@@ -73,11 +73,7 @@ const IndividualPlan = () => {
     loadRazorpay();
   }, []);
 
-  const calculateExpiryDate = (months) => {
-    const date = new Date();
-    date.setMonth(date.getMonth() + months);
-    return date.toISOString();
-  };
+
 
   // Razorpay payment handler (reusing exact logic from SubscriptionPlans)
   const handleRazorpayPayment = async (plan) => {
@@ -105,42 +101,15 @@ const IndividualPlan = () => {
       handler: async function (response) {
         console.log('✅ Payment successful:', response);
 
-        // Calculate expiry date
-        const expiryDate = calculateExpiryDate(months);
+        // Calculate expiry date logic moved to backend or unused
+        // const expiryDate = calculateExpiryDate(months);
 
-        // Prepare payment data
-        const paymentData = {
-          payment_id: response.razorpay_payment_id,
-          amount: amount,
-          plan_name: plan.duration,
-          user_id: currentUser.uid,
-          payment_status: 'success',
-          created_at: new Date().toISOString(),
-          razorpay_order_id: response.razorpay_order_id || '',
-          razorpay_signature: response.razorpay_signature || '',
-          payment_currency: currency,
-          payment_timestamp: new Date().toISOString(),
-          user_role: userRole
-        };
 
-        // Prepare subscription data
-        const subscriptionData = {
-          active_plan: plan.id,
-          plan_start_date: new Date().toISOString(),
-          plan_status: 'active',
-          is_subscribed: true,
-          subscription_expiry: expiryDate,
-          subscription_plan: plan.id,
-          subscription_price: plan.price,
-          subscribed_at: new Date().toISOString(),
-          user_type: userRole
-        };
+
+        // Backend handles data storage now
+
 
         try {
-          // Store payment details in database
-          await addDoc(collection(db, 'payments'), paymentData);
-          console.log('✅ Payment data stored successfully');
-
           // Create subscription using the subscription service
           const subscriptionId = await SubscriptionService.createSubscription(currentUser.uid, {
             plan_id: plan.id,
@@ -151,12 +120,11 @@ const IndividualPlan = () => {
             payment_id: response.razorpay_payment_id
           });
 
-          console.log('✅ Subscription created successfully:', subscriptionId);
+          console.log('Subscription created successfully:', subscriptionId);
 
           // Show success and redirect
           setPaymentLoading(false);
-          // alert(`Successfully subscribed to Individual ${plan.duration} plan! You can now post your property.`); // Removed blocking alert
-
+          
           // Redirect back to the original page or post property
           setTimeout(() => {
             navigate(returnTo, {

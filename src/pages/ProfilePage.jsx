@@ -2,8 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { FiUser, FiMail, FiPhone, FiHash, FiBriefcase, FiHome, FiUsers, FiCalendar, FiUpload, FiTrash2, FiEdit3, FiTrendingUp } from 'react-icons/fi';
-import { doc, updateDoc, collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
-import { db } from '../firebase';
+// import { doc, updateDoc, collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
+// import { db } from '../firebase';
+import api from '../services/api';
 import './ProfilePage.css';
 
 // Cloudinary Configuration
@@ -57,111 +58,63 @@ const ProfilePage = () => {
   const [loadingActivity, setLoadingActivity] = useState(true);
   const fileInputRef = useRef(null);
 
-  // Load profile photo from Firestore on component mount
+  // Load profile photo from userProfile
   useEffect(() => {
-    const loadProfilePhoto = async () => {
-      try {
-        setLoading(true);
-        // Wait for userProfile to be available
-        if (userProfile) {
-          setProfilePhoto(userProfile.profilePhoto || null);
-        }
-      } catch (error) {
-        console.error('Error loading profile photo:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadProfilePhoto();
+    if (userProfile) {
+      setProfilePhoto(userProfile.profilePhoto || null);
+      setLoading(false);
+    }
   }, [userProfile]);
 
-  // Subscribe to activity data
+  // Fetch activity stats via API
   useEffect(() => {
     if (!currentUser?.uid) return;
 
-    setLoadingActivity(true);
+    const fetchActivityStats = async () => {
+      setLoadingActivity(true);
+      try {
+        // Run fetches in parallel
+        const [propsRes, bookingsRes, groupsRes, invRes] = await Promise.all([
+          api.get('/properties/user/me'),
+          api.get('/bookings/my'), // Assuming endpoint exists
+          api.get('/live-groups/my'), // Assuming endpoint exists
+          api.get('/investments/my') // Assuming endpoint exists
+        ]);
 
-    const propertiesRef = collection(db, 'properties');
-    const propertiesQuery = query(propertiesRef, where('user_id', '==', currentUser.uid));
+        const properties = propsRes.data || [];
+        
+        // Filter active upcoming bookings
+        const bookings = bookingsRes.data || [];
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const activeBookings = bookings.filter(b => {
+          if (b.visit_date) {
+            const visitDate = new Date(b.visit_date);
+            visitDate.setHours(0, 0, 0, 0);
+            return visitDate >= today;
+          }
+          return true;
+        });
 
-    // Note: 'bookings' collection uses 'user_id' not 'userId'
-    const bookingsRef = collection(db, 'bookings');
-    const bookingsQuery = query(bookingsRef, where('user_id', '==', currentUser.uid));
+        // Live groups and investments
+        const liveGroups = groupsRes.data || [];
+        const investments = invRes.data || [];
 
-    const liveGroupInteractionsRef = collection(db, 'liveGroupInteractions');
-    const liveGroupQuery = query(liveGroupInteractionsRef, where('userId', '==', currentUser.uid));
+        setActivityCounts({
+          propertiesUploaded: properties.length,
+          joinedLiveGroups: liveGroups.length,
+          bookedSiteVisits: activeBookings.length,
+          investments: investments.length
+        });
 
-    const investmentsRef = collection(db, 'investments');
-    const investmentsQuery = query(investmentsRef, where('user_id', '==', currentUser.uid));
-
-    // Real-time listeners
-    const unsubscribeProperties = onSnapshot(propertiesQuery, (snapshot) => {
-      setActivityCounts(prev => ({
-        ...prev,
-        propertiesUploaded: snapshot.size
-      }));
-      setLoadingActivity(false); // Enable UI as soon as we get first data
-    }, (error) => {
-      console.error('Error fetching properties:', error);
-    });
-
-    const unsubscribeBookings = onSnapshot(bookingsQuery, (snapshot) => {
-      // Filter out past bookings - only count today and future visits
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      const activeBookings = snapshot.docs.filter(doc => {
-        const data = doc.data();
-        if (data.visit_date) {
-          const visitDate = new Date(data.visit_date);
-          visitDate.setHours(0, 0, 0, 0);
-          return visitDate >= today; // Keep only today and future bookings
-        }
-        return true; // Keep bookings without visit_date
-      });
-
-      setActivityCounts(prev => ({
-        ...prev,
-        bookedSiteVisits: activeBookings.length
-      }));
-      console.log('✅ Real-time active bookings updated:', activeBookings.length, '(filtered from', snapshot.size, 'total)');
-    }, (error) => {
-      console.error('Error fetching bookings:', error);
-      // Fallback for missing index or collection
-      if (error.code === 'failed-precondition') {
-        console.warn('Firestore index might be missing for bookings query');
+      } catch (error) {
+        console.error('Error fetching activity stats:', error);
+      } finally {
+        setLoadingActivity(false);
       }
-    });
-
-    // Live groups might not exist yet, so we handle it gracefully usually, 
-    // but onSnapshot will just not fire or return empty if collection doesn't exist 
-    // (actually strict empty collection reads are fine).
-    const unsubscribeLiveGroups = onSnapshot(liveGroupQuery, (snapshot) => {
-      setActivityCounts(prev => ({
-        ...prev,
-        joinedLiveGroups: snapshot.size
-      }));
-    }, (error) => {
-      // Feature might not be implemented yet
-      console.log('Live group interactions not available yet');
-    });
-
-    const unsubscribeInvestments = onSnapshot(investmentsQuery, (snapshot) => {
-      setActivityCounts(prev => ({
-        ...prev,
-        investments: snapshot.size
-      }));
-    }, (error) => {
-      console.error('Error fetching investments:', error);
-    });
-
-    return () => {
-      unsubscribeProperties();
-      unsubscribeBookings();
-      unsubscribeLiveGroups();
-      unsubscribeInvestments();
     };
+
+    fetchActivityStats();
   }, [currentUser]);
 
   // Placeholder data - will be replaced with actual Firebase data
@@ -226,18 +179,16 @@ const ProfilePage = () => {
 
     try {
       setUploading(true);
-
       console.log('🗑️ Removing profile photo...');
 
-      // Update Firestore user document to remove photo
-      const userDocRef = doc(db, 'users', currentUser.uid);
-      await updateDoc(userDocRef, {
+      // Update backend user profile
+      await api.put('/auth/update', {
         profilePhoto: null
       });
 
-      console.log('✅ Profile photo removed from Firestore');
+      console.log('✅ Profile photo removed from backend');
 
-      // Update local state immediately for instant UI update
+      // Update local state immediately
       setProfilePhoto(null);
 
       // Refresh profile to get updated data from context
@@ -280,15 +231,14 @@ const ProfilePage = () => {
 
       console.log('✅ Profile photo uploaded successfully:', photoURL);
 
-      // Update Firestore user document
-      const userDocRef = doc(db, 'users', currentUser.uid);
-      await updateDoc(userDocRef, {
+      // Update backend
+      await api.put('/auth/update', {
         profilePhoto: photoURL
       });
 
-      console.log('✅ Profile photo URL saved to Firestore');
+      console.log('✅ Profile photo URL saved to backend');
 
-      // Update local state immediately for instant UI update
+      // Update local state immediately
       setProfilePhoto(photoURL);
 
       // Refresh profile to get updated data from context

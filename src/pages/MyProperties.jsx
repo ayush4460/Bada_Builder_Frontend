@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { collection, query, where, getDocs, doc, deleteDoc, getDoc, onSnapshot } from 'firebase/firestore';
-import { db } from '../firebase';
+// import { collection, query, where, getDocs, doc, deleteDoc, getDoc, onSnapshot } from 'firebase/firestore';
+// import { db } from '../firebase';
+import api from '../services/api';
+import SubscriptionService from '../services/subscriptionService';
 import { useAuth } from '../context/AuthContext';
 import ViewToggle from '../components/ViewToggle/ViewToggle';
 import useViewPreference from '../hooks/useViewPreference';
 import { FiEdit2, FiEye, FiTrash2, FiClock, FiMapPin, FiHome, FiCalendar } from 'react-icons/fi';
-import { isPropertyExpired, markPropertyAsExpired } from '../utils/propertyExpiry';
+import { isPropertyExpired } from '../utils/propertyExpiry';
 import { formatDate } from '../utils/dateFormatter';
 import './MyProperties.css';
 
@@ -44,22 +46,9 @@ const MyProperties = () => {
   const fetchProperties = async () => {
     try {
       setLoading(true);
-      const propertiesRef = collection(db, 'properties');
-      const q = query(propertiesRef, where('user_id', '==', currentUser.uid));
-      const querySnapshot = await getDocs(q);
-
-      const propertiesData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-
-      // Check for expired properties and mark them
-      propertiesData.forEach(property => {
-        if (property.status === 'active' && isPropertyExpired(property)) {
-          markPropertyAsExpired(property.id); // Mark as expired in Firestore
-          property.status = 'expired'; // Update local state immediately
-        }
-      });
+      // Fetch user's properties from backend
+      const response = await api.get('/properties/user/me');
+      const propertiesData = response.data || [];
 
       // Sort by created_at (newest first)
       propertiesData.sort((a, b) => {
@@ -71,7 +60,7 @@ const MyProperties = () => {
       setProperties(propertiesData);
     } catch (error) {
       console.error('Error fetching properties:', error);
-      alert('Failed to load properties. Please try again.');
+      // alert('Failed to load properties. Please try again.'); // Silent fail is better sometimes, or specific error UI
     } finally {
       setLoading(false);
     }
@@ -79,15 +68,16 @@ const MyProperties = () => {
 
   const fetchSubscriptionData = async () => {
     try {
-      const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
-        setSubscriptionExpiry(userData.subscription_expiry);
+      const subscription = await SubscriptionService.getMySubscription();
+      if (subscription) {
+        setSubscriptionExpiry(subscription.expires_at || subscription.subscription_expiry);
       }
     } catch (error) {
       console.error('Error fetching subscription data:', error);
     }
   };
+
+
 
   const getSubscriptionTimeRemaining = (property) => {
     // Use property's own subscription expiry if available
@@ -212,7 +202,7 @@ const MyProperties = () => {
     if (!confirmDelete) return;
 
     try {
-      await deleteDoc(doc(db, 'properties', property.id));
+      await api.delete(`/properties/${property.id}`);
       alert('✅ Property deleted successfully!');
       // Refresh the list
       fetchProperties();

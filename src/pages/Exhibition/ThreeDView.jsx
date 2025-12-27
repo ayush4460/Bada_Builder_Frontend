@@ -3,8 +3,7 @@ import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Sky, Text } from '@react-three/drei';
 import { useLocation, useNavigate } from 'react-router-dom';
 import * as THREE from 'three';
-import { db } from '../../firebase';
-import { collection, doc, setDoc, onSnapshot, updateDoc, writeBatch, getDocs, query, where, collectionGroup, addDoc, increment } from 'firebase/firestore';
+import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import './LiveGrouping.css';
 
@@ -30,8 +29,17 @@ const COLOR_DEFAULT = '#e2e8f0';
 const UnitDetailsModal = ({ unit, onClose, onBookNow, onHold, paymentLoading }) => {
     if (!unit) return null;
 
+    // Normalize keys if needed (backend snake_case vs frontend camelCase)
+    // Actually simpler to just use what's likely there or check both
+    const price = Number(unit.price);
+    const unitNumber = unit.unit_number || unit.unitNumber;
+    const unitType = unit.unit_type || unit.unitType;
+    const carpetArea = unit.carpet_area || unit.carpetArea;
+    const superArea = unit.super_built_up_area || unit.superBuiltUpArea;
+    const floorId = unit.floor_id || unit.floorId;
+
     // Calculate 0.5% advance payment
-    const advanceAmount = (unit.price * 0.5) / 100;
+    const advanceAmount = (price * 0.5) / 100;
 
     return (
         <div style={{
@@ -41,25 +49,25 @@ const UnitDetailsModal = ({ unit, onClose, onBookNow, onHold, paymentLoading }) 
             minWidth: '320px', border: '2px solid #e2e8f0'
         }}>
             <h3 style={{ margin: '0 0 12px 0', fontSize: '20px', fontWeight: 'bold', color: '#1e293b' }}>
-                Unit: {unit.unitNumber} (Floor {unit.floorId})
+                Unit: {unitNumber} (Floor {floorId})
             </h3>
 
             <div style={{ marginBottom: '16px', display: 'grid', gap: '8px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ color: '#64748b' }}>Type:</span>
-                    <span style={{ fontWeight: '600' }}>{unit.unitType || 'Standard'}</span>
+                    <span style={{ fontWeight: '600' }}>{unitType || 'Standard'}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ color: '#64748b' }}>Super Area:</span>
-                    <span style={{ fontWeight: '600' }}>{unit.superBuiltUpArea} sq ft</span>
+                    <span style={{ fontWeight: '600' }}>{superArea} sq ft</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ color: '#64748b' }}>Carpet Area:</span>
-                    <span style={{ fontWeight: '600' }}>{unit.carpetArea} sq ft</span>
+                    <span style={{ fontWeight: '600' }}>{carpetArea} sq ft</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ color: '#64748b' }}>Price:</span>
-                    <span style={{ fontWeight: '600', color: '#0f172a' }}>₹{(unit.price / 100000).toFixed(2)} L</span>
+                    <span style={{ fontWeight: '600', color: '#0f172a' }}>₹{(price / 100000).toFixed(2)} L</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ color: '#64748b' }}>Advance (0.5%):</span>
@@ -282,87 +290,93 @@ const ThreeDView = () => {
         loadRazorpay();
     }, []);
 
-    // 1. Deep Nested Seeding
+    // Define fetchUnits first to be used in effects
+    const fetchUnits = React.useCallback(async () => {
+        if (!propertyId) return;
+        try {
+            const response = await api.get(`/properties/${propertyId}/units`);
+            if (response.data && response.data.units) {
+                 const data = {};
+                 response.data.units.forEach(u => {
+                     if (u.unit_identifier) {
+                         data[u.unit_identifier] = u;
+                     }
+                 });
+                 setUnitsData(data);
+            }
+        } catch (error) {
+            console.error("Polling/Fetch Error:", error);
+        }
+    }, [propertyId]);
+
+    // 1. Check & Seed Units
     useEffect(() => {
         if (!propertyId) return;
 
         const checkAndSeed = async () => {
             try {
-                // Check if ANY units exist for this project using a collection group query
-                // This requires an index, but for now we can check a specific known path to avoid index error on first run
-                const testTowerRef = collection(db, 'properties', String(propertyId), 'towers');
-                const snapshot = await getDocs(testTowerRef);
-
-                if (snapshot.empty) {
+                // Check if units exist
+                const response = await api.get(`/properties/${propertyId}/units`);
+                
+                if (response.data.units && response.data.units.length === 0) {
                     console.log("Seeding Deep Structure...");
-                    const batch = writeBatch(db);
+                    
+                    const unitsToSeed = [];
 
-                    // Structure: properties/{pid}/towers/{tid}/floors/{fid}/units/{uid}
+                    // Generate Units Logic
                     for (let t = 1; t <= TOWER_COUNT; t++) {
-                        const towerId = `Tower_${t}`;
-                        const towerRef = doc(db, 'properties', String(propertyId), 'towers', towerId);
-                        batch.set(towerRef, { created: true }); // Placeholder for tower
-
                         for (let f = 1; f <= FLOORS; f++) {
-                            const floorId = `Floor_${f}`;
-                            const floorRef = doc(db, 'properties', String(propertyId), 'towers', towerId, 'floors', floorId);
-                            batch.set(floorRef, { created: true }); // Placeholder for floor
-
                             ['A', 'B', 'C', 'D'].forEach(u => {
-                                const unitId = `Unit_${u}`;
-                                const uniqueId = `Tower_${t}_Floor_${f}_Unit_${u}`; // Unique key for logic
-
-                                const unitRef = doc(db, 'properties', String(propertyId), 'towers', towerId, 'floors', floorId, 'units', unitId);
-
-                                batch.set(unitRef, {
-                                    id: uniqueId, // Store the logical ID used by 3D mesh
-                                    towerId: t,
-                                    floorId: f,
-                                    unitNumber: `${f}${u}`,
-                                    unitType: '3 BHK',
-                                    carpetArea: 1200,
-                                    superBuiltUpArea: 1550,
+                                const uniqueId = `Tower_${t}_Floor_${f}_Unit_${u}`; // Unique identifier
+                                
+                                unitsToSeed.push({
+                                    property_id: String(propertyId),
+                                    unit_identifier: uniqueId,
+                                    tower_id: t,
+                                    floor_id: f,
+                                    unit_number: `${f}${u}`,
+                                    unit_type: '3 BHK',
+                                    carpet_area: 1200,
+                                    super_built_up_area: 1550,
                                     price: 7500000 + (f * 50000),
                                     status: 'available',
-                                    projectId: String(propertyId),
-                                    updatedAt: new Date()
+                                    updated_at: new Date().toISOString()
                                 });
                             });
                         }
                     }
-                    await batch.commit();
+
+                    // Send seed request
+                    await api.post(`/properties/${propertyId}/units/seed`, { units: unitsToSeed });
                     console.log("Deep Seeding Complete!");
+                    // Trigger immediate fetch
+                    fetchUnits();
+                } else {
+                    // Load existing
+                    const data = {};
+                    response.data.units.forEach(u => {
+                         if (u.unit_identifier) {
+                             data[u.unit_identifier] = u;
+                         }
+                    });
+                    setUnitsData(data);
                 }
             } catch (e) {
-                console.error("Seeding Error:", e);
+                console.error("Seeding/Fetching Error:", e);
             }
         };
 
         checkAndSeed();
+    }, [propertyId, fetchUnits]);
 
-        // 2. Collection Group Listener
-        // Listens to ALL 'units' subcollections where projectId matches
-        const q = query(collectionGroup(db, 'units'), where('projectId', '==', String(propertyId)));
+    // 2. Polling for Real-Time Updates (every 3 seconds)
+    useEffect(() => {
+        if (!propertyId) return;
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const data = {};
-            snapshot.forEach(doc => {
-                const unit = doc.data();
-                // Map by the logical ID (e.g., Tower_1_Floor_5_Unit_A)
-                if (unit.id) {
-                    data[unit.id] = { ...unit, firestorePath: doc.ref.path };
-                }
-            });
-            setUnitsData(data);
-        }, (error) => {
-            console.error("Snapshot Error (Index might be missing):", error);
-            if (error.code === 'failed-precondition') {
-                alert("Database Index Missing! Check console for link.");
-            }
-        });
+        const intervalId = setInterval(fetchUnits, 3000); // Poll every 3 seconds
 
-        return () => unsubscribe();
-    }, [propertyId]);
+        return () => clearInterval(intervalId);
+    }, [propertyId, fetchUnits]);
 
     // Handle Logic
     const handleUnitClick = (id) => {
@@ -374,123 +388,44 @@ const ThreeDView = () => {
     // Razorpay Payment Handler for Book Now
     const handleBookNowPayment = async (unit) => {
         // Validation
-        if (!isAuthenticated) {
-            alert('Please login to book a unit');
-            navigate('/login');
-            return;
-        }
-
-        if (!razorpayLoaded) {
-            alert('Payment gateway is loading. Please try again in a moment.');
-            return;
-        }
-
-        if (unit.status !== 'available') {
-            alert('This unit is no longer available');
-            return;
-        }
+        if (!isAuthenticated) return alert('Please login to book a unit');
+        if (!razorpayLoaded) return alert('Payment gateway is loading...');
+        if (unit.status !== 'available') return alert('This unit is no longer available');
 
         setPaymentLoading(true);
 
         // Calculate 0.5% advance payment
-        const advanceAmount = (unit.price * 0.5) / 100;
+        const advanceAmount = (Number(unit.price) * 0.5) / 100;
         const currency = 'INR';
-
-        console.log('\ud83d\ude80 Starting unit booking payment for:', unit.unitNumber);
-        console.log('\ud83d\udcb0 Advance Amount (0.5%):', advanceAmount);
 
         const options = {
             key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-            amount: advanceAmount * 100, // Amount in paise
+            amount: Math.round(advanceAmount * 100), // Amount in paise
             currency: currency,
             name: 'Bada Builder',
-            description: `Unit Booking - ${unit.unitNumber} (${property?.title || 'Property'})`,
+            description: `Unit Booking - ${unit.unit_number} (${property?.title || 'Property'})`,
             image: '/logo.png',
             handler: async function (response) {
-                console.log('\u2705 Payment successful:', response);
-
                 try {
-                    // Atomic Firestore Updates
-                    const batch = writeBatch(db);
-
-                    // 1. Update Unit Status to Booked
-                    const unitRef = doc(db, 'properties', String(propertyId),
-                        'towers', `Tower_${unit.towerId}`,
-                        'floors', `Floor_${unit.floorId}`,
-                        'units', `Unit_${unit.unitNumber.slice(-1)}`
-                    );
-
-                    batch.update(unitRef, {
+                    // Update Unit Status via API
+                    await api.put(`/properties/${propertyId}/units/${unit.id}`, {
                         status: 'booked',
-                        bookedBy: currentUser.uid,
-                        bookedByName: userProfile?.name || currentUser.displayName || 'User',
-                        bookedByEmail: userProfile?.email || currentUser.email,
-                        bookedAt: new Date().toISOString(),
-                        paymentId: response.razorpay_payment_id,
-                        amountPaid: advanceAmount,
-                        updatedAt: new Date()
-                    });
-
-                    // 2. Store Payment Record
-                    const paymentData = {
+                        booked_by: currentUser.uid,
+                        booked_by_name: userProfile?.name || currentUser.displayName || 'User',
+                        booked_at: new Date().toISOString(),
                         payment_id: response.razorpay_payment_id,
-                        user_id: currentUser.uid,
-                        user_name: userProfile?.name || currentUser.displayName || 'User',
-                        user_email: userProfile?.email || currentUser.email,
-                        property_id: String(propertyId),
-                        property_title: property?.title || 'Property',
-                        unit_id: unit.id,
-                        unit_number: unit.unitNumber,
-                        tower_id: unit.towerId,
-                        floor_id: unit.floorId,
-                        amount: advanceAmount,
-                        unit_price: unit.price,
-                        payment_type: 'unit_booking',
-                        payment_status: 'success',
-                        currency: currency,
-                        razorpay_order_id: response.razorpay_order_id || '',
-                        razorpay_signature: response.razorpay_signature || '',
-                        created_at: new Date().toISOString(),
-                        timestamp: new Date()
-                    };
-
-                    const paymentsRef = collection(db, 'payments');
-                    await addDoc(paymentsRef, paymentData);
-
-                    // 3. Increment Buyer Count in Property
-                    const propertyRef = doc(db, 'properties', String(propertyId));
-                    batch.update(propertyRef, {
-                        currentBuyers: increment(1)
+                        // Additional metadata if needed by backend
+                        amount_paid: advanceAmount
                     });
-
-                    // 4. Add User to Group Members
-                    const memberRef = doc(db, 'properties', String(propertyId), 'members', currentUser.uid);
-                    batch.set(memberRef, {
-                        userId: currentUser.uid,
-                        userName: userProfile?.name || currentUser.displayName || 'User',
-                        userEmail: userProfile?.email || currentUser.email,
-                        unitId: unit.id,
-                        unitNumber: unit.unitNumber,
-                        towerId: unit.towerId,
-                        floorId: unit.floorId,
-                        joinedAt: new Date().toISOString(),
-                        paymentId: response.razorpay_payment_id,
-                        amountPaid: advanceAmount
-                    }, { merge: true });
-
-                    // Commit all changes atomically
-                    await batch.commit();
 
                     console.log('\u2705 Unit booked successfully!');
-                    console.log('\u2705 Payment record stored');
-                    console.log('\u2705 Buyer count incremented');
-                    console.log('\u2705 User added to group members');
-
+                    
                     // Close modal and show success
                     setPaymentLoading(false);
                     setSelectedUnitId(null);
+                    fetchUnits(); // Immediate refresh
 
-                    alert(`\u2705 Booking Successful!\\n\\nUnit: ${unit.unitNumber}\\nAmount Paid: \u20b9${(advanceAmount / 100000).toFixed(2)}L\\nPayment ID: ${response.razorpay_payment_id}\\n\\nThe unit will now appear as BOOKED (RED).`);
+                    alert(`\u2705 Booking Successful!\\n\\nUnit: ${unit.unit_number}\\nAmount Paid: \u20b9${(advanceAmount / 100000).toFixed(2)}L\\nPayment ID: ${response.razorpay_payment_id}`);
 
                 } catch (error) {
                     console.error('Error updating database:', error);
@@ -503,22 +438,7 @@ const ThreeDView = () => {
                 email: userProfile?.email || currentUser?.email || '',
                 contact: userProfile?.phone || currentUser?.phoneNumber || ''
             },
-            notes: {
-                property_id: String(propertyId),
-                unit_id: unit.id,
-                unit_number: unit.unitNumber,
-                user_id: currentUser.uid,
-                payment_type: 'unit_booking_advance'
-            },
-            theme: {
-                color: '#2563eb'
-            },
-            modal: {
-                ondismiss: function () {
-                    console.log('Payment cancelled by user');
-                    setPaymentLoading(false);
-                }
-            }
+            theme: { color: '#2563eb' }
         };
 
         const razorpay = new window.Razorpay(options);
@@ -527,38 +447,24 @@ const ThreeDView = () => {
 
     // Hold Unit Handler (without payment)
     const handleHoldUnit = async (unit) => {
-        if (!isAuthenticated) {
-            alert('Please login to hold a unit');
-            navigate('/login');
-            return;
-        }
-
-        if (unit.status !== 'available') {
-            alert('This unit is no longer available');
-            return;
-        }
+        if (!isAuthenticated) return alert('Please login to hold a unit');
+        if (unit.status !== 'available') return alert('This unit is no longer available');
 
         setPaymentLoading(true);
 
         try {
-            const unitRef = doc(db, 'properties', String(propertyId),
-                'towers', `Tower_${unit.towerId}`,
-                'floors', `Floor_${unit.floorId}`,
-                'units', `Unit_${unit.unitNumber.slice(-1)}`
-            );
-
-            await updateDoc(unitRef, {
+            await api.put(`/properties/${propertyId}/units/${unit.id}`, {
                 status: 'hold',
-                heldBy: currentUser.uid,
-                heldByName: userProfile?.name || currentUser.displayName || 'User',
-                heldAt: new Date().toISOString(),
-                updatedAt: new Date()
+                held_by: currentUser.uid,
+                held_by_name: userProfile?.name || currentUser.displayName || 'User',
+                held_at: new Date().toISOString()
             });
 
             console.log('\u2705 Unit put on hold');
             setPaymentLoading(false);
             setSelectedUnitId(null);
-            alert(`Unit ${unit.unitNumber} is now on HOLD.`);
+            fetchUnits(); // Immediate refresh
+            alert(`Unit ${unit.unit_number} is now on HOLD.`);
 
         } catch (error) {
             console.error('Error holding unit:', error);

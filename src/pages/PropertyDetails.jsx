@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+// import { doc, getDoc } from 'firebase/firestore';
+// import { db } from '../firebase';
+import api from '../services/api';
 import './ProjectDetails.css';
 import { FiPhone, FiCheckCircle, FiInfo, FiMap } from 'react-icons/fi';
 import { FaChevronLeft, FaChevronRight, FaExpand } from 'react-icons/fa';
@@ -22,10 +23,10 @@ const PropertyDetails = () => {
         setLoading(false);
       } else if (id) {
         try {
-          const docRef = doc(db, 'properties', id);
-          const docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
-            setProperty({ id: docSnap.id, ...docSnap.data() });
+          // Fetch from backend API
+          const response = await api.get(`/properties/${id}`);
+          if (response.data) {
+            setProperty(response.data);
           }
         } catch (error) {
           console.error("Error fetching property:", error);

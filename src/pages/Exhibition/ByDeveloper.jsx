@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
-import { db } from '../../firebase';
+// import { collection, query, where, onSnapshot } from 'firebase/firestore';
+// import { db } from '../../firebase';
+import api from '../../services/api';
 import ViewToggle from '../../components/ViewToggle/ViewToggle';
 import PropertyCard from '../../components/PropertyCard/PropertyCard';
 import useViewPreference from '../../hooks/useViewPreference';
@@ -21,46 +22,30 @@ const ByDeveloper = () => {
         setLoading(true);
         setError(null);
 
-        // Use real-time listener for immediate updates
-        const propertiesRef = collection(db, 'properties');
-        const q = query(propertiesRef, where('user_type', '==', 'developer'));
+        // Fetch using backend API
+        const response = await api.get('/properties');
+        const allProperties = response.data.properties || [];
 
-        const unsubscribe = onSnapshot(q, async (querySnapshot) => {
-          const projectsData = [];
-          querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            // Filter active properties on client side
-            if (data.status === 'active') {
-              projectsData.push({
-                id: doc.id,
-                ...data
-              });
-            }
-          });
+        // Filter active properties and by user_type 'developer'
+        const projectsData = allProperties.filter(p => 
+          p.status === 'active' && p.user_type === 'developer'
+        );
 
-          // Filter out expired properties and mark them as expired
-          const activeProjects = await filterAndMarkExpiredProperties(projectsData);
+        // Filter out expired properties and mark them as expired (frontend utility)
+        const activeProjects = await filterAndMarkExpiredProperties(projectsData);
 
-          // Sort by created_at on client side
-          activeProjects.sort((a, b) => {
-            const dateA = new Date(a.created_at || 0);
-            const dateB = new Date(b.created_at || 0);
-            return dateB - dateA;
-          });
-
-          setProjects(activeProjects);
-          setLoading(false);
-        }, (error) => {
-          console.error('Error fetching developer projects:', error);
-          setError(`Failed to load projects: ${error.message}`);
-          setLoading(false);
+        // Sort by created_at on client side
+        activeProjects.sort((a, b) => {
+          const dateA = new Date(a.created_at || 0);
+          const dateB = new Date(b.created_at || 0);
+          return dateB - dateA;
         });
 
-        // Cleanup subscription on unmount
-        return () => unsubscribe();
+        setProjects(activeProjects);
+        setLoading(false);
 
       } catch (error) {
-        console.error('Error setting up projects listener:', error);
+        console.error('Error fetching developer projects:', error);
         setError(`Failed to load projects: ${error.message}`);
         setLoading(false);
       }

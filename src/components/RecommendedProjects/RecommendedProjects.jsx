@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import './RecommendedProjects.css';
 import { Link } from 'react-router-dom';
-import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
-import { db } from '../../firebase';
+// import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
+// import { db } from '../../firebase';
+import api from '../../services/api';
 import PropertyCard from '../PropertyCard/PropertyCard';
 
 const RecommendedProjects = () => {
@@ -19,61 +20,35 @@ const RecommendedProjects = () => {
     const fetchFeaturedProperties = async () => {
       try {
         setLoading(true);
-        const propertiesRef = collection(db, 'properties');
+        // Fetch all properties from backend
+        const response = await api.get('/properties');
+        const allProperties = response.data.properties || [];
 
-        // Fetch one Individual property
-        const individualQuery = query(
-          propertiesRef,
-          where('user_type', '==', 'individual'),
-          where('status', '==', 'active'),
-          orderBy('created_at', 'desc'),
-          limit(1)
-        );
+        // Helper to sort by date desc
+        const sortByDate = (a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0);
 
-        // Fetch one Developer property
-        const developerQuery = query(
-          propertiesRef,
-          where('user_type', '==', 'developer'),
-          where('status', '==', 'active'),
-          orderBy('created_at', 'desc'),
-          limit(1)
-        );
+        // Filter and get latest for each category
+        const individualProps = allProperties
+          .filter(p => p.status === 'active' && p.user_type === 'individual')
+          .sort(sortByDate);
 
-        // Fetch one Live Grouping property (assumed: has live_group_id or is_live_grouping)
-        const liveGroupingQuery = query(
-          propertiesRef,
-          where('is_live_grouping', '==', true),
-          where('status', '==', 'active'),
-          orderBy('created_at', 'desc'),
-          limit(1)
-        );
+        const developerProps = allProperties
+          .filter(p => p.status === 'active' && p.user_type === 'developer')
+          .sort(sortByDate);
 
-        // Fetch one Bada Builder property (assumed: posted by admin or is_bada_builder)
-        const badaBuilderQuery = query(
-          propertiesRef,
-          where('is_bada_builder', '==', true),
-          where('status', '==', 'active'),
-          orderBy('created_at', 'desc'),
-          limit(1)
-        );
+        const liveGroupingProps = allProperties
+          .filter(p => p.status === 'active' && p.is_live_grouping === true)
+          .sort(sortByDate);
 
-        // Execute all queries in parallel
-        const [individualSnap, developerSnap, liveGroupingSnap, badaBuilderSnap] = await Promise.all([
-          getDocs(individualQuery),
-          getDocs(developerQuery),
-          getDocs(liveGroupingQuery).catch(() => ({ empty: true, docs: [] })), // Fallback if field doesn't exist
-          getDocs(badaBuilderQuery).catch(() => ({ empty: true, docs: [] }))   // Fallback if field doesn't exist
-        ]);
+        const badaBuilderProps = allProperties
+          .filter(p => p.status === 'active' && p.is_bada_builder === true)
+          .sort(sortByDate);
 
         const results = {
-          individual: !individualSnap.empty ? { id: individualSnap.docs[0].id, ...individualSnap.docs[0].data() } : null,
-          developer: !developerSnap.empty ? { id: developerSnap.docs[0].id, ...developerSnap.docs[0].data() } : null,
-          liveGrouping: !liveGroupingSnap.empty && liveGroupingSnap.docs.length > 0
-            ? { id: liveGroupingSnap.docs[0].id, ...liveGroupingSnap.docs[0].data() }
-            : null,
-          badaBuilder: !badaBuilderSnap.empty && badaBuilderSnap.docs.length > 0
-            ? { id: badaBuilderSnap.docs[0].id, ...badaBuilderSnap.docs[0].data() }
-            : null
+          individual: individualProps.length > 0 ? individualProps[0] : null,
+          developer: developerProps.length > 0 ? developerProps[0] : null,
+          liveGrouping: liveGroupingProps.length > 0 ? liveGroupingProps[0] : null,
+          badaBuilder: badaBuilderProps.length > 0 ? badaBuilderProps[0] : null
         };
 
         setFeaturedProperties(results);

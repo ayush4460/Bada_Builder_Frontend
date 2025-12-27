@@ -2,8 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
-import { db } from '../firebase';
+// import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
+// import { db } from '../firebase';
+import api from '../services/api';
 import { formatDate } from '../utils/dateFormatter';
 import { FaChartLine, FaRupeeSign, FaCalendarAlt, FaArrowRight, FaBuilding } from 'react-icons/fa';
 import './MyInvestments.css';
@@ -28,48 +29,41 @@ const MyInvestments = () => {
             return;
         }
 
-        // Subscribe to investments for the current user
-        const investmentsRef = collection(db, 'investments');
-        const q = query(
-            investmentsRef,
-            where('user_id', '==', currentUser.uid)
-        );
+        const fetchInvestments = async () => {
+            try {
+                // Fetch user's investments
+                const response = await api.get('/investments/my');
+                const investmentsData = response.data || [];
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const investmentsData = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
+                // Sort by date manually
+                investmentsData.sort((a, b) => {
+                    const dateA = new Date(a.investedDate || 0);
+                    const dateB = new Date(b.investedDate || 0);
+                    return dateB - dateA;
+                });
 
-            // Sort by date manually if Firestore index isn't ready
-            investmentsData.sort((a, b) => {
-                const dateA = a.investedDate?.toDate() || new Date(0);
-                const dateB = b.investedDate?.toDate() || new Date(0);
-                return dateB - dateA;
-            });
+                setInvestments(investmentsData);
 
-            setInvestments(investmentsData);
+                // Calculate Stats 
+                const total = investmentsData.reduce((sum, inv) => sum + (inv.investedAmount || 0), 0);
+                const uniqueProps = new Set(investmentsData.map(inv => inv.propertyId)).size;
+                const avgReturn = investmentsData.length > 0
+                    ? investmentsData.reduce((sum, inv) => sum + (inv.expectedReturn || 0), 0) / investmentsData.length
+                    : 0;
 
-            // Calculate Stats (Global, not filtered for portfolio overview)
-            const total = investmentsData.reduce((sum, inv) => sum + (inv.investedAmount || 0), 0);
-            const uniqueProps = new Set(investmentsData.map(inv => inv.propertyId)).size;
-            const avgReturn = investmentsData.length > 0
-                ? investmentsData.reduce((sum, inv) => sum + (inv.expectedReturn || 0), 0) / investmentsData.length
-                : 0;
+                setStats({
+                    totalInvested: total,
+                    activeOpportunities: uniqueProps,
+                    averageReturn: avgReturn.toFixed(1)
+                });
+            } catch (error) {
+                console.error("Error fetching investments:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
 
-            setStats({
-                totalInvested: total,
-                activeOpportunities: uniqueProps,
-                averageReturn: avgReturn.toFixed(1)
-            });
-
-            setLoading(false);
-        }, (error) => {
-            console.error("Error fetching investments:", error);
-            setLoading(false);
-        });
-
-        return () => unsubscribe();
+        fetchInvestments();
     }, [currentUser, navigate]);
 
     const filteredInvestments = investments.filter(inv => {

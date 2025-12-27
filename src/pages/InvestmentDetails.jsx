@@ -1,94 +1,77 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { db } from '../firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+// import { db } from '../firebase';
+// import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import api from '../services/api';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import {
-    FaMapMarkerAlt,
-    FaRulerCombined,
-    FaMoneyBillWave,
-    FaChartLine,
-    FaClock,
-    FaLock,
-    FaExchangeAlt,
-    FaArrowLeft,
-    FaCheckCircle,
-    FaChevronRight
-} from 'react-icons/fa';
-
-// Mock DB for specific IDs (simulating fetching individual items)
-const investmentDatabase = {
-    // Shops
-    'shop-1': {
-        title: 'Retail Shop 1', type: 'shop', category: 'Commercial',
-        location: 'Mumbai', area: '450 sq.ft', description: 'Prime retail location.',
-        fundingRequired: 25000000, minInvestment: 1000000, fundedAmount: 7500000,
-        annualReturn: '7%', openingDate: '2026-01-11', closingDate: '2026-02-11',
-        lockIn: 'Till doubled', liquidity: 'Highly Liquid',
-        images: ['https://images.unsplash.com/photo-1541976844346-618be1a1f3c0?auto=format&fit=crop&q=80&w=1200']
-    },
-    // Offices
-    'office-1': {
-        title: 'Corporate Office 1', type: 'office', category: 'Commercial',
-        location: 'Bangalore', area: '1200 sq.ft', description: 'Grade A office space.',
-        fundingRequired: 50000000, minInvestment: 1500000, fundedAmount: 32000000,
-        annualReturn: '8.5%', openingDate: '2026-02-01', closingDate: '2026-03-01',
-        lockIn: '3 Years', liquidity: 'Liquid',
-        images: ['https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=1200']
-    },
-    // Flats
-    'flat-1': {
-        title: 'Luxury 3BHK', type: 'flat', category: 'Residential',
-        location: 'Mumbai', area: '1800 sq.ft', description: 'Sea view apartment.',
-        fundingRequired: 65000000, minInvestment: 2000000, fundedAmount: 15000000,
-        annualReturn: '5.5%', openingDate: '2026-01-20', closingDate: '2026-02-28',
-        lockIn: '5 Years', liquidity: 'Moderate',
-        images: ['https://images.unsplash.com/photo-1600596542815-e3289cab473c?auto=format&fit=crop&q=80&w=1200']
-    },
-    // Default Fallback
-    'default': {
-        title: 'Investment Opportunity', type: 'general', category: 'General',
-        location: 'Prime Location', area: 'Variable', description: 'High growth asset.',
-        fundingRequired: 10000000, minInvestment: 500000, fundedAmount: 0,
-        annualReturn: '8%', openingDate: '2026-01-01', closingDate: '2026-12-31',
-        lockIn: 'Variable', liquidity: 'Variable',
-        images: ['https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&q=80&w=1200']
-    }
-};
+import { FaChevronRight, FaMapMarkerAlt, FaRulerCombined, FaChartLine, FaClock, FaLock, FaExchangeAlt, FaMoneyBillWave, FaCheckCircle } from 'react-icons/fa';
 
 const InvestmentDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const { currentUser } = useAuth();
-    const [data, setData] = useState(investmentDatabase.default);
+
+    // State
+    const [isLoading, setIsLoading] = useState(true);
+    const [data, setData] = useState(null);
     const [investAmount, setInvestAmount] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
     const [currentFunded, setCurrentFunded] = useState(0);
+    const [fundingPercentage, setFundingPercentage] = useState(0);
 
+    // Fetch Data
     useEffect(() => {
-        // In real app, fetch by ID. Here we mock lookup or generate generic if missing
-        let selectedData = investmentDatabase[id];
+        const fetchData = async () => {
+            try {
+                // Fetch property from API or use mock if not implementing full investment backend yet
+                // For now, let's try to fetch a property and map it, or handle 404
+                let investmentData = null;
+                try {
+                    const response = await api.get(`/properties/${id}`);
+                    const property = response.data;
+                    if (property) {
+                        investmentData = {
+                             id: property.id,
+                             title: property.title || 'Investment Opportunity',
+                             type: property.type || 'Commercial',
+                             minInvestment: 500000, 
+                             fundingRequired: 10000000,
+                             annualReturn: '12%',
+                             openingDate: 'Jan 1, 2025',
+                             closingDate: 'Feb 1, 2025',
+                             lockIn: '3 Years',
+                             liquidity: 'High',
+                             images: property.image_url ? [property.image_url] : ['/placeholder.jpg'],
+                             description: property.description || 'No description available.',
+                             location: property.location || 'Unknown Location',
+                             area: '1200 sq.ft',
+                             ...property // Spread original properties
+                        };
+                    }
+                } catch (e) {
+                    console.log("Property fetch failed, using fallback or empty", e);
+                }
 
-        // If exact ID not found, try to generate generic based on type prefix (e.g. shop-2 -> shop generic)
-        if (!selectedData) {
-            const type = id.split('-')[0];
-            // Create a generic fallback borrowing from existing data but with dynamic ID
-            const base = investmentDatabase[`${type}-1`] || investmentDatabase.default;
-            selectedData = {
-                ...base,
-                title: `${base.title} (Generated)`,
-                id: id
-            };
-        }
-
-        setData(selectedData);
-        setCurrentFunded(selectedData.fundedAmount);
+                if (investmentData) {
+                    setData(investmentData);
+                    setCurrentFunded(2500000); 
+                    setFundingPercentage(25); 
+                } else {
+                     setError("Investment not found.");
+                }
+            } catch (err) {
+                console.error("Error fetching investment details:", err);
+                setError("Failed to load investment details.");
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchData();
     }, [id]);
 
-    const fundingPercentage = Math.min((currentFunded / data.fundingRequired) * 100, 100);
+    if (!data && !isLoading) return <div className="p-10 text-center">Investment Opportunity Not Found</div>;
 
     const handleInvest = async (e) => {
         e.preventDefault();
@@ -115,23 +98,20 @@ const InvestmentDetails = () => {
         setError('');
 
         try {
-            // Simulate Payment Processing Delay
+            // Simulate Payment Processing Delay (optional, keeps UI feeling real)
             await new Promise(resolve => setTimeout(resolve, 2000));
 
-            // Create Investment Record in Firestore
-            await addDoc(collection(db, 'investments'), {
-                user_id: currentUser.uid,
-                propertyId: data.id || id, // Use data.id if available from DB, else param id
+            // Create Investment Record via API
+            await api.post('/investments', {
+                propertyId: data.id || id,
                 propertyName: data.title,
                 propertyType: data.type,
                 category: data.category,
                 investedAmount: amount,
-                expectedReturn: parseFloat(data.annualReturn) || 0, // Extract number from string like "7%"
+                expectedReturn: parseFloat(data.annualReturn) || 0,
                 totalFunding: data.fundingRequired,
-                currentFunding: currentFunded + amount, // Snapshot of funding at time of investment (or updated)
+                currentFunding: currentFunded + amount,
                 status: 'Active',
-                investedDate: serverTimestamp(),
-                // Add mocked image for UI consistency in MyInvestments
                 image: data.images?.[0] || ''
             });
 
@@ -139,7 +119,7 @@ const InvestmentDetails = () => {
             setCurrentFunded(prev => prev + amount);
             setInvestAmount('');
 
-            // Redirect after success? Or just show message. Keeping message for now as per previous logic.
+            // Redirect after success? Or just show message. Keeping message for now.
         } catch (err) {
             console.error("Investment failed:", err);
             setError("Failed to process investment. Please try again.");

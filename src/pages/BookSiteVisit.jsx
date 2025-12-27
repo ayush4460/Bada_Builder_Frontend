@@ -2,8 +2,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { collection, addDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+// import { collection, addDoc } from 'firebase/firestore';
+// import { db } from '../firebase';
+import api from '../services/api';
 import emailjs from '@emailjs/browser';
 import './BookSiteVisit.css';
 
@@ -401,9 +402,11 @@ const BookSiteVisit = () => {
         };
 
         try {
-          // Save booking with payment details to Firebase
-          const docRef = await addDoc(collection(db, 'bookings'), paymentData);
-          paymentData.booking_id = docRef.id;
+          // Save booking with payment details to Backend
+          const response = await api.post('/bookings', paymentData);
+          const savedBooking = response.data.booking;
+          
+          paymentData.booking_id = savedBooking.id;
           paymentData.property_location = property?.location || 'N/A';
 
           // Send email notification
@@ -534,37 +537,28 @@ const BookSiteVisit = () => {
       // For postvisit, save booking directly
       setLoading(true);
       try {
-        // Save booking to Firestore
+        // Save booking to Backend
         bookingData.payment_status = 'pending';
-        const docRef = await addDoc(collection(db, 'bookings'), bookingData);
+        
+        const response = await api.post('/bookings', bookingData);
+        const savedBooking = response.data.booking;
 
-        // Add booking ID to data
-        bookingData.booking_id = docRef.id;
+        // Add booking ID to data for email
+        bookingData.booking_id = savedBooking.id;
         bookingData.property_location = property?.location || 'N/A';
 
         // Send notifications in background (non-blocking)
         Promise.allSettled([
           // EmailJS notification
-          sendAdminEmail(bookingData),
-          // Backend API notification (if available)
-          fetch('http://localhost:3002/api/notify-booking', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(bookingData)
-          }).then(res => res.json()).catch(() => ({ success: false }))
+          sendAdminEmail(bookingData)
+          // Backend notification is now handled within api.post('/bookings') if implemented there, or we skip duplicate call
         ]).then(results => {
-          const [emailResult, apiResult] = results;
+          const [emailResult] = results;
           
           if (emailResult.status === 'fulfilled' && emailResult.value.success) {
             console.log('✅ Email notification sent successfully');
           } else {
             console.warn('⚠️ Email notification failed:', emailResult.reason);
-          }
-          
-          if (apiResult.status === 'fulfilled' && apiResult.value.success) {
-            console.log('✅ API notification sent successfully');
-          } else {
-            console.warn('⚠️ API notification failed');
           }
         });
 

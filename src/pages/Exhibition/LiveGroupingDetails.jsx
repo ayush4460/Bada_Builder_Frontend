@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../../firebase';
+// import { doc, getDoc } from 'firebase/firestore';
+// import { db } from '../../firebase';
+import api from '../../services/api';
 import { calculateTokenAmount, formatCurrency, calculateTotalPrice, calculateSavings, calculatePriceRange, formatPriceRange } from '../../utils/liveGroupingCalculations';
 import './LiveGroupingDetails.css';
 
@@ -18,31 +19,75 @@ const LiveGroupingDetails = () => {
 
   const fetchProperty = async () => {
     try {
-      const docRef = doc(db, 'live_grouping_properties', id);
-      const docSnap = await getDoc(docRef);
+      const response = await api.get(`/properties/${id}`);
       
-      if (docSnap.exists()) {
-        setProperty({ id: docSnap.id, ...docSnap.data() });
+      if (response.data && response.data.property) {
+        const backendProp = response.data.property;
+        const config = backendProp.live_group_config || {};
+        
+        // Map backend data to component format
+        const mappedProperty = {
+          id: backendProp.id,
+          title: backendProp.title,
+          developer: (backendProp.developer_info && backendProp.developer_info.name) || 'Verified Builder',
+          location: backendProp.location,
+          pricePerSqFt: Number(backendProp.price?.replace(/[^0-9]/g, '')) || 4500, // Fallback or parse
+          groupPricePerSqFt: config.pricePerSqFt ? config.groupPricePerSqFt : (Number(backendProp.price?.replace(/[^0-9]/g, '')) * 0.9 || 4000), // Approximate if missing
+          discount: config.discount || '10% OFF',
+          image: backendProp.image_url || '/placeholder-property.jpg',
+          type: backendProp.type || '3 BHK Apartment',
+          area: config.area || "1450 sq.ft",
+          units: config.units || [
+            { name: "Standard Unit", area: 1200 },
+            { name: "Premium Unit", area: 1500 }
+          ],
+          totalSlots: parseInt(config.totalSlots) || 20,
+          filledSlots: parseInt(config.filledSlots) || 0,
+          timeLeft: config.timeLeft || "Limited Time",
+          minBuyers: parseInt(config.minBuyers) || 5,
+          benefits: config.benefits || ["Group Discount", "Premium Location", "Verified Builder"],
+          status: backendProp.status || 'active',
+          images: backendProp.image_url ? [backendProp.image_url] : ["/placeholder-property.jpg"],
+          possession: config.possession || "Dec 2025",
+          reraNumber: (backendProp.developer_info && backendProp.developer_info.rera) || "PR/GJ/VADODARA/123456",
+          facilities: backendProp.facilities || ["Swimming Pool", "Gym", "Parking"],
+          description: backendProp.description,
+          advantages: config.advantages || [
+             { place: "Railway Station", distance: "2.5 km" },
+             { place: "Airport", distance: "8 km" }
+          ],
+          groupDetails: config.groupDetails || {
+             refundPolicy: "100% refund if group doesn't fill",
+             closingDate: "Dec 31, 2025",
+             expectedCompletion: "Dec 2025"
+          }
+        };
+        
+        setProperty(mappedProperty);
       } else {
-        // If not found in database, check fallback data
-        const fallbackProperty = fallbackData[id];
-        if (fallbackProperty) {
-          setProperty(fallbackProperty);
-        } else {
-          setProperty(null);
-        }
+        // Fallback or Not Found
+        loadFallback();
       }
     } catch (error) {
       console.error('Error fetching property:', error);
-      // On error, try fallback data
-      const fallbackProperty = fallbackData[id];
-      if (fallbackProperty) {
-        setProperty(fallbackProperty);
-      } else {
-        setProperty(null);
-      }
+      loadFallback();
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadFallback = () => {
+    const fallbackProperty = fallbackData[id];
+    if (fallbackProperty) {
+      setProperty(fallbackProperty);
+    } else {
+      // Try to find ANY fallback for demo/dev if ID doesn't match
+      const firstFallback = Object.values(fallbackData)[0];
+      if (firstFallback && id === '1') { // Example logic
+          setProperty(firstFallback);
+      } else {
+          setProperty(null);
+      }
     }
   };
 
