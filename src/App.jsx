@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import AdminRoute from './components/ProtectedRoute/AdminRoute';
 import './App.css'
 import Header from './components/Header/Header';
 import Footer from './components/Footer/Footer';
@@ -69,12 +70,11 @@ import PFFOCalculator from './pages/calculator/PFFOCalculator';
 import DCFCalculator from './pages/calculator/DCFCalculator';
 import NPVCalculator from './pages/calculator/NPVCalculator';
 
-
-
-import AdminLogin from './pages/AdminPanel/AdminLogin';
-import AdminLayout from './pages/AdminPanel/AdminLayout';
-import AdminPostProperty from './pages/AdminPanel/PostProperty';
-import AdminManageProperties from './pages/AdminPanel/ManageProperties';
+import AdminLogin from './pages/admin/AdminLogin';
+import AdminLayout from './pages/admin/AdminLayout';
+import AdminPostProperty from './pages/admin/PostProperty';
+import AdminManageProperties from './pages/admin/ManageProperties';
+import AdminDashboard from './pages/admin/AdminDashboard';
 
 function App() {
   const [showLeadModal, setShowLeadModal] = useState(false);
@@ -99,6 +99,13 @@ function App() {
           <>
             <HeroSection />
             <RecommendedProjects />
+            <Working />
+            <ByIndividual />
+            <ByDeveloper />
+            <ByBadaBuilder />
+            <SubscriptionPlans />
+            <Services />
+            <Footer />
           </>
         } />
         {/* <Route path="/projects" element={<Projects />} /> */}
@@ -120,16 +127,24 @@ function App() {
         <Route path="/profile/investments" element={<MyInvestments />} />
         <Route path="/my-properties" element={<MyProperties />} />
         <Route path="/my-bookings" element={<MyBookings />} />
-        <Route path="/admin/live-grouping" element={<AdminLiveGrouping />} />
         <Route path="/investments/:type" element={<InvestmentListing />} />
         <Route path="/investment-details/:id" element={<InvestmentDetails />} />
 
-        {/* Admin Panel Routes */}
-        <Route path="/admin-panel/login" element={<AdminLogin />} />
-        <Route path="/admin-panel" element={<AdminLayout />}>
-          <Route index element={<AdminPostProperty />} /> {/* Default to Post Property */}
-          <Route path="post-property" element={<AdminPostProperty />} />
-          <Route path="manage-properties" element={<AdminManageProperties />} />
+        {/* Admin Routes */}
+        <Route path="/admin/login" element={<AdminLogin />} />
+        
+        {/* Protected Admin Routes */}
+        <Route path="/admin" element={
+          <AdminRoute>
+            <AdminLayout />
+          </AdminRoute>
+        }>
+           <Route index element={<AdminDashboard />} />
+           <Route path="post-property" element={<AdminPostProperty />} />
+           <Route path="properties" element={<AdminManageProperties />} />
+           <Route path="add-property" element={<AdminPostProperty />} />
+           <Route path="dashboard" element={<AdminDashboard />} />
+           <Route path="live-grouping" element={<AdminLiveGrouping />} />
         </Route>
 
         {/* Learn */}
@@ -163,11 +178,6 @@ function App() {
         <Route path="/calculator/PFFO" element={<PFFOCalculator />} />
         <Route path="/calculator/DCF" element={<DCFCalculator />} />
         <Route path="/calculator/NPV" element={<NPVCalculator />} />
-
-
-
-
-
 
         <Route path="/contact" element={<Connect />} />
         {/* <Route path="/calculator" element={<Calculator />} /> */}

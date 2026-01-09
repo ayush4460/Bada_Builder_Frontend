@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import api from '../../services/api';
 import ViewToggle from '../../components/ViewToggle/ViewToggle';
 import PropertyCard from '../../components/PropertyCard/PropertyCard';
 import useViewPreference from '../../hooks/useViewPreference';
@@ -11,63 +12,32 @@ const ByBadaBuilder = () => {
 
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  // Fallback data
-  const fallbackProperties = [
-    {
-      id: 1,
-      title: "Premium Investment Opportunity",
-      category: "Curated by Bada Builder",
-      location: "Prime Location, Vadodara",
-      price: "₹75 L - ₹1.5 Cr",
-      image: "/placeholder-property.jpg",
-      type: "Mixed Development",
-      roi: "12% Expected ROI",
-      verified: true
-    },
-    {
-      id: 2,
-      title: "Smart City Project",
-      category: "Curated by Bada Builder",
-      location: "IT Park Area, Vadodara",
-      price: "₹60 L - ₹1.2 Cr",
-      image: "/placeholder-property.jpg",
-      type: "Residential + Commercial",
-      roi: "15% Expected ROI",
-      verified: true
-    },
-    {
-      id: 3,
-      title: "Luxury Waterfront Villas",
-      category: "Curated by Bada Builder",
-      location: "Ajwa Road, Vadodara",
-      price: "₹1.5 Cr - ₹3 Cr",
-      image: "/placeholder-property.jpg",
-      type: "Ultra Luxury",
-      roi: "10% Expected ROI",
-      verified: true
-    }
-  ];
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem('badaBuilderProperties') || '[]');
-    if (stored.length > 0) {
-      // Ensure robust structure
-      const processed = stored.map(p => ({
-        ...p,
-        verified: true,
-        roi: 'High ROI', // Default for posted ones
-        image: (p.images && p.images.length > 0) ? p.images[0] : (p.imageUrl || '/placeholder-property.jpg'),
-        price: p.price || 'Price on Request',
-        // Map correct fields for PropertyCard
-        owner: p.developer || 'Bada Builder Curated',
-        type: p.type || p.category || 'Premium Property'
-      }));
-      setProperties(processed);
-    } else {
-      setProperties(fallbackProperties);
-    }
-    setLoading(false);
+    const fetchBadaBuilderProperties = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Fetch all properties and filter for is_bada_builder
+        const response = await api.get('/properties');
+        const allProperties = response.data.properties || [];
+        
+        const badaBuilderProps = allProperties
+          .filter(p => p.status === 'active' && p.is_bada_builder === true)
+          .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+
+        setProperties(badaBuilderProps);
+      } catch (err) {
+        console.error('Error fetching Bada Builder properties:', err);
+        setError('Failed to load premium properties.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBadaBuilderProperties();
   }, []);
 
   return (
@@ -109,35 +79,80 @@ const ByBadaBuilder = () => {
             By Bada Builder
           </Link>
         </motion.div>
-
         {/* View Toggle */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px' }}>
-          <ViewToggle view={view} onViewChange={setView} />
-        </div>
+        {!loading && !error && properties.length > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px' }}>
+            <ViewToggle view={view} onViewChange={setView} />
+          </div>
+        )}
+
+        {/* Loading State */}
+        {loading && (
+          <motion.div
+            className="loading-state"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            <div className="spinner"></div>
+            <p>Loading premium properties...</p>
+          </motion.div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <motion.div
+            className="error-state"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            <h3>⚠️ {error}</h3>
+            <button
+              className="retry-btn"
+              onClick={() => window.location.reload()}
+            >
+              Try Again
+            </button>
+          </motion.div>
+        )}
 
         {/* Properties Grid */}
-        <div className={`properties-grid ${view === 'list' ? 'list-view' : 'grid-view'}`}>
-          {properties.map((property, index) => (
-            <motion.div
-              key={property.id}
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-            >
-              <PropertyCard
-                property={{
-                  ...property,
-                  status: 'Verified',
-                  badge: 'Bada Builder',
-                  owner: property.category,
-                  featured: true
-                }}
-                viewType={view}
-                source="badabuilder"
-              />
-            </motion.div>
-          ))}
-        </div>
+        {!loading && !error && (
+          <div className={`properties-grid ${view === 'list' ? 'list-view' : 'grid-view'}`}>
+            {properties.map((property, index) => (
+              <motion.div
+                key={property.id}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+              >
+                <PropertyCard
+                  property={{
+                    ...property,
+                    image: property.image_url,
+                    status: 'Verified',
+                    badge: 'Bada Builder',
+                    owner: property.developer_info?.companyName || 'Bada Builder',
+                    featured: true
+                  }}
+                  viewType={view}
+                  source="badabuilder"
+                />
+              </motion.div>
+            ))}
+          </div>
+        )}
+
+        {/* Empty State if no properties */}
+        {!loading && !error && properties.length === 0 && (
+          <motion.div
+            className="empty-state"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            <h3>No premium properties available yet</h3>
+            <p>Check back soon for handpicked listings from Bada Builder</p>
+          </motion.div>
+        )}
 
         {/* Why Choose Bada Builder Section */}
         <motion.div

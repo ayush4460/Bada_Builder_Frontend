@@ -1,17 +1,19 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { FiUser, FiHome, FiUsers, FiCalendar, FiTrendingUp, FiMapPin, FiPhone, FiMail, FiEdit2, FiCamera, FiLogOut } from 'react-icons/fi';
-import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  User, Mail, Phone, MapPin, Calendar, Edit2, Camera, 
+  LogOut, Shield, Briefcase, Building, ChevronRight,
+  TrendingUp, Clock, CheckCircle, AlertCircle
+} from 'lucide-react';
 import api, { uploadService } from '../services/api';
 
 const ProfilePage = () => {
   const navigate = useNavigate();
   const { currentUser, userProfile, refreshProfile, logout } = useAuth();
   const [uploading, setUploading] = useState(false);
-  const [uploadSuccess, setUploadSuccess] = useState(false);
-  const [profilePhoto, setProfilePhoto] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // State for activity counts
   const [activityCounts, setActivityCounts] = useState({
     propertiesUploaded: 0,
     joinedLiveGroups: 0,
@@ -20,13 +22,6 @@ const ProfilePage = () => {
   });
   const [loadingActivity, setLoadingActivity] = useState(true);
   const fileInputRef = useRef(null);
-
-  useEffect(() => {
-    if (userProfile) {
-      setProfilePhoto(userProfile.profilePhoto || null);
-      setLoading(false);
-    }
-  }, [userProfile]);
 
   useEffect(() => {
     if (!currentUser?.uid) return;
@@ -102,7 +97,7 @@ const ProfilePage = () => {
     try {
       const date = new Date(dateString);
       return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-    } catch (e) {
+    } catch {
       return 'Unknown';
     }
   };
@@ -159,10 +154,7 @@ const ProfilePage = () => {
     try {
       setUploading(true);
       await api.put('/auth/update', { profile_photo: null });
-      setProfilePhoto(null);
       await refreshProfile();
-      setUploadSuccess(true);
-      setTimeout(() => setUploadSuccess(false), 3000);
     } catch (error) {
       console.error('Error removing photo:', error);
       alert('Failed to remove photo.');
@@ -185,7 +177,6 @@ const ProfilePage = () => {
 
     try {
       setUploading(true);
-      setUploadSuccess(false);
       const formData = new FormData();
       formData.append('file', file);
       const uploadRes = await uploadService.uploadImage(formData);
@@ -193,10 +184,7 @@ const ProfilePage = () => {
 
       const photoURL = uploadRes.data.url;
       await api.put('/auth/update', { profile_photo: photoURL });
-      setProfilePhoto(photoURL);
       await refreshProfile();
-      setUploadSuccess(true);
-      setTimeout(() => setUploadSuccess(false), 3000);
     } catch (error) {
       console.error('Error uploading photo:', error);
       alert('Failed to upload photo.');
@@ -429,7 +417,7 @@ const ProfilePage = () => {
                 
                 {/* Profile Photo Area */}
                 <div className="relative mx-auto w-32 h-32 mb-6 group">
-                    <div className="absolute inset-0 bg-gradient-to-tr from-blue-500 to-purple-500 rounded-full opacity-0 group-hover:opacity-100 blur-lg transition-opacity duration-500" />
+                    <div className="absolute inset-0 bg-linear-to-tr from-blue-500 to-purple-500 rounded-full opacity-0 group-hover:opacity-100 blur-lg transition-opacity duration-500" />
                     <div className="w-full h-full rounded-full p-1 bg-white shadow-lg relative z-10 overflow-hidden">
                         <div className="w-full h-full rounded-full bg-slate-100 flex items-center justify-center relative overflow-hidden">
                              {userData.profilePhoto ? (
@@ -509,7 +497,7 @@ const ProfilePage = () => {
                 <div 
                   key={item.id} 
                   onClick={() => handleActivityClick(item.path)}
-                  className={`group bg-white p-6 rounded-[2rem] border border-slate-100 shadow-[0_4px_20px_rgb(0,0,0,0.02)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] transition-all duration-300 cursor-pointer flex flex-col justify-between h-36 relative overflow-hidden`}
+                  className={`group bg-white p-6 rounded-4xl border border-slate-100 shadow-[0_4px_20px_rgb(0,0,0,0.02)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] transition-all duration-300 cursor-pointer flex flex-col justify-between h-36 relative overflow-hidden`}
                 >
                   <div className="flex justify-between items-start z-10">
                     <div className="flex flex-col">
@@ -522,7 +510,7 @@ const ProfilePage = () => {
                   </div>
                   
                   {/* Decorative background bloom */}
-                  <div className={`absolute -right-10 -bottom-10 w-32 h-32 bg-gradient-to-br ${item.bg.replace('bg-', 'from-').replace('/10', '/20')} to-transparent rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+                  <div className={`absolute -right-10 -bottom-10 w-32 h-32 bg-linear-to-br ${item.bg.replace('bg-', 'from-').replace('/10', '/20')} to-transparent rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
                 </div>
               ))}
             </motion.div>
@@ -530,7 +518,7 @@ const ProfilePage = () => {
             {/* Editable Information Section */}
             <div className="bg-white rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 p-8 sm:p-10 relative overflow-hidden">
                  
-                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 opacity-30" />
+                 <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-blue-500 via-purple-500 to-pink-500 opacity-30" />
 
                 <div className="flex items-center justify-between mb-8">
                     <div>
@@ -654,7 +642,7 @@ const ProfilePage = () => {
                     </div>
 
                     {/* Account Status & Access */}
-                    <div className="w-full mt-4 p-4 rounded-2xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-100 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                    <div className="w-full mt-4 p-4 rounded-2xl bg-linear-to-r from-emerald-50 to-teal-50 border border-emerald-100 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
                         <div className="flex items-center gap-2 text-emerald-700 bg-white px-3 py-1.5 rounded-lg border border-emerald-100 shadow-sm shrink-0">
                             <span className="relative flex h-2.5 w-2.5">
                               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>

@@ -6,7 +6,7 @@ import api from '../services/api';
 // import './ProjectDetails.css'; // Removed and replaced with Tailwind
 import { FiPhone, FiCheckCircle, FiInfo, FiMap } from 'react-icons/fi';
 import { FaChevronLeft, FaChevronRight, FaExpand } from 'react-icons/fa';
-import { AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const PropertyDetails = () => {
   const { id } = useParams();

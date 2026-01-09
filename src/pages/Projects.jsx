@@ -72,7 +72,7 @@ const Projects = () => {
                 transition={{ duration: 0.7 }}
                 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tight"
             >
-                Discover Premium <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-400">Living</span>
+                Discover Premium <span className="text-transparent bg-clip-text bg-linear-to-r from-purple-400 to-indigo-400">Living</span>
             </motion.h1>
             <motion.p 
                 initial={{ opacity: 0 }}
@@ -141,7 +141,7 @@ const Projects = () => {
                             <article className="h-full bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl overflow-hidden hover:border-purple-500/30 hover:bg-white/[0.07] transition-all duration-500 flex flex-col hover:-translate-y-2 hover:shadow-[0_10px_40px_rgba(0,0,0,0.2)]">
                                 {/* Image Container */}
                                 <div className="relative h-64 overflow-hidden">
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent z-10" />
+                                    <div className="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-transparent z-10" />
                                     <img 
                                         src={listing.image} 
                                         alt={listing.title} 
@@ -172,7 +172,7 @@ const Projects = () => {
                                     <h3 className="text-2xl font-bold text-white mb-2 group-hover:text-purple-400 transition-colors line-clamp-1">{listing.title}</h3>
                                     
                                     <div className="flex items-start gap-2 text-slate-400 mb-6 text-sm line-clamp-2 min-h-[40px]">
-                                        <FiMapPin className="text-purple-500 mt-1 flex-shrink-0" />
+                                        <FiMapPin className="text-purple-500 mt-1 shrink-0" />
                                         <span>{listing.location}</span>
                                     </div>
 

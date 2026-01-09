@@ -57,7 +57,7 @@ const ProjectDetails = () => {
                         {project.title}
                     </h1>
                     <div className="flex items-center gap-2 text-slate-400 text-lg">
-                        <FiMapPin className="text-purple-500 flex-shrink-0" />
+                        <FiMapPin className="text-purple-500 shrink-0" />
                         <span>{project.location}</span>
                     </div>
                 </div>
@@ -103,7 +103,7 @@ const ProjectDetails = () => {
                             alt={`${project.title} view ${idx+1}`} 
                             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     </motion.div>
                 ))}
                  {/* "View All" Placeholder if more images exist */}
@@ -154,7 +154,7 @@ const ProjectDetails = () => {
                         <h2 className="text-2xl font-bold text-white">Premium Amenities</h2>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                              {project.facilities?.map((facility, idx) => (
-                                <div key={idx} className="p-4 rounded-xl bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/5 hover:border-purple-500/30 transition-colors group">
+                                <div key={idx} className="p-4 rounded-xl bg-linear-to-br from-white/5 to-white/2 border border-white/5 hover:border-purple-500/30 transition-colors group">
                                     <div className="w-10 h-10 rounded-full bg-purple-500/10 flex items-center justify-center text-purple-400 mb-3 group-hover:bg-purple-500 group-hover:text-white transition-all">
                                         <FiCheckCircle size={20} />
                                     </div>
@@ -221,7 +221,7 @@ const ProjectDetails = () => {
                 {/* Sidebar */}
                 <div className="lg:col-span-1 space-y-6">
                     {/* Price Card */}
-                    <div className="bg-gradient-to-b from-purple-900/20 to-transparent p-6 rounded-3xl border border-purple-500/20 backdrop-blur-xl sticky top-6">
+                    <div className="bg-linear-to-b from-purple-900/20 to-transparent p-6 rounded-3xl border border-purple-500/20 backdrop-blur-xl sticky top-6">
                         <span className="text-purple-300 text-sm font-semibold tracking-wider uppercase">Price Range</span>
                         <div className="text-4xl font-bold text-white mt-1 mb-2">
                            ₹ {project.priceRange}

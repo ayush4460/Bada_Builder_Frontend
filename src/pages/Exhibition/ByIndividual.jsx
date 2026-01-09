@@ -27,7 +27,9 @@ const ByIndividual = () => {
         const propertiesData = response.data.properties || [];
 
         // Filter out expired properties and mark them as expired
-        const activeProperties = await filterAndMarkExpiredProperties(propertiesData);
+        // AND exclude Bada Builder properties from this view
+        const activeProperties = (await filterAndMarkExpiredProperties(propertiesData))
+          .filter(p => !p.is_bada_builder);
         
         // Sort by created_at on client side
         activeProperties.sort((a, b) => {

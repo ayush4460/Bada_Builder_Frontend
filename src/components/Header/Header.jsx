@@ -133,7 +133,7 @@ const Header = () => {
           <div className="flex justify-between items-center h-20">
             
             {/* Logo */}
-            <div className="flex-shrink-0 flex items-center">
+            <div className="shrink-0 flex items-center">
               <Link to="/" className="block">
                 <img className="h-10 w-auto md:h-12 hover:scale-105 transition-transform duration-200" src={logo} alt="Bada Builder" />
               </Link>
@@ -198,14 +198,14 @@ const Header = () => {
 
               {isLoggedIn ? (
                 <div className="relative" onMouseEnter={handleProfileMouseEnter} onMouseLeave={handleProfileMouseLeave}>
-                  <button className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-[#58335e] to-[#8a4f94] text-white font-semibold shadow-md ring-2 ring-transparent hover:ring-[#58335e] transition-all duration-200">
+                  <button className="flex items-center justify-center w-10 h-10 rounded-full bg-linear-to-br from-[#58335e] to-[#8a4f94] text-white font-semibold shadow-md ring-2 ring-transparent hover:ring-[#58335e] transition-all duration-200">
                     {getUserInitials()}
                   </button>
 
                   {showProfileDropdown && (
                     <div className="absolute right-0 mt-4 w-72 bg-white rounded-xl shadow-2xl border border-gray-100 ring-1 ring-black ring-opacity-5 overflow-hidden z-50 origin-top-right animate-in fade-in slide-in-from-top-2 duration-200">
                       <div className="p-4 bg-gray-50 border-b border-gray-100 flex items-center gap-3">
-                        <div className="flex-shrink-0 w-12 h-12 rounded-full bg-gradient-to-br from-[#58335e] to-[#8a4f94] flex items-center justify-center text-white font-bold text-lg shadow-sm">
+                        <div className="shrink-0 w-12 h-12 rounded-full bg-linear-to-br from-[#58335e] to-[#8a4f94] flex items-center justify-center text-white font-bold text-lg shadow-sm">
                            {getUserInitials()}
                         </div>
                         <div className="min-w-0 flex-1">
@@ -236,7 +236,7 @@ const Header = () => {
             </div>
 
             {/* Mobile Menu Button */}
-            <div className="flex xl:!hidden">
+            <div className="flex xl:hidden!">
               <button
                 onClick={toggleMobileMenu}
                 className="p-2 rounded-md text-gray-600 hover:text-[#58335e] hover:bg-purple-50 focus:outline-none transition-colors"
@@ -254,7 +254,7 @@ const Header = () => {
 
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-[100] xl:hidden">
+        <div className="fixed inset-0 z-100 xl:hidden">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onClick={toggleMobileMenu}></div>
           <div className="absolute inset-y-0 right-0 w-full max-w-sm bg-white shadow-2xl flex flex-col overflow-hidden">
              
@@ -271,7 +271,7 @@ const Header = () => {
                 
                 {/* Profile Section */}
                 {isLoggedIn ? (
-                  <div className="bg-gradient-to-br from-gray-50 to-white border border-gray-100 rounded-2xl p-4 shadow-sm">
+                  <div className="bg-linear-to-br from-gray-50 to-white border border-gray-100 rounded-2xl p-4 shadow-sm">
                     <div className="flex items-center gap-4 mb-4">
                       <div className="w-12 h-12 rounded-full bg-[#58335e] text-white flex items-center justify-center font-bold text-lg">
                         {getUserInitials()}
@@ -316,7 +316,8 @@ const Header = () => {
                         className="w-full flex items-center justify-between p-3.5 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition-colors"
                       >
                         <span>Learn Reit's</span>
-                        <svg className={`w-5 h-5 text-gray-400 transition-transform ${mobileLearnOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                        <svg className={`w-5 h-5 text-gray-400 transition-transform ${mobileLearnOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
                       </button>
                       <div className={`space-y-1 pl-4 pr-2 overflow-hidden transition-all duration-300 ${mobileLearnOpen ? 'max-h-[500px] opacity-100 pt-2' : 'max-h-0 opacity-0'}`}>
                          {dropdownItems.map((item, idx) => (
@@ -343,7 +344,7 @@ const Header = () => {
 
       {/* Logout Modal */}
       {showLogoutModal && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-70 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
            <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 transform transition-all scale-100">
               <div className="text-center mb-6">
                  <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500">

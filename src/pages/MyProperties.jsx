@@ -231,7 +231,7 @@ const MyProperties = () => {
             onError={(e) => {
               e.target.src = '/placeholder-property.jpg';
             }}
-            className={`w-full h-full object-cover transition-transform duration-300 hover:scale-105 ${!editable ? 'grayscale-[30%]' : ''} ${subscriptionTime.expired ? 'grayscale' : ''}`}
+            className={`w-full h-full object-cover transition-transform duration-300 hover:scale-105 ${!editable ? 'grayscale-30' : ''} ${subscriptionTime.expired ? 'grayscale' : ''}`}
           />
           <div className={`absolute top-3 left-3 px-3.5 py-1.5 rounded-full text-xs font-bold uppercase backdrop-blur-md ${
             property.status === 'active' || !property.status ? 'bg-emerald-500/90 text-white' :

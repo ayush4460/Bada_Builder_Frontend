@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+
+
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import PropertyForm from '../components/PropertyForm/PropertyForm';
@@ -278,7 +279,8 @@ const PostProperty = () => {
     setLoading(true);
 
     try {
-      let imageUrl = formData.image_url || ((editingProperty.image_url) || '');
+      let imageUrl = '';
+      // let imageUrl = formData.image_url || ((editingProperty.image_url) || ''); // Unused
 
       if (imageFile) {
         imageUrl = await uploadToBackend(imageFile);
@@ -749,7 +751,7 @@ const PostProperty = () => {
         {/* Disclaimer Modal */}
         <AnimatePresence>
           {showDisclaimer && (
-            <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[1000] p-5">
+            <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-1000 p-5">
               <motion.div
                 className="bg-white rounded-[24px] w-full max-w-[500px] p-10 shadow-2xl border border-white/10"
                 initial={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -794,7 +796,7 @@ const PostProperty = () => {
                     Go Back
                   </button>
                   <button
-                    className="flex-1 bg-gradient-to-br from-purple-800 to-purple-700 text-white font-semibold py-3 rounded-xl shadow-lg shadow-purple-900/30 transition-all hover:-translate-y-0.5 hover:shadow-purple-900/40"
+                    className="flex-1 bg-linear-to-br from-purple-800 to-purple-700 text-white font-semibold py-3 rounded-xl shadow-lg shadow-purple-900/30 transition-all hover:-translate-y-0.5 hover:shadow-purple-900/40"
                     onClick={handleFinalSubmit}
                     disabled={loading}
                   >

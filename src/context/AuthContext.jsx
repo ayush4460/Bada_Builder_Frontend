@@ -50,6 +50,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('token', token);
     setCurrentUser(user);
     setUserProfile(user);
+    return { token, user };
   }, []);
 
   const logout = useCallback(async () => {

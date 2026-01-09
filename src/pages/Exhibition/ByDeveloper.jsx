@@ -27,7 +27,9 @@ const ByDeveloper = () => {
         const projectsData = response.data.properties || [];
 
         // Filter out expired properties and mark them as expired (frontend utility)
-        const activeProjects = await filterAndMarkExpiredProperties(projectsData);
+        // AND exclude Bada Builder properties from this view
+        const activeProjects = (await filterAndMarkExpiredProperties(projectsData))
+          .filter(p => !p.is_bada_builder);
 
         // Sort by created_at on client side
         activeProjects.sort((a, b) => {

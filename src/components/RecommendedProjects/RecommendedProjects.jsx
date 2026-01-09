@@ -25,13 +25,13 @@ const RecommendedProjects = () => {
         // Helper to sort by date desc
         const sortByDate = (a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0);
 
-        // Filter and get latest for each category using new logic (developer_info existence)
+        // Filter and get latest for each category using mutual exclusion
         const individualProps = allProperties
-          .filter(p => p.status === 'active' && !p.developer_info) 
+          .filter(p => p.status === 'active' && !p.developer_info && !p.is_bada_builder) 
           .sort(sortByDate);
 
         const developerProps = allProperties
-          .filter(p => p.status === 'active' && p.developer_info)
+          .filter(p => p.status === 'active' && p.developer_info && !p.is_bada_builder)
           .sort(sortByDate);
 
         const liveGroupingProps = allProperties
