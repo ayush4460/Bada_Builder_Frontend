@@ -140,7 +140,7 @@ const Header = () => {
             </div>
 
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center space-x-8">
+            <nav className="hidden xl:flex items-center space-x-8">
               <Link to="/exhibition" className="text-gray-700 hover:text-[#58335e] font-medium transition-colors relative group py-2">
                 Exhibition
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#58335e] transition-all duration-300 group-hover:w-full"></span>
@@ -188,7 +188,7 @@ const Header = () => {
             </nav>
 
             {/* Desktop Actions */}
-            <div className="hidden lg:flex items-center gap-4">
+            <div className="hidden xl:flex items-center gap-4">
               <button
                 onClick={() => setIsUserTypeModalOpen(true)}
                 className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-full shadow-md transition-all duration-300 transform hover:scale-105 font-medium text-sm flex items-center gap-2"
@@ -236,7 +236,7 @@ const Header = () => {
             </div>
 
             {/* Mobile Menu Button */}
-            <div className="flex lg:hidden">
+            <div className="flex xl:!hidden">
               <button
                 onClick={toggleMobileMenu}
                 className="p-2 rounded-md text-gray-600 hover:text-[#58335e] hover:bg-purple-50 focus:outline-none transition-colors"
@@ -254,7 +254,7 @@ const Header = () => {
 
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-[100] lg:hidden">
+        <div className="fixed inset-0 z-[100] xl:hidden">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onClick={toggleMobileMenu}></div>
           <div className="absolute inset-y-0 right-0 w-full max-w-sm bg-white shadow-2xl flex flex-col overflow-hidden">
              

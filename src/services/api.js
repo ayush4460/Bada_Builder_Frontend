@@ -42,6 +42,10 @@ export const authService = {
   forgotPassword: (email) => api.post('/auth/forgot-password', { email }),
   resetPassword: (data) => api.post('/auth/reset-password', data),
   getMe: () => api.get('/auth/me'),
+  initiateEmailChange: (data) => api.post('/auth/initiate-email-change', data),
+  verifyEmailChange: (data) => api.post('/auth/verify-email-change', data),
+  sendLoginOtp: (data) => api.post('/auth/send-login-otp', data),
+  loginWithOtp: (data) => api.post('/auth/login-with-otp', data),
 };
 
 export const propertyService = {

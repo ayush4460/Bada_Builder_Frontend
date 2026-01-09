@@ -4,7 +4,7 @@ import { authService } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { performanceMonitor } from "../utils/performance";
-import { FiMail, FiLock, FiEye, FiEyeOff, FiArrowRight, FiAlertCircle, FiLoader } from "react-icons/fi";
+import { FiMail, FiLock, FiEye, FiEyeOff, FiArrowRight, FiAlertCircle, FiLoader, FiCheckCircle, FiSmartphone, FiKey } from "react-icons/fi";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -14,7 +14,18 @@ const Login = () => {
   const returnTo = location.state?.returnTo;
   const property = location.state?.property;
   const message = location.state?.message;
-  
+
+  const [loginMethod, setLoginMethod] = useState('password'); // 'password' | 'otp'
+  const [showPassword, setShowPassword] = useState(false);
+  const [formData, setFormData] = useState({ email: "", password: "", otp: "" });
+  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
+
+  // OTP State
+  const [otpSent, setOtpSent] = useState(false);
+  const [timer, setTimer] = useState(0); // in seconds
+  const [canResend, setCanResend] = useState(false);
+
   const getRedirectPath = useCallback(() => {
     if (returnTo && returnTo.includes('/book-visit')) {
       return { 
@@ -25,17 +36,15 @@ const Login = () => {
     return from === "/login" ? "/" : from;
   }, [from, returnTo, property]);
 
-  const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState({ email: "", password: "" });
-  const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false);
-
   // ------------------ RESET FORM ------------------
   const resetForm = useCallback(() => {
     setShowPassword(false);
-    setFormData({ email: "", password: "" });
+    setFormData({ email: "", password: "", otp: "" });
     setErrors({});
     setLoading(false);
+    setOtpSent(false);
+    setTimer(0);
+    setCanResend(false);
   }, []);
 
   useEffect(() => {
@@ -47,28 +56,89 @@ const Login = () => {
     }
   }, [location.state, resetForm, navigate, location.pathname]);
 
+  // ------------------ OTP TIMER ------------------
+  useEffect(() => {
+    let interval;
+    if (timer > 0) {
+      interval = setInterval(() => {
+        setTimer((prev) => prev - 1);
+      }, 1000);
+    } else if (timer === 0 && otpSent) {
+      setCanResend(true);
+    }
+    return () => clearInterval(interval);
+  }, [timer, otpSent]);
+
+  const formatTime = (seconds) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  };
+
   // ------------------ HANDLERS ------------------
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
+    if (name === 'email') setOtpSent(false); // Reset OTP flow if email changes
   }, [errors]);
 
-  const validate = useMemo(() => {
-    return () => {
-      const newErrors = {};
-      if (!formData.email) newErrors.email = "Email is required.";
-      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = "Enter a valid email.";
-      if (!formData.password) newErrors.password = "Password is required.";
-      setErrors(newErrors);
-      return Object.keys(newErrors).length === 0;
-    };
-  }, [formData]);
+  const validateEmail = () => {
+    if (!formData.email) return "Email is required.";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) return "Enter a valid email.";
+    return null;
+  };
+
+  const validate = () => {
+    const newErrors = {};
+    const emailError = validateEmail();
+    if (emailError) newErrors.email = emailError;
+
+    if (loginMethod === 'password') {
+       if (!formData.password) newErrors.password = "Password is required.";
+    } else {
+       if (otpSent && !formData.otp) newErrors.otp = "OTP is required.";
+       if (otpSent && formData.otp.length !== 6) newErrors.otp = "OTP must be 6 digits.";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSendOtp = async () => {
+    const emailError = validateEmail();
+    if (emailError) {
+      setErrors({ email: emailError });
+      return;
+    }
+
+    setLoading(true);
+    setErrors({});
+
+    try {
+      await authService.sendLoginOtp({ email: formData.email });
+      setOtpSent(true);
+      setTimer(180); // 3 minutes
+      setCanResend(false);
+      setErrors({}); // Clear any previous errors
+    } catch (error) {
+       let msg = "Failed to send OTP";
+       if (error.response?.data?.message) msg = error.response.data.message;
+       setErrors({ submit: msg });
+    } finally {
+       setLoading(false);
+    }
+  };
 
   const loginUser = useCallback(async (e) => {
     e.preventDefault();
     if (loading) return;
     if (!validate()) return;
+
+    if (loginMethod === 'otp' && !otpSent) {
+      handleSendOtp();
+      return;
+    }
 
     setLoading(true);
     setErrors({});
@@ -77,10 +147,19 @@ const Login = () => {
       await performanceMonitor.trackNetworkRequest(
         'Login',
         (async () => {
-          const response = await authService.login({ 
-             email: formData.email, 
-             password: formData.password 
-          });
+          let response;
+          if (loginMethod === 'password') {
+             response = await authService.login({ 
+               email: formData.email, 
+               password: formData.password 
+             });
+          } else {
+             response = await authService.loginWithOtp({
+               email: formData.email,
+               otp: formData.otp
+             });
+          }
+
           if (response.data.success) {
             login(response.data.token, response.data.user);
             return response.data;
@@ -104,7 +183,7 @@ const Login = () => {
     } finally {
       setLoading(false);
     }
-  }, [navigate, formData, validate, login, getRedirectPath, loading]);
+  }, [navigate, formData, login, getRedirectPath, loading, loginMethod, otpSent]);
 
   // ------------------ UI STYLES ------------------
   const inputIconStyle = "absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-purple-600 transition-colors duration-300";
@@ -145,9 +224,31 @@ const Login = () => {
       >
         <div className="bg-white/95 backdrop-blur-2xl rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-white/20 p-8 sm:p-10 overflow-hidden relative">
           
-          <motion.div variants={itemVariants} className="text-center mb-8">
+          <motion.div variants={itemVariants} className="text-center mb-6">
             <h2 className="text-3xl font-bold text-slate-900 mb-2 tracking-tight">Welcome Back</h2>
             <p className="text-slate-500 text-sm">Sign in to manage your property journey</p>
+          </motion.div>
+
+          {/* Login Method Toggle */}
+          <motion.div variants={itemVariants} className="flex p-1 bg-slate-100/80 rounded-xl mb-8 relative">
+            <div 
+               className="absolute top-1 bottom-1 w-1/2 bg-white rounded-lg shadow-sm transition-all duration-300 ease-in-out"
+               style={{ left: loginMethod === 'password' ? '4px' : 'calc(50% - 4px)' }}
+            />
+            <button
+               type="button"
+               onClick={() => { setLoginMethod('password'); setErrors({}); }}
+               className={`flex-1 relative z-10 py-2 text-sm font-semibold transition-colors duration-300 ${loginMethod === 'password' ? 'text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+            >
+               Password
+            </button>
+            <button
+               type="button"
+               onClick={() => { setLoginMethod('otp'); setErrors({}); }}
+               className={`flex-1 relative z-10 py-2 text-sm font-semibold transition-colors duration-300 ${loginMethod === 'otp' ? 'text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+            >
+               OTP
+            </button>
           </motion.div>
 
           {/* Flash Message */}
@@ -181,42 +282,109 @@ const Login = () => {
                         placeholder="Email Address"
                         value={formData.email}
                         onChange={handleChange}
-                        disabled={loading}
+                        disabled={loading || (loginMethod === 'otp' && otpSent)}
                         className={inputStyle}
                     />
+                     {/* Edit Email Icon for OTP Flow */}
+                     {loginMethod === 'otp' && otpSent && (
+                        <button 
+                           type="button" 
+                           onClick={() => { setOtpSent(false); setTimer(0); setFormData(prev => ({...prev, otp: ''})); }}
+                           className="absolute right-4 top-1/2 -translate-y-1/2 text-purple-600 hover:text-purple-700 text-xs font-bold"
+                        >
+                           EDIT
+                        </button>
+                     )}
                 </div>
                 {errors.email && <p className={errorStyle}><FiAlertCircle size={12} /> {errors.email}</p>}
             </motion.div>
 
-            {/* Password */}
-            <motion.div variants={itemVariants} className="space-y-1 group">
-                <div className="relative">
-                    <FiLock className={inputIconStyle} size={18} />
-                    <input
-                        name="password"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="Password"
-                        value={formData.password}
-                        onChange={handleChange}
-                        disabled={loading}
-                        className={inputStyle}
-                    />
-                    <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none"
-                    >
-                        {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-                    </button>
-                </div>
-                {errors.password && <p className={errorStyle}><FiAlertCircle size={12} /> {errors.password}</p>}
-                
-                <div className="flex justify-end mt-2">
-                     <Link to="/forgot-password" className="text-xs font-medium text-purple-600 hover:text-purple-700 hover:underline transition-colors">
-                        Forgot Password?
-                    </Link>
-                </div>
-            </motion.div>
+            <AnimatePresence mode="wait">
+              {loginMethod === 'password' ? (
+                <motion.div 
+                   key="password-field"
+                   initial={{ opacity: 0, height: 0 }}
+                   animate={{ opacity: 1, height: 'auto' }}
+                   exit={{ opacity: 0, height: 0 }}
+                   className="space-y-5"
+                >
+                    <div className="space-y-1 group">
+                        <div className="relative">
+                            <FiLock className={inputIconStyle} size={18} />
+                            <input
+                                name="password"
+                                type={showPassword ? "text" : "password"}
+                                placeholder="Password"
+                                value={formData.password}
+                                onChange={handleChange}
+                                disabled={loading}
+                                className={inputStyle}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none"
+                            >
+                                {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                            </button>
+                        </div>
+                        {errors.password && <p className={errorStyle}><FiAlertCircle size={12} /> {errors.password}</p>}
+                        
+                        <div className="flex justify-end mt-2">
+                             <Link to="/forgot-password" className="text-xs font-medium text-purple-600 hover:text-purple-700 hover:underline transition-colors">
+                                Forgot Password?
+                            </Link>
+                        </div>
+                    </div>
+                </motion.div>
+              ) : (
+                <motion.div 
+                   key="otp-field"
+                   initial={{ opacity: 0, height: 0 }}
+                   animate={{ opacity: 1, height: 'auto' }}
+                   exit={{ opacity: 0, height: 0 }}
+                   className="space-y-5"
+                >
+                   {/* OTP Input - Only show if OTP sent */}
+                   {otpSent && (
+                      <div className="space-y-3">
+                         <div className="relative group">
+                            <FiKey className={inputIconStyle} size={18} />
+                            <input
+                                name="otp"
+                                type="text"
+                                placeholder="Enter 6-digit OTP"
+                                value={formData.otp}
+                                onChange={(e) => {
+                                   if (/^\d*$/.test(e.target.value) && e.target.value.length <= 6) {
+                                      handleChange(e);
+                                   }
+                                }}
+                                disabled={loading}
+                                className={`${inputStyle} tracking-[0.2em] font-bold text-center pl-4 pr-4`} 
+                                maxLength={6}
+                            />
+                         </div>
+                         {errors.otp && <p className={errorStyle}><FiAlertCircle size={12} /> {errors.otp}</p>}
+
+                         <div className="flex items-center justify-between text-xs px-1">
+                            <span className="text-slate-500">
+                               Time remaining: <span className={`${timer < 30 ? 'text-red-500 font-bold' : 'text-slate-700 font-medium'}`}>{formatTime(timer)}</span>
+                            </span>
+                            <button 
+                               type="button"
+                               onClick={handleSendOtp}
+                               disabled={!canResend || loading}
+                               className={`font-semibold ${canResend ? 'text-purple-600 hover:text-purple-700 cursor-pointer' : 'text-slate-300 cursor-not-allowed'}`}
+                            >
+                               Resend OTP
+                            </button>
+                         </div>
+                      </div>
+                   )}
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Submit Error */}
             <AnimatePresence>
@@ -244,17 +412,17 @@ const Login = () => {
                 {loading ? (
                     <div className="flex items-center gap-2 text-slate-500">
                         <FiLoader className="animate-spin" />
-                        <span>Signing In...</span>
+                        <span>{loginMethod === 'otp' && !otpSent ? 'Sending OTP...' : 'Signing In...'}</span>
                     </div>
                 ) : (
                     <>
-                        <span className="group-hover:text-white transition-colors">Sign In</span>
+                        <span className="group-hover:text-white transition-colors">
+                           {loginMethod === 'otp' && !otpSent ? 'Send OTP' : 'Sign In'}
+                        </span>
                         <FiArrowRight className="group-hover:translate-x-1 transition-transform group-hover:text-white" />
                     </>
                 )}
             </motion.button>
-
-
 
           </form>
 
@@ -275,4 +443,3 @@ const Login = () => {
 };
 
 export default Login;
-

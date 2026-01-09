@@ -65,10 +65,10 @@ const HeroSection = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.1, ease: "easeOut" }}
-          className="text-lg sm:text-xl text-gray-300 mb-14 font-light max-w-3xl leading-relaxed tracking-wide"
+          className="text-lg sm:text-xl text-white mb-14 max-w-3xl leading-relaxed tracking-wide"
         >
           Experience the finest collection of real estate across India. 
-          <span className="block mt-2 text-white/60">Luxury. Comfort. Lifestyle.</span>
+          <span className="block mt-2 text-white">Luxury. Comfort. Lifestyle.</span>
         </motion.p>
 
         <motion.div 
