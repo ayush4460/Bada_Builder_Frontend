@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { LayoutDashboard, Building2, PlusCircle } from 'lucide-react';
 import logo from '../../assets/logo.png';
 import UserTypeModal from '../UserTypeModal/UserTypeModal';
 import { useAuth } from '../../context/AuthContext';
@@ -141,60 +142,90 @@ const Header = () => {
 
             {/* Desktop Navigation */}
             <nav className="hidden xl:flex items-center space-x-8">
-              <Link to="/exhibition" className="text-gray-700 hover:text-[#58335e] font-medium transition-colors relative group py-2">
-                Exhibition
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#58335e] transition-all duration-300 group-hover:w-full"></span>
-              </Link>
-              <Link to="/services" className="text-gray-700 hover:text-[#58335e] font-medium transition-colors relative group py-2">
-                Services
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#58335e] transition-all duration-300 group-hover:w-full"></span>
-              </Link>
-
-              {/* Learn Dropdown */}
-              <div className="relative group" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
-                <button className={`flex items-center gap-1 text-gray-700 font-medium hover:text-[#58335e] transition-colors py-2 group ${showDropdown ? 'text-[#58335e]' : ''}`}>
-                  <span>Learn Reit's</span>
-                  <svg className={`w-4 h-4 transition-transform duration-200 ${showDropdown ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                  <span className={`absolute bottom-0 left-0 h-0.5 bg-[#58335e] transition-all duration-300 ${showDropdown ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
-                </button>
-                
-                {showDropdown && (
-                  <div className="absolute left-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-gray-100 ring-1 ring-black ring-opacity-5 overflow-hidden origin-top-right transition-all duration-200 z-50">
-                    <div className="py-2 max-h-[80vh] overflow-y-auto custom-scrollbar">
-                      {dropdownItems.map((item, idx) => (
-                        <Link
-                          key={idx}
-                          to={item.href}
-                          className="block px-4 py-3 text-sm text-gray-700 hover:bg-purple-50 hover:text-[#58335e] transition-colors border-l-4 border-transparent hover:border-[#58335e]"
-                        >
-                          {item.label}
-                        </Link>
-                      ))}
+              {userProfile?.user_type === 'admin' ? (
+                <>
+                  <Link to="/admin/dashboard" className={`text-gray-700 hover:text-[#58335e] font-medium transition-colors relative group py-2 ${location.pathname === '/admin/dashboard' ? 'text-[#58335e]' : ''}`}>
+                    <div className="flex items-center gap-2">
+                      <LayoutDashboard size={18} />
+                      Dashboard
                     </div>
-                  </div>
-                )}
-              </div>
+                    <span className={`absolute bottom-0 left-0 h-0.5 bg-[#58335e] transition-all duration-300 ${location.pathname === '/admin/dashboard' ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
+                  </Link>
+                  <Link to="/admin/properties" className={`text-gray-700 hover:text-[#58335e] font-medium transition-colors relative group py-2 ${location.pathname === '/admin/properties' ? 'text-[#58335e]' : ''}`}>
+                    <div className="flex items-center gap-2">
+                      <Building2 size={18} />
+                      Manage Properties
+                    </div>
+                    <span className={`absolute bottom-0 left-0 h-0.5 bg-[#58335e] transition-all duration-300 ${location.pathname === '/admin/properties' ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
+                  </Link>
+                  <Link to="/admin/add-property" className={`text-gray-700 hover:text-[#58335e] font-medium transition-colors relative group py-2 ${location.pathname === '/admin/add-property' ? 'text-[#58335e]' : ''}`}>
+                    <div className="flex items-center gap-2">
+                      <PlusCircle size={18} />
+                      Add Property
+                    </div>
+                    <span className={`absolute bottom-0 left-0 h-0.5 bg-[#58335e] transition-all duration-300 ${location.pathname === '/admin/add-property' ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link to="/exhibition" className="text-gray-700 hover:text-[#58335e] font-medium transition-colors relative group py-2">
+                    Exhibition
+                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#58335e] transition-all duration-300 group-hover:w-full"></span>
+                  </Link>
+                  <Link to="/services" className="text-gray-700 hover:text-[#58335e] font-medium transition-colors relative group py-2">
+                    Services
+                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#58335e] transition-all duration-300 group-hover:w-full"></span>
+                  </Link>
 
-              <Link to="/investments" className="text-gray-700 hover:text-[#58335e] font-medium transition-colors relative group py-2">
-                Investment
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#58335e] transition-all duration-300 group-hover:w-full"></span>
-              </Link>
-              <Link to="/contact" className="text-gray-700 hover:text-[#58335e] font-medium transition-colors relative group py-2">
-                Contact Us
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#58335e] transition-all duration-300 group-hover:w-full"></span>
-              </Link>
+                  {/* Learn Dropdown */}
+                  <div className="relative group" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+                    <button className={`flex items-center gap-1 text-gray-700 font-medium hover:text-[#58335e] transition-colors py-2 group ${showDropdown ? 'text-[#58335e]' : ''}`}>
+                      <span>Learn Reit's</span>
+                      <svg className={`w-4 h-4 transition-transform duration-200 ${showDropdown ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                      <span className={`absolute bottom-0 left-0 h-0.5 bg-[#58335e] transition-all duration-300 ${showDropdown ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
+                    </button>
+                    
+                    {showDropdown && (
+                      <div className="absolute left-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-gray-100 ring-1 ring-black ring-opacity-5 overflow-hidden origin-top-right transition-all duration-200 z-50">
+                        <div className="py-2 max-h-[80vh] overflow-y-auto custom-scrollbar">
+                          {dropdownItems.map((item, idx) => (
+                            <Link
+                              key={idx}
+                              to={item.href}
+                              className="block px-4 py-3 text-sm text-gray-700 hover:bg-purple-50 hover:text-[#58335e] transition-colors border-l-4 border-transparent hover:border-[#58335e]"
+                            >
+                              {item.label}
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <Link to="/investments" className="text-gray-700 hover:text-[#58335e] font-medium transition-colors relative group py-2">
+                    Investment
+                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#58335e] transition-all duration-300 group-hover:w-full"></span>
+                  </Link>
+                  <Link to="/contact" className="text-gray-700 hover:text-[#58335e] font-medium transition-colors relative group py-2">
+                    Contact Us
+                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#58335e] transition-all duration-300 group-hover:w-full"></span>
+                  </Link>
+                </>
+              )}
             </nav>
 
             {/* Desktop Actions */}
             <div className="hidden xl:flex items-center gap-4">
-              <button
-                onClick={() => setIsUserTypeModalOpen(true)}
-                className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-full shadow-md transition-all duration-300 transform hover:scale-105 font-medium text-sm flex items-center gap-2"
-              >
-                <span>Post Property</span>
-              </button>
+              {userProfile?.user_type !== 'admin' && (
+                <button
+                  onClick={() => setIsUserTypeModalOpen(true)}
+                  className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-full shadow-md transition-all duration-300 transform hover:scale-105 font-medium text-sm flex items-center gap-2"
+                >
+                  <span>Post Property</span>
+                </button>
+              )}
 
               {isLoggedIn ? (
                 <div className="relative" onMouseEnter={handleProfileMouseEnter} onMouseLeave={handleProfileMouseLeave}>
@@ -298,38 +329,57 @@ const Header = () => {
 
                 {/* Main Links */}
                 <div className="space-y-2">
-                   <button 
-                      onClick={() => { toggleMobileMenu(); setIsUserTypeModalOpen(true); }}
-                      className="w-full flex items-center justify-between p-3.5 bg-green-50 text-green-700 rounded-xl hover:bg-green-100 transition-colors font-medium border border-green-100"
-                   >
-                     <span>Post Property</span>
-                     <span className="text-xl">✨</span>
-                   </button>
+                   {userProfile?.user_type === 'admin' ? (
+                     <>
+                        <Link to="/admin/dashboard" onClick={toggleMobileMenu} className={`flex items-center gap-3 p-3.5 rounded-xl font-medium transition-colors ${location.pathname === '/admin/dashboard' ? 'bg-purple-50 text-[#58335e]' : 'text-gray-700 hover:bg-gray-50'}`}>
+                          <LayoutDashboard size={20} />
+                          Dashboard
+                        </Link>
+                        <Link to="/admin/properties" onClick={toggleMobileMenu} className={`flex items-center gap-3 p-3.5 rounded-xl font-medium transition-colors ${location.pathname === '/admin/properties' ? 'bg-purple-50 text-[#58335e]' : 'text-gray-700 hover:bg-gray-50'}`}>
+                          <Building2 size={20} />
+                          Manage Properties
+                        </Link>
+                        <Link to="/admin/add-property" onClick={toggleMobileMenu} className={`flex items-center gap-3 p-3.5 rounded-xl font-medium transition-colors ${location.pathname === '/admin/add-property' ? 'bg-purple-50 text-[#58335e]' : 'text-gray-700 hover:bg-gray-50'}`}>
+                          <PlusCircle size={20} />
+                          Add Property
+                        </Link>
+                     </>
+                   ) : (
+                     <>
+                        <button 
+                           onClick={() => { toggleMobileMenu(); setIsUserTypeModalOpen(true); }}
+                           className="w-full flex items-center justify-between p-3.5 bg-green-50 text-green-700 rounded-xl hover:bg-green-100 transition-colors font-medium border border-green-100"
+                        >
+                          <span>Post Property</span>
+                          <span className="text-xl">✨</span>
+                        </button>
 
-                   <Link to="/exhibition" onClick={toggleMobileMenu} className="block p-3.5 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition-colors">Exhibition</Link>
-                   <Link to="/services" onClick={toggleMobileMenu} className="block p-3.5 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition-colors">Services</Link>
-                   
-                   {/* Mobile Dropdown */}
-                   <div className="overflow-hidden">
-                      <button 
-                        onClick={() => setMobileLearnOpen(!mobileLearnOpen)}
-                        className="w-full flex items-center justify-between p-3.5 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition-colors"
-                      >
-                        <span>Learn Reit's</span>
-                        <svg className={`w-5 h-5 text-gray-400 transition-transform ${mobileLearnOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </button>
-                      <div className={`space-y-1 pl-4 pr-2 overflow-hidden transition-all duration-300 ${mobileLearnOpen ? 'max-h-[500px] opacity-100 pt-2' : 'max-h-0 opacity-0'}`}>
-                         {dropdownItems.map((item, idx) => (
-                           <Link key={idx} to={item.href} onClick={toggleMobileMenu} className="block px-4 py-2.5 text-sm text-gray-600 hover:text-[#58335e] border-l-2 border-transparent hover:border-[#58335e] bg-gray-50/50 rounded-r-lg">
-                             {item.label}
-                           </Link>
-                         ))}
-                      </div>
-                   </div>
+                        <Link to="/exhibition" onClick={toggleMobileMenu} className="block p-3.5 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition-colors">Exhibition</Link>
+                        <Link to="/services" onClick={toggleMobileMenu} className="block p-3.5 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition-colors">Services</Link>
+                        
+                        {/* Mobile Dropdown */}
+                        <div className="overflow-hidden">
+                           <button 
+                             onClick={() => setMobileLearnOpen(!mobileLearnOpen)}
+                             className="w-full flex items-center justify-between p-3.5 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition-colors"
+                           >
+                             <span>Learn Reit's</span>
+                             <svg className={`w-5 h-5 text-gray-400 transition-transform ${mobileLearnOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                             </svg>
+                           </button>
+                           <div className={`space-y-1 pl-4 pr-2 overflow-hidden transition-all duration-300 ${mobileLearnOpen ? 'max-h-[500px] opacity-100 pt-2' : 'max-h-0 opacity-0'}`}>
+                              {dropdownItems.map((item, idx) => (
+                                <Link key={idx} to={item.href} onClick={toggleMobileMenu} className="block px-4 py-2.5 text-sm text-gray-600 hover:text-[#58335e] border-l-2 border-transparent hover:border-[#58335e] bg-gray-50/50 rounded-r-lg">
+                                  {item.label}
+                                </Link>
+                              ))}
+                           </div>
+                        </div>
 
-                   <Link to="/investments" onClick={toggleMobileMenu} className="block p-3.5 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition-colors">Investment</Link>
-                   <Link to="/contact" onClick={toggleMobileMenu} className="block p-3.5 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition-colors">Contact Us</Link>
+                        <Link to="/investments" onClick={toggleMobileMenu} className="block p-3.5 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition-colors">Investment</Link>
+                        <Link to="/contact" onClick={toggleMobileMenu} className="block p-3.5 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition-colors">Contact Us</Link>
+                     </>
+                   )}
                 </div>
              </div>
           </div>
