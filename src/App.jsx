@@ -89,7 +89,7 @@ function App() {
   return (
     <Router>
       <Header />
-      <GlobalSearchBar />
+      {/* <GlobalSearchBar /> */}
       <LeadModal isOpen={showLeadModal} onClose={() => setShowLeadModal(false)} />
       <Chatbot />
       <Routes>
