@@ -1,46 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { FiUser, FiMail, FiPhone, FiHash, FiBriefcase, FiHome, FiUsers, FiCalendar, FiUpload, FiTrash2, FiEdit3, FiTrendingUp } from 'react-icons/fi';
+import { FiUser, FiMail, FiPhone, FiHash, FiBriefcase, FiHome, FiUsers, FiCalendar, FiUpload, FiTrash2, FiEdit2, FiTrendingUp } from 'react-icons/fi';
 // import { doc, updateDoc, collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
 // import { db } from '../firebase';
 import api from '../services/api';
 import './ProfilePage.css';
 
-// Cloudinary Configuration
-const CLOUDINARY_CLOUD_NAME = "dooamkdih";
-const CLOUDINARY_UPLOAD_PRESET = "property_images";
-
-/**
- * Uploads an image file to Cloudinary using an unsigned preset.
- * @param {File} file The image file to upload.
- * @returns {Promise<string>} A promise that resolves to the secure URL of the uploaded image.
- */
-const uploadToCloudinary = async (file) => {
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-
-  const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
-
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      body: formData,
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(`Cloudinary upload failed: ${errorData.error.message}`);
-    }
-
-    const data = await response.json();
-    return data.secure_url;
-  } catch (error) {
-    console.error("Error uploading to Cloudinary:", error);
-    throw error;
-  }
-};
+// Import removed as we use uploadService from api.js
+import { uploadService } from '../services/api';
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -117,14 +85,26 @@ const ProfilePage = () => {
     fetchActivityStats();
   }, [currentUser]);
 
-  // Placeholder data - will be replaced with actual Firebase data
   const userData = {
-    name: userProfile?.name || 'John Doe',
-    email: currentUser?.email || 'john.doe@example.com',
-    phone: userProfile?.phone || '+91 9876543210',
-    userId: currentUser?.uid?.substring(0, 8).toUpperCase() || 'USER1234',
-    userType: userProfile?.userType || '',
-    profilePhoto: profilePhoto
+    name: userProfile?.name || currentUser?.displayName || 'User',
+    email: currentUser?.email || '',
+    phone: userProfile?.phone_number || '', // Backend sends phone_number
+    userId: currentUser?.uid || userProfile?.uid || '',
+    userType: userProfile?.user_type || userProfile?.userType || 'Individual', // Backend sends user_type
+    profilePhoto: userProfile?.profile_photo || userProfile?.profilePhoto || null, // Backend sends profile_photo
+    createdAt: userProfile?.created_at,
+    location: userProfile?.location || 'India' // Backend doesn't send location yet, keep fallback
+  };
+
+  // Helper to format date
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Unknown';
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    } catch (e) {
+      return 'Unknown';
+    }
   };
 
   const activityItems = [
@@ -183,7 +163,7 @@ const ProfilePage = () => {
 
       // Update backend user profile
       await api.put('/auth/update', {
-        profilePhoto: null
+        profile_photo: null
       });
 
       console.log('✅ Profile photo removed from backend');
@@ -224,16 +204,24 @@ const ProfilePage = () => {
       setUploading(true);
       setUploadSuccess(false);
 
-      console.log('📸 Uploading profile photo to Cloudinary...');
+      console.log('📸 Uploading profile photo...');
 
-      // Upload to Cloudinary
-      const photoURL = await uploadToCloudinary(file);
+      // Upload using uploadService (proxies to backend)
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const uploadRes = await uploadService.uploadImage(formData);
+      
+      if (!uploadRes.data.success) {
+          throw new Error(uploadRes.data.message || 'Upload failed');
+      }
 
+      const photoURL = uploadRes.data.url;
       console.log('✅ Profile photo uploaded successfully:', photoURL);
 
       // Update backend
       await api.put('/auth/update', {
-        profilePhoto: photoURL
+        profile_photo: photoURL // Match backend field name
       });
 
       console.log('✅ Profile photo URL saved to backend');
@@ -248,15 +236,7 @@ const ProfilePage = () => {
       setTimeout(() => setUploadSuccess(false), 3000);
     } catch (error) {
       console.error('❌ Error uploading profile photo:', error);
-
-      let errorMessage = 'Failed to upload photo. ';
-      if (error.message.includes('Cloudinary')) {
-        errorMessage += 'Image upload service is temporarily unavailable. Please try again later.';
-      } else {
-        errorMessage += 'Please check your internet connection and try again.';
-      }
-
-      alert(errorMessage);
+      alert('Failed to upload photo. Please try again.');
     } finally {
       setUploading(false);
       // Reset file input
@@ -295,7 +275,19 @@ const ProfilePage = () => {
                 onClick={handleChangePhoto}
                 disabled={uploading}
               >
-                <FiEdit3 />
+                <svg 
+                  width="16" 
+                  height="16" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="#334155" 
+                  strokeWidth="2" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                >
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
               </button>
             </div>
 
@@ -308,9 +300,6 @@ const ProfilePage = () => {
             <p className="profile-email">{userData.email}</p>
 
             <div className="profile-actions">
-              <button className="action-btn" onClick={() => navigate('/settings')}>
-                Settings
-              </button>
               {userData.profilePhoto && (
                  <button className="action-btn outline" onClick={handleRemovePhoto} disabled={uploading}>
                   Remove Photo
@@ -353,7 +342,7 @@ const ProfilePage = () => {
               <div className="info-list">
                 <div className="info-item">
                   <div className="info-label">Phone</div>
-                  <div className="info-value">{userData.phone}</div>
+                  <div className="info-value">{userData.phone || 'Not provided'}</div>
                 </div>
                 <div className="info-item">
                   <div className="info-label">User ID</div>
@@ -361,11 +350,11 @@ const ProfilePage = () => {
                 </div>
                 <div className="info-item">
                   <div className="info-label">Location</div>
-                  <div className="info-value">India</div> 
+                  <div className="info-value">{userData.location}</div> 
                 </div>
                 <div className="info-item">
                   <div className="info-label">Member Since</div>
-                  <div className="info-value">January 2024</div>
+                  <div className="info-value">{formatDate(userData.createdAt)}</div>
                 </div>
               </div>
             </div>

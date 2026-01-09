@@ -71,24 +71,33 @@
   position: absolute;
   bottom: 0;
   right: 0;
-  background: white;
+  background: #ffffff;
   border: 1px solid #e2e8f0;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #64748b;
+  color: #334155; /* Darker slate for better visibility */
+  font-size: 16px; /* Explicit icon size */
   cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.edit-photo-btn svg {
+  display: block;
+  stroke: #334155; /* Force stroke color */
 }
 
 .edit-photo-btn:hover {
-  color: #0f172a;
-  border-color: #cbd5e1;
+  background: #f8fafc;
+  color: #3b82f6;
+  border-color: #3b82f6;
   transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
 }
 
 .profile-name {
