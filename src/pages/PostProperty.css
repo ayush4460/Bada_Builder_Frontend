@@ -3,7 +3,7 @@
   min-height: 100vh;
   /* Premium, clean background with subtle texture */
   background: radial-gradient(circle at top left, #f8fafc 0%, #e2e8f0 100%);
-  padding: 120px 20px 80px;
+  padding: 40px 20px 80px;
   position: relative;
   overflow: hidden;
 }
