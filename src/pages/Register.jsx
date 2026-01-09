@@ -1,9 +1,9 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { motion } from "framer-motion";
-// import "./Login.css"; // Removed and replaced with Tailwind 
+import { motion, AnimatePresence } from "framer-motion";
 import { authService } from "../services/api";
 import { useNavigate, Link } from "react-router-dom";
 import { performanceMonitor } from "../utils/performance";
+import { FiUser, FiMail, FiPhone, FiLock, FiEye, FiEyeOff, FiArrowRight, FiCheck, FiAlertCircle, FiLoader } from "react-icons/fi";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -22,7 +22,7 @@ const Register = () => {
 
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState('form'); // 'form', 'otp', 'creating', 'success'
+  const [step, setStep] = useState('form'); // 'form', 'otp', 'creating', 'success', 'redirecting'
   const [timer, setTimer] = useState(0);
 
   // ------------------ TIMER LOGIC ------------------
@@ -150,8 +150,8 @@ const Register = () => {
         setStep('redirecting');
         setTimeout(() => {
              navigate('/login', { state: { message: "Registration successful! Please login." } });
-        }, 800);
-      }, 1000);
+        }, 1500);
+      }, 1500);
 
     } catch (error) {
       setStep('otp'); // Go back to OTP step on failure
@@ -166,232 +166,305 @@ const Register = () => {
     }
   }, [formData, loading, validate, navigate]);
 
+  // ------------------ UI STYLES ------------------
+
+  const inputIconStyle = "absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-purple-600 transition-colors duration-300";
+  const inputStyle = `w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm font-medium 
+    placeholder:text-slate-400 transition-all duration-300
+    focus:bg-white focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 focus:outline-none
+    disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed`;
+  const errorStyle = "text-red-500 text-xs mt-1 ml-1 flex items-center gap-1 font-medium";
+
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: {
+        duration: 0.6,
+        ease: [0.22, 1, 0.36, 1],
+        staggerChildren: 0.1
+      }
+    },
+    exit: { opacity: 0, y: -20, transition: { duration: 0.4 } }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, x: -10 },
+    visible: { opacity: 1, x: 0, transition: { duration: 0.4 } }
+  };
+
   return (
-    <div className="flex justify-center items-center min-h-screen bg-linear-to-br from-[#f5f7fa] to-[#e8ecf1] p-5">
-      {/* Loading Overlay */}
-      {(loading && step !== 'success') || step === 'redirecting' ? (
+    <div className="min-h-screen w-full flex items-center justify-center p-4 sm:p-6 lg:p-8 bg-[#0a0a0a] relative overflow-hidden">
+        {/* Background Ambient Effects */}
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-purple-600/20 rounded-full blur-[120px] animate-pulse-slow pointer-events-none" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-indigo-600/10 rounded-full blur-[120px] animate-pulse-slow pointer-events-none" />
+        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] pointer-events-none" />
+
         <motion.div
-          className="fixed inset-0 bg-black/70 backdrop-blur-xs flex items-center justify-center z-9999 cursor-wait select-none pointer-events-auto"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.15 }}
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="w-full max-w-md relative z-10"
         >
-          <div className="flex flex-col items-center gap-5 bg-white p-10 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.3)] max-w-[300px] text-center pointer-events-none">
-            <div className="w-10 h-10 border-4 border-[#58335e]/20 border-t-[#58335e] rounded-full animate-spin"></div>
-            <p className="m-0 text-base font-semibold text-[#333] leading-relaxed">
-              {step === 'redirecting' ? "Redirecting to login..." : 
-               step === 'creating' ? "Verifying & Creating Account..." : 
-               "Processing..."}
-            </p>
-          </div>
-        </motion.div>
-      ) : null}
+            <div className="bg-white/95 backdrop-blur-2xl rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-white/20 p-8 sm:p-10 overflow-hidden relative">
+                
+                {/* Header */}
+                <motion.div variants={itemVariants} className="text-center mb-10">
+                    <h2 className="text-3xl font-bold text-slate-900 mb-2 tracking-tight">Create Account</h2>
+                    <p className="text-slate-500 text-sm">Join Bada Builder today</p>
+                </motion.div>
 
-      <motion.div
-        className="bg-white p-10 rounded-2xl w-full max-w-[450px] shadow-[0_10px_40px_rgba(0,0,0,0.1)] sm:p-[30px_20px]"
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-      >
-        <motion.h2
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="mb-2 text-[32px] font-bold text-[#1a1a1a] text-center sm:text-[26px]"
-        >
-          Create Account
-        </motion.h2>
-
-        <form onSubmit={createUser} className={`flex flex-col gap-5 sm:gap-4 ${loading ? 'pointer-events-none opacity-70' : ''}`}>
-          
-          <div className="flex flex-col">
-            <label className="block text-left mb-1.5 font-semibold text-sm text-[#333]">Name</label>
-            <input 
-              name="name" 
-              value={formData.name} 
-              onChange={handleChange} 
-              disabled={loading || step === 'otp'} 
-              className="w-full p-3 px-4 rounded-lg border-2 border-[#e0e0e0] text-[15px] text-[#1a1a1a] transition-all duration-200 font-inherit focus:outline-none focus:border-[#58335e] focus:shadow-[0_0_0_3px_rgba(88,51,94,0.1)] disabled:bg-[#f5f5f5] disabled:text-[#999] disabled:cursor-not-allowed disabled:border-[#e0e0e0] sm:p-[10px_14px] sm:text-sm"
-            />
-            {errors.name && <p className="text-red-600 text-sm mt-1 text-left">{errors.name}</p>}
-          </div>
-
-          <div className="flex flex-col">
-            <label className="block text-left mb-1.5 font-semibold text-sm text-[#333]">Email</label>
-            <input
-              name="email"
-              type="email"
-              value={formData.email}
-              onChange={handleChange}
-              disabled={loading || step === 'otp'}
-              className="w-full p-3 px-4 rounded-lg border-2 border-[#e0e0e0] text-[15px] text-[#1a1a1a] transition-all duration-200 font-inherit focus:outline-none focus:border-[#58335e] focus:shadow-[0_0_0_3px_rgba(88,51,94,0.1)] disabled:bg-[#f5f5f5] disabled:text-[#999] disabled:cursor-not-allowed disabled:border-[#e0e0e0] sm:p-[10px_14px] sm:text-sm"
-            />
-            {errors.email && <p className="text-red-600 text-sm mt-1 text-left">{errors.email}</p>}
-          </div>
-
-          <div className="flex flex-col">
-            <label className="block text-left mb-1.5 font-semibold text-sm text-[#333]">Phone Number</label>
-            <input
-              name="phone_number"
-              type="tel"
-              maxLength="10"
-              value={formData.phone_number}
-              onChange={handleChange}
-              disabled={loading || step === 'otp'}
-              className="w-full p-3 px-4 rounded-lg border-2 border-[#e0e0e0] text-[15px] text-[#1a1a1a] transition-all duration-200 font-inherit focus:outline-none focus:border-[#58335e] focus:shadow-[0_0_0_3px_rgba(88,51,94,0.1)] disabled:bg-[#f5f5f5] disabled:text-[#999] disabled:cursor-not-allowed disabled:border-[#e0e0e0] sm:p-[10px_14px] sm:text-sm"
-            />
-            {errors.phone_number && <p className="text-red-600 text-sm mt-1 text-left">{errors.phone_number}</p>}
-          </div>
-
-          <div className="flex flex-col">
-            <label className="block text-left mb-1.5 font-semibold text-sm text-[#333]">Password</label>
-            <div className="relative flex items-center">
-              <input
-                name="password"
-                type={showPassword ? "text" : "password"}
-                value={formData.password}
-                onChange={handleChange}
-                className="w-full p-3 px-4 pr-[35px] rounded-lg border-2 border-[#e0e0e0] text-[15px] text-[#1a1a1a] transition-all duration-200 font-inherit focus:outline-none focus:border-[#58335e] focus:shadow-[0_0_0_3px_rgba(88,51,94,0.1)] disabled:bg-[#f5f5f5] disabled:text-[#999] disabled:cursor-not-allowed disabled:border-[#e0e0e0] sm:p-[10px_14px] sm:text-sm"
-                disabled={loading || step === 'otp'}
-              />
-              <button
-                type="button"
-                className="absolute right-[5px] bg-transparent border-none cursor-pointer p-0.5 flex items-center justify-center outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none"
-                onClick={() => setShowPassword((prev) => !prev)}
-                disabled={loading || step === 'otp'}
-              >
-                <i className={`far ${showPassword ? "fa-eye" : "fa-eye-slash"}`} />
-              </button>
-            </div>
-            {errors.password && <p className="text-red-600 text-sm mt-1 text-left">{errors.password}</p>}
-          </div>
-
-          <div className="flex flex-col">
-            <label className="block text-left mb-1.5 font-semibold text-sm text-[#333]">Confirm Password</label>
-            <div className="relative flex items-center">
-              <input
-                name="confirmPassword"
-                type={showConfirmPassword ? "text" : "password"}
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                className="w-full p-3 px-4 pr-[35px] rounded-lg border-2 border-[#e0e0e0] text-[15px] text-[#1a1a1a] transition-all duration-200 font-inherit focus:outline-none focus:border-[#58335e] focus:shadow-[0_0_0_3px_rgba(88,51,94,0.1)] disabled:bg-[#f5f5f5] disabled:text-[#999] disabled:cursor-not-allowed disabled:border-[#e0e0e0] sm:p-[10px_14px] sm:text-sm"
-                disabled={loading || step === 'otp'}
-              />
-              <button
-                type="button"
-                className="absolute right-[5px] bg-transparent border-none cursor-pointer p-0.5 flex items-center justify-center outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none"
-                onClick={() => setShowConfirmPassword((prev) => !prev)}
-                disabled={loading || step === 'otp'}
-              >
-                <i className={`far ${showConfirmPassword ? "fa-eye" : "fa-eye-slash"}`} />
-              </button>
-            </div>
-            {errors.confirmPassword && (
-              <p className="text-red-600 text-sm mt-1 text-left">{errors.confirmPassword}</p>
-            )}
-          </div>
-
-          {/* OTP Section */}
-          {step === 'otp' && (
-             <motion.div 
-               initial={{ opacity: 0, height: 0 }}
-               animate={{ opacity: 1, height: 'auto' }}
-               className="mt-4 pt-4 border-t border-[#eee]"
-             >
-                <div className="my-[15px]">
-                    <label className="block text-[#58335e] font-bold">Enter Verification Code</label>
-                    <p className="text-xs text-[#666] mb-2">
-                       Sent to {formData.email}
-                    </p>
-                    <input 
-                       name="otp" 
-                       value={formData.otp} 
-                       onChange={handleChange} 
-                       placeholder="6-digit OTP"
-                       maxLength="6"
-                       className="w-full p-2 tracking-[2px] text-lg text-center border-2 border-[#e0e0e0] rounded-lg focus:outline-none focus:border-[#58335e] mb-2"
-                       disabled={loading}
-                    />
-                    {errors.otp && <p className="text-red-600 text-sm mt-1">{errors.otp}</p>}
+                <form onSubmit={createUser} className="flex flex-col gap-5">
                     
-                    <div className="flex justify-between mt-2 text-[13px]">
-                       <span style={{ color: timer > 0 ? '#666' : '#d32f2f' }}>
-                          Expect code in: {formatTime(timer)}
-                       </span>
-                       <button 
-                         type="button"
-                         onClick={handleSendOtp}
-                         disabled={timer > 0 || loading}
-                         style={{ 
-                            background: 'none', 
-                            border: 'none', 
-                            color: timer > 0 ? '#ccc' : '#58335e',
-                            cursor: timer > 0 ? 'default' : 'pointer',
-                            textDecoration: 'underline'
-                         }}
-                       >
-                         Resend Code
-                       </button>
-                    </div>
-                </div>
-             </motion.div>
-          )}
+                    <AnimatePresence mode="wait">
+                        {step === 'form' && (
+                            <motion.div
+                                key="form-fields"
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: 20 }}
+                                transition={{ duration: 0.3 }}
+                                className="flex flex-col gap-5"
+                            >
+                                {/* Name */}
+                                <div className="space-y-1 group">
+                                    <div className="relative">
+                                        <FiUser className={inputIconStyle} size={18} />
+                                        <input
+                                            name="name"
+                                            placeholder="Full Name"
+                                            value={formData.name}
+                                            onChange={handleChange}
+                                            disabled={loading}
+                                            className={inputStyle}
+                                        />
+                                    </div>
+                                    {errors.name && <p className={errorStyle}><FiAlertCircle size={12} /> {errors.name}</p>}
+                                </div>
 
-          {errors.submit && (
-            <p className={`text-center p-3 rounded-lg border mt-0 text-sm ${
-              errors.submit.includes('sent') ? 'text-green-800 bg-green-100 border-green-200' : 'text-center bg-[#fee] border-[#fcc] text-[#dc2626]'
-            }`}>
-              {errors.submit}
-            </p>
-          )}
+                                {/* Email */}
+                                <div className="space-y-1 group">
+                                    <div className="relative">
+                                        <FiMail className={inputIconStyle} size={18} />
+                                        <input
+                                            name="email"
+                                            type="email"
+                                            placeholder="Email Address"
+                                            value={formData.email}
+                                            onChange={handleChange}
+                                            disabled={loading}
+                                            className={inputStyle}
+                                        />
+                                    </div>
+                                    {errors.email && <p className={errorStyle}><FiAlertCircle size={12} /> {errors.email}</p>}
+                                </div>
 
-          {step === 'success' && (
-            <motion.div 
-              className="text-center p-4 bg-green-100 border border-green-200 rounded-lg text-green-700 font-bold mb-4"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
-              <p className="m-0">✓ Registration successful!</p>
-            </motion.div>
-          )}
+                                {/* Phone */}
+                                <div className="space-y-1 group">
+                                    <div className="relative">
+                                        <FiPhone className={inputIconStyle} size={18} />
+                                        <input
+                                            name="phone_number"
+                                            type="tel"
+                                            maxLength="10"
+                                            placeholder="Phone Number"
+                                            value={formData.phone_number}
+                                            onChange={handleChange}
+                                            disabled={loading}
+                                            className={inputStyle}
+                                        />
+                                    </div>
+                                    {errors.phone_number && <p className={errorStyle}><FiAlertCircle size={12} /> {errors.phone_number}</p>}
+                                </div>
 
-          {step === 'form' ? (
-             <button 
-               type="button"
-               className="p-3.5 px-6 bg-linear-to-br from-[#58335e] to-[#6d4575] text-white border-none rounded-lg font-semibold text-base cursor-pointer transition-all duration-300 mt-2.5 hover:translate-y-[-2px] hover:shadow-[0_8px_20px_rgba(88,51,94,0.3)] disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none sm:p-[12px_20px] sm:text-[15px] text-white flex justify-center items-center" 
-               onClick={handleSendOtp}
-               disabled={loading}
-             >
-               {loading ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block"></span> : "Verify Email & Register"}
-             </button>
-          ) : (
-            <div className="flex gap-2.5">
-                <button 
-                  type="button"
-                  onClick={() => { setStep('form'); setErrors({}); }}
-                  className="p-3.5 px-6 bg-[#f5f5f5] text-[#333] border-none rounded-lg font-semibold text-base cursor-pointer transition-all duration-300 mt-2.5 hover:bg-[#e0e0e0] disabled:opacity-60 disabled:cursor-not-allowed sm:p-[12px_20px] sm:text-[15px]" 
-                  disabled={loading}
-                >
-                  Back
-                </button>
-                <button 
-                  className="p-3.5 px-6 bg-linear-to-br from-[#58335e] to-[#6d4575] text-white border-none rounded-lg font-semibold text-base cursor-pointer transition-all duration-300 mt-2.5 hover:translate-y-[-2px] hover:shadow-[0_8px_20px_rgba(88,51,94,0.3)] disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none sm:p-[12px_20px] sm:text-[15px] text-white flex-1 flex justify-center items-center" 
-                  disabled={loading}
-                >
-                  {loading ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block"></span> : "Complete Registration"}
-                </button>
+                                {/* Password */}
+                                <div className="space-y-1 group">
+                                    <div className="relative">
+                                        <FiLock className={inputIconStyle} size={18} />
+                                        <input
+                                            name="password"
+                                            type={showPassword ? "text" : "password"}
+                                            placeholder="Password"
+                                            value={formData.password}
+                                            onChange={handleChange}
+                                            disabled={loading}
+                                            className={inputStyle}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                                        >
+                                            {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                                        </button>
+                                    </div>
+                                    {errors.password && <p className={errorStyle}><FiAlertCircle size={12} /> {errors.password}</p>}
+                                </div>
+
+                                {/* Confirm Password */}
+                                <div className="space-y-1 group">
+                                    <div className="relative">
+                                        <FiLock className={inputIconStyle} size={18} />
+                                        <input
+                                            name="confirmPassword"
+                                            type={showConfirmPassword ? "text" : "password"}
+                                            placeholder="Confirm Password"
+                                            value={formData.confirmPassword}
+                                            onChange={handleChange}
+                                            disabled={loading}
+                                            className={inputStyle}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                                        >
+                                            {showConfirmPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                                        </button>
+                                    </div>
+                                    {errors.confirmPassword && <p className={errorStyle}><FiAlertCircle size={12} /> {errors.confirmPassword}</p>}
+                                </div>
+                            </motion.div>
+                        )}
+
+                        {step === 'otp' && (
+                            <motion.div
+                                key="otp-field"
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -20 }}
+                                transition={{ duration: 0.3 }}
+                                className="flex flex-col gap-6"
+                            >
+                                <div className="text-center">
+                                    <div className="w-16 h-16 bg-purple-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <FiMail className="text-purple-600 text-2xl" />
+                                    </div>
+                                    <h3 className="text-lg font-semibold text-slate-900">Verify your Email</h3>
+                                    <p className="text-slate-500 text-sm mt-1">We sent a code to <span className="font-medium text-slate-900">{formData.email}</span></p>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <input 
+                                       name="otp" 
+                                       value={formData.otp} 
+                                       onChange={handleChange} 
+                                       placeholder="Enter 6-digit Code"
+                                       maxLength="6"
+                                       className="w-full text-center text-2xl tracking-[0.5em] font-bold py-4 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-purple-500 focus:bg-white transition-all outline-none"
+                                       disabled={loading}
+                                    />
+                                    {errors.otp && <p className="text-red-500 text-sm text-center font-medium">{errors.otp}</p>}
+                                </div>
+
+                                <div className="flex justify-between items-center text-sm px-1">
+                                    <span className={`${timer > 0 ? 'text-slate-500' : 'text-slate-400'}`}>
+                                        Expiring in {formatTime(timer)}
+                                    </span>
+                                    <button 
+                                        type="button"
+                                        onClick={handleSendOtp}
+                                        disabled={timer > 0 || loading}
+                                        className={`font-medium transition-colors ${timer > 0 ? 'text-slate-300 cursor-not-allowed' : 'text-purple-600 hover:text-purple-700'}`}
+                                    >
+                                        Resend Code
+                                    </button>
+                                </div>
+                            </motion.div>
+                        )}
+                         {step === 'creating' && (
+                            <motion.div
+                                key="loading-state"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                className="flex flex-col items-center justify-center py-10"
+                            >
+                                <div className="w-16 h-16 border-4 border-purple-100 border-t-purple-600 rounded-full animate-spin mb-4" />
+                                <p className="text-slate-600 font-medium">Creating your account...</p>
+                            </motion.div>
+                        )}
+
+                        {step === 'success' || step === 'redirecting' ? (
+                             <motion.div
+                                key="success-state"
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="flex flex-col items-center justify-center py-10 text-center"
+                            >
+                                <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mb-6">
+                                    <FiCheck className="text-green-500 text-4xl" />
+                                </div>
+                                <h3 className="text-2xl font-bold text-slate-900 mb-2">Welcome Aboard!</h3>
+                                <p className="text-slate-500">Your account has been created successfully.</p>
+                                {step === 'redirecting' && (
+                                     <p className="text-sm text-purple-600 mt-4 font-medium animate-pulse">Redirecting to login...</p>
+                                )}
+                            </motion.div>
+                        ) : null}
+                    </AnimatePresence>
+
+                    {errors.submit && (
+                        <motion.div 
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="bg-red-50 text-red-600 p-4 rounded-xl text-sm font-medium flex items-start gap-3"
+                        >
+                            <FiAlertCircle className="shrink-0 mt-0.5" size={18} />
+                            <span>{errors.submit}</span>
+                        </motion.div>
+                    )}
+
+                    {/* Actions */}
+                    {step !== 'creating' && step !== 'success' && step !== 'redirecting' && (
+                         <motion.div variants={itemVariants} className="mt-2">
+                            {step === 'form' ? (
+                                <button
+                                    type="button"
+                                    onClick={handleSendOtp}
+                                    disabled={loading}
+                                    className="w-full bg-[#0a0a0a] text-white font-semibold py-4 rounded-xl hover:bg-slate-900 active:scale-[0.98] transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed shadow-lg shadow-slate-900/20 flex items-center justify-center gap-2 group"
+                                >
+                                    {loading ? <FiLoader className="animate-spin" /> : <>Verify & Continue <FiArrowRight className="group-hover:translate-x-1 transition-transform" /></>}
+                                </button>
+                            ) : (
+                                <div className="grid grid-cols-2 gap-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => { setStep('form'); setErrors({}); }}
+                                        disabled={loading}
+                                        className="w-full bg-slate-100 text-slate-700 font-semibold py-4 rounded-xl hover:bg-slate-200 transition-all duration-200 disabled:opacity-70"
+                                    >
+                                        Back
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={createUser} // Ensure this triggers form submission/creation
+                                        disabled={loading}
+                                        className="w-full bg-[#0a0a0a] text-white font-semibold py-4 rounded-xl hover:bg-slate-900 active:scale-[0.98] transition-all duration-200 disabled:opacity-70 shadow-lg shadow-slate-900/20"
+                                    >
+                                        {loading ? <FiLoader className="animate-spin mx-auto" /> : "Complete Signup"}
+                                    </button>
+                                </div>
+                            )}
+                        </motion.div>
+                    )}
+
+                </form>
+
+                {/* Footer */}
+                <motion.div variants={itemVariants} className="mt-8 text-center">
+                    <p className="text-slate-500 text-sm">
+                        Already have an account?{" "}
+                        <Link to="/login" className="text-purple-600 font-semibold hover:text-purple-700 hover:underline transition-colors">
+                            Sign In
+                        </Link>
+                    </p>
+                </motion.div>
+
             </div>
-          )}
-          
-        </form>
-
-        <p className="mt-6 text-center text-[#666] text-[15px]">
-          Already have an account?{" "}
-          <Link to="/login" className="text-[#58335e] cursor-pointer font-semibold transition-colors duration-200 hover:text-[#6d4575] hover:underline">
-            Login
-          </Link>
-        </p>
-      </motion.div>
+        </motion.div>
     </div>
   );
 };

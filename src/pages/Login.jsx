@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
-// import { motion } from "framer-motion"; // Removed unused import
+import { motion } from "framer-motion";
 // import "./Login.css"; // Removed and replaced with Tailwind
 import { authService } from "../services/api";
 import { useAuth } from "../context/AuthContext";
