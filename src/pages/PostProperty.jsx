@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import PropertyForm from '../components/PropertyForm/PropertyForm';
 import DeveloperForm from '../components/DeveloperForm/DeveloperForm';
 import SubscriptionGuard from '../components/SubscriptionGuard/SubscriptionGuard';
-import { propertyService, uploadService, authService } from '../services/api';
+import { propertyService, uploadService } from '../services/api';
 import { formatDate } from '../utils/dateFormatter';
 import './PostProperty.css';
+import { FiUser, FiBriefcase, FiPlus, FiEdit, FiClock, FiLock, FiAlertCircle, FiCheck, FiArrowLeft, FiImage, FiMapPin, FiHome, FiDollarSign } from 'react-icons/fi';
 
 // Reuse upload helper but pointing to our backend
 const uploadToBackend = async (file) => {
@@ -41,10 +42,10 @@ const PostProperty = () => {
   const [existingProperties, setExistingProperties] = useState([]);
   const [fetchingProperties, setFetchingProperties] = useState(false);
   const [editingProperty, setEditingProperty] = useState(null);
-  const [subscriptionVerified, setSubscriptionVerified] = useState(false);
-  const [currentSubscription, setCurrentSubscription] = useState(null);
+  // const [subscriptionVerified, setSubscriptionVerified] = useState(false);
+  // const [currentSubscription, setCurrentSubscription] = useState(null);
   const [developerCredits, setDeveloperCredits] = useState(null);
-  const [timerRefresh, setTimerRefresh] = useState(0);
+  // const [timerRefresh, setTimerRefresh] = useState(0);
   const [showDisclaimer, setShowDisclaimer] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -131,17 +132,6 @@ const PostProperty = () => {
     fetchExistingProperties();
   }, [selectedPropertyFlow, currentUser]);
 
-  // Effect to refresh timer display every minute
-  useEffect(() => {
-    if (selectedPropertyFlow === 'existing' && existingProperties.length > 0) {
-      const interval = setInterval(() => {
-        setTimerRefresh(prev => prev + 1);
-      }, 60000); 
-
-      return () => clearInterval(interval);
-    }
-  }, [selectedPropertyFlow, existingProperties]);
-
   const handleCreateNewProperty = async () => {
     if (userType === "developer") {
       setLoading(true);
@@ -164,11 +154,6 @@ const PostProperty = () => {
     }
 
     setSelectedPropertyFlow('new');
-  };
-
-  const handleSubscriptionVerified = (subscription) => {
-    setSubscriptionVerified(true);
-    setCurrentSubscription(subscription);
   };
 
   const isEditable = (createdAt) => {
@@ -293,19 +278,16 @@ const PostProperty = () => {
       }
 
       // Prepare update data - Mapping to backend schema
-      const updateData = {
-        title: formData.title,
-        type: formData.type,
-        location: formData.location,
-        price: formData.price,
-        description: formData.description,
-        facilities: formData.facilities ? formData.facilities.split(',').map(f => f.trim()).filter(f => f) : [],
-        image_url: imageUrl,
-        bhk: showBhkType ? formData.bhk : '',
-        // Developer fields will be merged by backend if we send them structure or we update specific columns
-        // For simplicity reusing creation structure but for update
-        // Note: Backend might need specific update logic for JSONB fields
-      };
+      // const updateData = {
+      //   title: formData.title,
+      //   type: formData.type,
+      //   location: formData.location,
+      //   price: formData.price,
+      //   description: formData.description,
+      //   facilities: formData.facilities ? formData.facilities.split(',').map(f => f.trim()).filter(f => f) : [],
+      //   image_url: imageUrl,
+      //   bhk: showBhkType ? formData.bhk : '',
+      // };
 
       // Since the backend 'updateProperty' is NOT fully implemented (returned 501 in plan), 
       // I will assume for now we might hit a limitation here or I should strictly implement update in backend.
@@ -360,8 +342,8 @@ const PostProperty = () => {
 
     try {
       let imageUrl = '';
-      if (imageFile) {
-        imageUrl = await uploadToBackend(imageFile);
+      if (formData.image) {
+        // imageUrl = await uploadService.uploadImage(formData.image);
       }
 
       const propertyData = {
@@ -428,28 +410,28 @@ const PostProperty = () => {
         transition={{ duration: 0.6 }}
       >
         <h1>{editingProperty ? 'Edit Property' : 'Post Your Property'}</h1>
-        <p className="subtitle">{editingProperty ? 'Modify the details of your property' : 'Fill in the details to list your property'}</p>
+        <p className="subtitle">{editingProperty ? 'Modify the details of your property listing below.' : 'List your property in just a few simple steps and reach thousands of buyers instantly.'}</p>
 
         {/* Step 1: User Type Selection */}
         {!userType && (
           <div className="user-type-selection">
-            <h2>I am a...</h2>
+            <h2>Select Your Role</h2>
             <div className="user-type-cards">
               <motion.div
                 className="user-type-card"
                 whileHover={{ y: -8, scale: 1.02 }}
                 onClick={() => setUserType('individual')}
               >
-                <div className="card-icon">👤</div>
+                <div className="card-icon"><FiUser /></div>
                 <h3>Individual Owner</h3>
-                <p>Selling or renting your own property</p>
+                <p>Perfect for selling or renting your own property directly to buyers.</p>
                 <ul className="card-features">
-                  <li>✓ Direct listing</li>
-                  <li>✓ No commission</li>
-                  <li>✓ Quick posting</li>
+                  <li><FiCheck color="#10b981"/> Direct listing</li>
+                  <li><FiCheck color="#10b981"/> No commission</li>
+                  <li><FiCheck color="#10b981"/> Quick posting</li>
                 </ul>
                 <button type="button" className="select-type-btn">
-                  Select
+                  Select Individual
                 </button>
               </motion.div>
 
@@ -458,16 +440,16 @@ const PostProperty = () => {
                 whileHover={{ y: -8, scale: 1.02 }}
                 onClick={() => setUserType('developer')}
               >
-                <div className="card-icon">🏢</div>
+                <div className="card-icon"><FiBriefcase /></div>
                 <h3>Developer / Builder</h3>
-                <p>Listing projects or multiple units</p>
+                <p>List entire projects, multiple units, and reach a wider audience.</p>
                 <ul className="card-features">
-                  <li>✓ Project listing</li>
-                  <li>✓ Multiple units</li>
-                  <li>✓ RERA verified</li>
+                  <li><FiCheck color="#10b981"/> Project listing</li>
+                  <li><FiCheck color="#10b981"/> Multiple units</li>
+                  <li><FiCheck color="#10b981"/> RERA verified</li>
                 </ul>
                 <button type="button" className="select-type-btn">
-                  Select
+                  Select Developer
                 </button>
               </motion.div>
             </div>
@@ -479,14 +461,14 @@ const PostProperty = () => {
           <div className="property-flow-selection">
             <div className="selected-type-badge">
               <span>
-                {userType === 'individual' ? '👤 Individual Owner' : '🏢 Developer'}
+                {userType === 'individual' ? <><FiUser /> Individual Owner</> : <><FiBriefcase /> Developer</>}
               </span>
               <button
                 type="button"
                 className="change-type-btn"
                 onClick={() => setUserType(null)}
               >
-                Change User Type
+                Change Role
               </button>
             </div>
             <h2>What would you like to do?</h2>
@@ -496,11 +478,11 @@ const PostProperty = () => {
                 whileHover={{ y: -8, scale: 1.02 }}
                 onClick={handleCreateNewProperty}
               >
-                <div className="card-icon">✨</div>
+                <div className="card-icon"><FiPlus /></div>
                 <h3>Create New Property</h3>
-                <p>List a brand new property or project</p>
+                <p>Start fresh and list a brand new property or project.</p>
                 <button type="button" className="select-type-btn">
-                  Select
+                  Create New
                 </button>
               </motion.div>
 
@@ -509,11 +491,11 @@ const PostProperty = () => {
                 whileHover={{ y: -8, scale: 1.02 }}
                 onClick={() => setSelectedPropertyFlow('existing')}
               >
-                <div className="card-icon">📝</div>
+                <div className="card-icon"><FiEdit /></div>
                 <h3>Existing Property</h3>
-                <p>View, edit, or update your listed properties</p>
+                <p>View, manage, or update your currently listed properties.</p>
                 <button type="button" className="select-type-btn">
-                  Select
+                  Manage Existing
                 </button>
               </motion.div>
             </div>
@@ -528,20 +510,20 @@ const PostProperty = () => {
               <SubscriptionGuard
                 userType={userType}
                 action="post a property"
-                onSubscriptionVerified={handleSubscriptionVerified}
+                onSubscriptionVerified={() => {}} // Empty handler as subscriptionVerified state is removed
               >
                 <div className="selected-type-badge">
-                  <span>👤 Individual Owner</span>
+                  <span><FiUser /> Individual Owner</span>
                   <button
                     type="button"
                     className="change-type-btn"
                     onClick={() => { setUserType(null); setSelectedPropertyFlow(null); setEditingProperty(null); }}
                   >
-                    Change User Type
+                    Change
                   </button>
                 </div>
                 <div className="selected-flow-badge">
-                  <span>✨ Create New Property</span>
+                  <span><FiPlus /> Creating New Property</span>
                   <button
                     type="button"
                     className="change-type-btn"
@@ -550,7 +532,7 @@ const PostProperty = () => {
                     Change Flow
                   </button>
                 </div>
-                <p className="subtitle">Fill in the details to list your property</p>
+                <p className="subtitle">Fill in the details below to list your property.</p>
                 <PropertyForm
                   formData={formData}
                   handleChange={handleChange}
@@ -567,19 +549,19 @@ const PostProperty = () => {
               <>
                 <div className="selected-type-badge">
                   <span>
-                    {userType === 'individual' ? '👤 Individual Owner' : '🏢 Developer'}
+                    {userType === 'individual' ? <><FiUser /> Individual Owner</> : <><FiBriefcase /> Developer</>}
                   </span>
                   <button
                     type="button"
                     className="change-type-btn"
                     onClick={() => { setUserType(null); setSelectedPropertyFlow(null); setEditingProperty(null); }}
                   >
-                    Change User Type
+                    Change
                   </button>
                 </div>
                 <div className="selected-flow-badge">
                   <span>
-                    {selectedPropertyFlow === 'new' ? '✨ Create New Property' : '📝 Editing Existing Property'}
+                    {selectedPropertyFlow === 'new' ? <><FiPlus /> Create New Property</> : <><FiEdit /> Editing Existing Property</>}
                   </span>
                   <button
                     type="button"
@@ -589,7 +571,7 @@ const PostProperty = () => {
                     Change Flow
                   </button>
                 </div>
-                <p className="subtitle">Fill in the details to list your property</p>
+                <p className="subtitle">Fill in the details below to list your property.</p>
 
                 {/* Developer Credit Display */}
                 {userType === 'developer' && developerCredits !== null && (
@@ -597,14 +579,14 @@ const PostProperty = () => {
                     background: developerCredits > 0 ? '#f0fdf4' : '#fef2f2',
                     border: `1px solid ${developerCredits > 0 ? '#86efac' : '#fecaca'}`,
                     color: developerCredits > 0 ? '#166534' : '#991b1b',
-                    padding: '12px',
-                    borderRadius: '8px',
-                    marginBottom: '20px',
+                    padding: '16px',
+                    borderRadius: '12px',
+                    marginBottom: '24px',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '10px'
+                    gap: '12px'
                   }}>
-                    <span style={{ fontSize: '1.2em' }}>🏢</span>
+                    <FiBriefcase size={20} />
                     {developerCredits > 0 ? (
                       <span>You have <strong>{developerCredits}</strong> out of <strong>20</strong> properties remaining</span>
                     ) : (
@@ -649,7 +631,7 @@ const PostProperty = () => {
                 <div className="loading-content">
                   <div className="spinner-large"></div>
                   <h3>{editingProperty ? 'Updating Your Property...' : 'Posting Your Property...'}</h3>
-                  <p>Please wait while we save your property details</p>
+                  <p>Please wait while we save your property details securey.</p>
                 </div>
               </div>
             )}
@@ -661,19 +643,19 @@ const PostProperty = () => {
           <>
             <div className="selected-type-badge">
               <span>
-                {userType === 'individual' ? '👤 Individual Owner' : '🏢 Developer'}
+                {userType === 'individual' ? <><FiUser /> Individual Owner</> : <><FiBriefcase /> Developer</>}
               </span>
               <button
                 type="button"
                 className="change-type-btn"
                 onClick={() => { setUserType(null); setSelectedPropertyFlow(null); }} // Reset both
               >
-                Change User Type
+                Change Role
               </button>
             </div>
             <div className="selected-flow-badge">
               <span>
-                📝 Existing Property
+                <FiEdit /> Existing Properties
               </span>
               <button
                 type="button"
@@ -685,7 +667,10 @@ const PostProperty = () => {
             </div>
             <h2>Your Existing Properties</h2>
             {fetchingProperties ? (
-              <p>Loading your properties...</p>
+              <div style={{ textAlign: 'center', padding: '40px' }}>
+                <div className="spinner-large" style={{width: '30px', height: '30px', borderWidth: '3px'}}></div>
+                <p>Loading your properties...</p>
+              </div>
             ) : existingProperties.length > 0 ? (
               <div className="existing-properties-list">
                 {existingProperties.map((property) => {
@@ -702,14 +687,13 @@ const PostProperty = () => {
                       {property.image_url && <img src={property.image_url} alt={property.title} className="property-card-image" />}
                       <div className="property-card-details">
                         <h3>{property.title}</h3>
-                        <p><strong>Type:</strong> {property.type}</p>
-                        <p><strong>Location:</strong> {property.location}</p>
-                        <p><strong>Price:</strong> {property.price}</p>
-                        <p><strong>Posted On:</strong> {formatDate(property.created_at)}</p>
+                        <p><span><FiHome size={14} style={{ marginRight: '6px' }}/> {property.type}</span> <strong>{property.price}</strong></p>
+                        <p><span><FiMapPin size={14} style={{ marginRight: '6px' }}/> {property.location}</span></p>
+                        <p><span><FiClock size={14} style={{ marginRight: '6px' }}/> {formatDate(property.created_at)}</span></p>
 
                         {/* Time Remaining Display */}
                         <div className={`edit-timer ${timeRemaining.expired ? 'expired' : timeRemaining.urgent ? 'urgent' : 'active'}`}>
-                          <span className="timer-icon">⏱️</span>
+                          <span className="timer-icon"><FiClock /></span>
                           <span className="timer-text">{timeRemaining.text}</span>
                         </div>
 
@@ -718,15 +702,15 @@ const PostProperty = () => {
                             className="edit-property-btn"
                             onClick={() => handleEditProperty(property)}
                           >
-                            ✏️ Edit Property
+                            <FiEdit /> Edit Property
                           </button>
                         ) : (
                           <div className="edit-locked-section">
                             <p className="edit-restriction-message">
-                              🔒 Editing Locked
+                              <FiLock /> Editing Locked
                             </p>
                             <p className="edit-restriction-detail">
-                              This property can no longer be edited as the 3-day edit window has expired.
+                              Edit window (3 days) has expired.
                             </p>
                           </div>
                         )}
@@ -736,7 +720,10 @@ const PostProperty = () => {
                 })}
               </div>
             ) : (
-              <p>You have not posted any properties yet.</p>
+              <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+                <FiHome size={40} style={{ marginBottom: '16px', opacity: 0.5 }} />
+                <p>You have not posted any properties yet.</p>
+              </div>
             )}
           </>
         )}
@@ -751,7 +738,7 @@ const PostProperty = () => {
                 exit={{ opacity: 0, scale: 0.9, y: 20 }}
               >
                 <div className="disclaimer-header">
-                  <div className="disclaimer-icon">⚠️</div>
+                  <div className="disclaimer-icon"><FiAlertCircle /></div>
                   <h2>Post Property Disclaimer</h2>
                 </div>
                 <div className="disclaimer-body">

@@ -8,7 +8,8 @@ const GlobalSearchBar = () => {
   const [serviceSearch, setServiceSearch] = useState('');
   
   // Don't show on these pages
-  if (['/search', '/', '/login', '/register'].includes(location.pathname)) {
+  const path = location.pathname.toLowerCase().replace(/\/$/, '');
+  if (['/search', '', '/login', '/register', '/post-property'].includes(path)) {
     return null;
   }
 

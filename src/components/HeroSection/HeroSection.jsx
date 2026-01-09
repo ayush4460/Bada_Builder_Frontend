@@ -1,17 +1,12 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import './HeroSection.css';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import DetailedSearchBar from '../DetailedSearchBar/DetailedSearchBar';
 
 const HeroSection = () => {
-  const navigate = useNavigate();
-  const locationState = useLocation();
 
-  // 🔴 HIDE HERO SECTION ON SEARCH PAGE
-  if (locationState.pathname === '/search') {
-    return null;
-  }
+  const locationState = useLocation();
 
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
@@ -22,6 +17,11 @@ const HeroSection = () => {
       setTimeout(() => setShowSuccessMessage(false), 5000);
     }
   }, [locationState]);
+
+  // 🔴 HIDE HERO SECTION ON SEARCH PAGE AND POST PROPERTY PAGE
+  if (locationState.pathname === '/search' || locationState.pathname === '/post-property') {
+    return null;
+  }
 
 
 
