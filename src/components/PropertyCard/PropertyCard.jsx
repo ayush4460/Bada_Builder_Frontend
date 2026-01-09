@@ -1,19 +1,21 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FiMapPin, FiHome, FiMaximize2, FiCalendar } from 'react-icons/fi';
+import { useAuth } from '../../context/AuthContext';
 import './PropertyCard.css';
 
-/**
- * Reusable PropertyCard component that supports both grid and list views
- * @param {Object} property - Property data object
- * @param {string} viewType - 'grid' or 'list'
- * @param {string} source - Source page identifier (optional)
- */
 const PropertyCard = ({ property, viewType = 'grid', source = 'home' }) => {
   const navigate = useNavigate();
+  const { currentUser } = useAuth(); // Get auth state
 
   const handleBookVisit = (e) => {
     e.preventDefault();
+    if (!currentUser) {
+      // User not logged in -> Redirect to login
+      // Pass the return path so they can be redirected back after login (if Login supports it)
+      navigate('/login', { state: { returnTo: '/book-visit', property } }); 
+      return;
+    }
     navigate('/book-visit', { state: { property } });
   };
 
