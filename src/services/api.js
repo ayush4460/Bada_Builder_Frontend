@@ -39,6 +39,8 @@ export const authService = {
   register: (userData) => api.post('/auth/register', userData),
   login: (credentials) => api.post('/auth/login', credentials),
   sendOtp: (email) => api.post('/auth/send-otp', { email }),
+  forgotPassword: (email) => api.post('/auth/forgot-password', { email }),
+  resetPassword: (data) => api.post('/auth/reset-password', data),
   getMe: () => api.get('/auth/me'),
 };
 
