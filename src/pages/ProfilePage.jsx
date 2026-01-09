@@ -269,172 +269,110 @@ const ProfilePage = () => {
   return (
     <div className="profile-page">
       <div className="profile-container">
-        {/* Page Header */}
-        <div className="profile-header">
-          <h1 className="profile-title">My Profile</h1>
-          <p className="profile-subtitle">View your account information and activity</p>
-        </div>
-
-        {/* Profile Card */}
-        <div className="profile-card">
-          <div className="profile-content">
-            {/* Profile Photo */}
-            <div className="profile-photo-section">
-              <div className="profile-photo-container">
-                <div className="profile-photo-wrapper">
-                  {userData.profilePhoto ? (
-                    <img
-                      src={userData.profilePhoto}
-                      alt="Profile"
-                      className="profile-photo"
-                    />
-                  ) : (
-                    <div className="profile-photo-placeholder">
-                      <FiUser className="profile-photo-icon" />
-                    </div>
-                  )}
-                  {uploading && (
-                    <div className="photo-overlay">
-                      <div className="photo-uploading">
-                        <div className="spinner"></div>
-                        <span>Processing...</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Photo Action Buttons */}
-                <div className="photo-action-buttons">
-                  <button
-                    className="photo-action-btn change-photo"
-                    onClick={handleChangePhoto}
-                    disabled={uploading}
-                  >
-                    <FiEdit3 className="action-icon" />
-                    <span>Change Photo</span>
-                  </button>
-                  {userData.profilePhoto && (
-                    <button
-                      className="photo-action-btn remove-photo"
-                      onClick={handleRemovePhoto}
-                      disabled={uploading}
-                    >
-                      <FiTrash2 className="action-icon" />
-                      <span>Remove Photo</span>
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handlePhotoChange}
-                style={{ display: 'none' }}
-              />
-              {uploadSuccess && (
-                <div className="upload-success">
-                  <FiUpload className="success-icon" />
-                  Photo updated successfully!
+        
+        <div className="profile-layout">
+          {/* Left Column: Identity Card */}
+          <div className="profile-identity-card">
+            <div className="profile-photo-wrapper">
+              {userData.profilePhoto ? (
+                <img
+                  src={userData.profilePhoto}
+                  alt="Profile"
+                  className="profile-photo"
+                />
+              ) : (
+                <div className="profile-photo-placeholder">
+                  <FiUser className="profile-photo-icon" />
                 </div>
               )}
-              <div className="profile-name-mobile">
-                <h2>{userData.name}</h2>
-                <span className={`user-type-badge ${userData.userType.toLowerCase()}`}>
-                  {userData.userType}
-                </span>
-              </div>
-            </div>
-
-            {/* User Details */}
-            <div className="profile-details">
-              <div className="profile-name-desktop">
-                <h2>{userData.name}</h2>
-                <span className={`user-type-badge ${userData.userType.toLowerCase()}`}>
-                  {userData.userType}
-                </span>
-              </div>
-
-              <div className="details-grid">
-                {/* Email */}
-                <div className="detail-item">
-                  <div className="detail-icon-wrapper email">
-                    <FiMail className="detail-icon" />
-                  </div>
-                  <div className="detail-content">
-                    <p className="detail-label">Email Address</p>
-                    <p className="detail-value">{userData.email}</p>
-                  </div>
+              {uploading && (
+                <div className="photo-overlay">
+                  <div className="spinner"></div>
                 </div>
-
-                {/* Phone */}
-                <div className="detail-item">
-                  <div className="detail-icon-wrapper phone">
-                    <FiPhone className="detail-icon" />
-                  </div>
-                  <div className="detail-content">
-                    <p className="detail-label">Phone Number</p>
-                    <p className="detail-value">{userData.phone}</p>
-                  </div>
-                </div>
-
-                {/* User ID */}
-                <div className="detail-item">
-                  <div className="detail-icon-wrapper userid">
-                    <FiHash className="detail-icon" />
-                  </div>
-                  <div className="detail-content">
-                    <p className="detail-label">User ID</p>
-                    <p className="detail-value user-id">{userData.userId}</p>
-                  </div>
-                </div>
-
-                {/* User Type */}
-                <div className="detail-item">
-                  <div className="detail-icon-wrapper usertype">
-                    <FiBriefcase className="detail-icon" />
-                  </div>
-                  <div className="detail-content">
-                    <p className="detail-label">Account Type</p>
-                    <p className="detail-value">{userData.userType} Owner</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Activity Section */}
-        <div className="activity-section">
-          <div className="activity-header">
-            <h2 className="activity-title">Activity Overview</h2>
-            <p className="activity-subtitle">Track your engagement and contributions</p>
-            {loadingActivity && (
-              <div className="activity-loading">
-                <div className="spinner-small"></div>
-                <span>Updating...</span>
-              </div>
-            )}
-          </div>
-
-          <div className="activity-grid">
-            {activityItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => handleActivityClick(item.path)}
-                className={`activity-card ${item.color}`}
+              )}
+              <button 
+                className="edit-photo-btn"
+                onClick={handleChangePhoto}
+                disabled={uploading}
               >
-                <div className="activity-icon-wrapper">
-                  {item.icon}
-                </div>
-                <h3 className="activity-card-title">{item.title}</h3>
-                <p className="activity-count">{item.count}</p>
-                <div className="activity-arrow">→</div>
+                <FiEdit3 />
               </button>
-            ))}
+            </div>
+
+            <h2 className="profile-name">{userData.name}</h2>
+            <div className="profile-role">
+              <span className={`role-badge ${userData.userType.toLowerCase()}`}>
+                {userData.userType}
+              </span>
+            </div>
+            <p className="profile-email">{userData.email}</p>
+
+            <div className="profile-actions">
+              <button className="action-btn" onClick={() => navigate('/settings')}>
+                Settings
+              </button>
+              {userData.profilePhoto && (
+                 <button className="action-btn outline" onClick={handleRemovePhoto} disabled={uploading}>
+                  Remove Photo
+                </button>
+              )}
+            </div>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handlePhotoChange}
+              style={{ display: 'none' }}
+            />
+          </div>
+
+          {/* Right Column: Details & Stats */}
+          <div className="profile-info-section">
+            
+            {/* Quick Stats Row */}
+            <div className="stats-grid">
+              {activityItems.map((item) => (
+                <div 
+                  key={item.id} 
+                  className="stat-card"
+                  onClick={() => handleActivityClick(item.path)}
+                >
+                  <div className="stat-icon">{item.icon}</div>
+                  <div className="stat-info">
+                    <span className="stat-value">{item.count}</span>
+                    <span className="stat-label">{item.title}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Detailed Info */}
+            <div className="info-card">
+              <h3 className="section-title">Personal Information</h3>
+              <div className="info-list">
+                <div className="info-item">
+                  <div className="info-label">Phone</div>
+                  <div className="info-value">{userData.phone}</div>
+                </div>
+                <div className="info-item">
+                  <div className="info-label">User ID</div>
+                  <div className="info-value mono">{userData.userId}</div>
+                </div>
+                <div className="info-item">
+                  <div className="info-label">Location</div>
+                  <div className="info-value">India</div> 
+                </div>
+                <div className="info-item">
+                  <div className="info-label">Member Since</div>
+                  <div className="info-value">January 2024</div>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
+
       </div>
     </div>
   );
