@@ -22,14 +22,9 @@ const ByDeveloper = () => {
         setLoading(true);
         setError(null);
 
-        // Fetch using backend API
-        const response = await api.get('/properties');
-        const allProperties = response.data.properties || [];
-
-        // Filter active properties and by user_type 'developer'
-        const projectsData = allProperties.filter(p => 
-          p.status === 'active' && p.user_type === 'developer'
-        );
+        // Fetch using backend API with role 'developer'
+        const response = await api.get('/properties', { params: { role: 'developer' } });
+        const projectsData = response.data.properties || [];
 
         // Filter out expired properties and mark them as expired (frontend utility)
         const activeProjects = await filterAndMarkExpiredProperties(projectsData);

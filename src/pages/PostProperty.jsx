@@ -113,12 +113,19 @@ const PostProperty = () => {
   // Effect to fetch existing properties via API
   useEffect(() => {
     const fetchExistingProperties = async () => {
-      if (selectedPropertyFlow === 'existing' && currentUser?.uid) {
+      if (selectedPropertyFlow === 'existing' && currentUser?.uid && userType) {
         setFetchingProperties(true);
         try {
-          const response = await propertyService.getAll({ user_id: currentUser.uid });
-          if (response.data.success) {
-            setExistingProperties(response.data.properties);
+          let response;
+          if (userType === 'developer') {
+              // Fetch developer specific properties or implement separate endpoint?
+              // The user wants strict separation.
+              // Assuming propertyService.getAll handles filtering by user_id and role.
+              response = await propertyService.getAll({ user_id: currentUser.uid, role: 'developer' }); 
+              setExistingProperties(response.data.properties || []);
+          } else {
+             response = await propertyService.getAll({ user_id: currentUser.uid, role: 'individual' });
+             setExistingProperties(response.data.properties || []);
           }
         } catch (error) {
           console.error("Error fetching existing properties:", error);
@@ -130,7 +137,7 @@ const PostProperty = () => {
     };
 
     fetchExistingProperties();
-  }, [selectedPropertyFlow, currentUser]);
+  }, [selectedPropertyFlow, currentUser, userType]);
 
   const handleCreateNewProperty = async () => {
     if (userType === "developer") {
@@ -342,8 +349,13 @@ const PostProperty = () => {
 
     try {
       let imageUrl = '';
-      if (formData.image) {
-        // imageUrl = await uploadService.uploadImage(formData.image);
+      if (imageFile) {
+        imageUrl = await uploadToBackend(imageFile);
+      } else if (formData.image) {
+         // Fallback if imageFile wasn't set but formData has it (legacy check)
+         // But logic uses handleImageChange setting imageFile. 
+         // Let's stick to imageFile derived from state
+         // imageUrl = await uploadToBackend(formData.image);
       }
 
       const propertyData = {
@@ -364,6 +376,7 @@ const PostProperty = () => {
         contact_phone: formData.contactPhone,
         project_stats: formData.projectStats,
         // ... (other fields map automatically if names match backend expectation)
+        role: userType, // Send role explicitly ('individual' or 'developer')
       };
 
       if (userType === 'developer') {

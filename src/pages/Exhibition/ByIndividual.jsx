@@ -22,14 +22,9 @@ const ByIndividual = () => {
         setLoading(true);
         setError(null);
 
-        // Fetch using backend API
-        const response = await api.get('/properties');
-        const allProperties = response.data.properties || [];
-
-        // Filter active properties and by user_type 'individual'
-        const propertiesData = allProperties.filter(p => 
-          p.status === 'active' && p.user_type === 'individual'
-        );
+        // Fetch using backend API with role 'individual'
+        const response = await api.get('/properties', { params: { role: 'individual' } });
+        const propertiesData = response.data.properties || [];
 
         // Filter out expired properties and mark them as expired
         const activeProperties = await filterAndMarkExpiredProperties(propertiesData);
