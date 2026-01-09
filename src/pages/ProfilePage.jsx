@@ -41,38 +41,56 @@ const ProfilePage = () => {
     const fetchActivityStats = async () => {
       setLoadingActivity(true);
       try {
-        // Run fetches in parallel
-        const [propsRes, bookingsRes, groupsRes, invRes] = await Promise.all([
+        // We use Promise.allSettled so one failure doesn't block others
+        const results = await Promise.allSettled([
           api.get('/properties/user/me'),
-          api.get('/bookings/my'), // Assuming endpoint exists
-          api.get('/live-groups/my'), // Assuming endpoint exists
-          api.get('/investments/my') // Assuming endpoint exists
+          api.get('/bookings/my'),
+          // These endpoints might not exist yet, so we handle failures gracefully
+          api.get('/live-groups/my').catch(() => ({ data: [] })), 
+          api.get('/investments/my').catch(() => ({ data: [] }))
         ]);
 
-        const properties = propsRes.data || [];
-        
-        // Filter active upcoming bookings
-        const bookings = bookingsRes.data || [];
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const activeBookings = bookings.filter(b => {
-          if (b.visit_date) {
-            const visitDate = new Date(b.visit_date);
-            visitDate.setHours(0, 0, 0, 0);
-            return visitDate >= today;
-          }
-          return true;
-        });
+        const [propsResult, bookingsResult, groupsResult, invResult] = results;
 
-        // Live groups and investments
-        const liveGroups = groupsRes.data || [];
-        const investments = invRes.data || [];
+        // Process Properties
+        let properties = [];
+        if (propsResult.status === 'fulfilled') {
+           properties = propsResult.value.data?.properties || [];
+           // Fallback if data is array directly
+           if (Array.isArray(propsResult.value.data)) {
+              properties = propsResult.value.data;
+           }
+        } else {
+           console.error('Failed to fetch properties:', propsResult.reason);
+        }
+
+        // Process Bookings
+        let activeBookings = [];
+        if (bookingsResult.status === 'fulfilled') {
+            const bookings = bookingsResult.value.data?.bookings || []; // Check .bookings based on controller
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            activeBookings = bookings.filter(b => {
+              if (b.visit_date) {
+                const visitDate = new Date(b.visit_date);
+                visitDate.setHours(0, 0, 0, 0);
+                return visitDate >= today;
+              }
+              return true;
+            });
+        }
+
+        // Process Live Groups (Placeholder/Future)
+        const liveGroups = (groupsResult.status === 'fulfilled' && groupsResult.value.data) ? groupsResult.value.data : [];
+
+        // Process Investments (Placeholder/Future)
+        const investments = (invResult.status === 'fulfilled' && invResult.value.data) ? invResult.value.data : [];
 
         setActivityCounts({
           propertiesUploaded: properties.length,
-          joinedLiveGroups: liveGroups.length,
+          joinedLiveGroups: Array.isArray(liveGroups) ? liveGroups.length : 0,
           bookedSiteVisits: activeBookings.length,
-          investments: investments.length
+          investments: Array.isArray(investments) ? investments.length : 0
         });
 
       } catch (error) {
