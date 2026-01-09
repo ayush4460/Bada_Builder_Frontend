@@ -76,6 +76,8 @@ import AdminPostProperty from './pages/admin/PostProperty';
 import AdminManageProperties from './pages/admin/ManageProperties';
 import AdminDashboard from './pages/admin/AdminDashboard';
 
+import Home from './pages/Home';
+
 function App() {
   const [showLeadModal, setShowLeadModal] = useState(false);
 
@@ -95,19 +97,7 @@ function App() {
       <LeadModal isOpen={showLeadModal} onClose={() => setShowLeadModal(false)} />
       <Chatbot />
       <Routes>
-        <Route path="/" element={
-          <>
-            <HeroSection />
-            <RecommendedProjects />
-            <Working />
-            <ByIndividual />
-            <ByDeveloper />
-            <ByBadaBuilder />
-            <SubscriptionPlans />
-            <Services />
-            <Footer />
-          </>
-        } />
+        <Route path="/" element={<Home />} />
         {/* <Route path="/projects" element={<Projects />} /> */}
         <Route path="/services" element={<Services />} />
         <Route path="/investments" element={<Investments />} />

@@ -221,9 +221,10 @@ const Header = () => {
               {userProfile?.user_type !== 'admin' && (
                 <button
                   onClick={() => setIsUserTypeModalOpen(true)}
-                  className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-full shadow-md transition-all duration-300 transform hover:scale-105 font-medium text-sm flex items-center gap-2"
+                  className="bg-linear-to-r from-[#58335e] to-[#8a4f94] text-white! px-7 py-2.5 rounded-full shadow-[0_10px_20px_-10px_rgba(88,51,94,0.5)] hover:shadow-[0_15px_25px_-10px_rgba(88,51,94,0.4)] hover:scale-105 active:scale-95 transition-all duration-300 font-bold text-sm flex items-center gap-2 cursor-pointer"
                 >
                   <span>Post Property</span>
+                  <span className="text-lg">✨</span>
                 </button>
               )}
 
@@ -260,7 +261,7 @@ const Header = () => {
                   )}
                 </div>
               ) : (
-                <Link to="/login" onClick={handleLoginClick} className="bg-[#58335e] hover:bg-[#46284b] text-white px-6 py-2.5 rounded-full shadow-md transition-all duration-300 transform hover:scale-105 font-medium text-sm">
+                <Link to="/login" onClick={handleLoginClick} className="bg-[#58335e] hover:bg-[#46284b] text-white! px-6 py-2.5 rounded-full shadow-md transition-all duration-300 transform hover:scale-105 font-medium text-sm">
                   Login
                 </Link>
               )}
@@ -322,7 +323,7 @@ const Header = () => {
                     </div>
                   </div>
                 ) : (
-                   <Link to="/login" onClick={handleLoginClick} className="flex items-center justify-center w-full py-3.5 bg-[#58335e] text-white rounded-xl font-semibold shadow-lg shadow-purple-200 active:scale-95 transition-all">
+                   <Link to="/login" onClick={handleLoginClick} className="flex items-center justify-center w-full py-3.5 bg-linear-to-r from-[#58335e] to-[#7c4581] text-white! rounded-xl font-bold shadow-lg shadow-purple-900/10 active:scale-95 transition-all">
                       Login / Sign Up
                    </Link>
                 )}
@@ -348,7 +349,7 @@ const Header = () => {
                      <>
                         <button 
                            onClick={() => { toggleMobileMenu(); setIsUserTypeModalOpen(true); }}
-                           className="w-full flex items-center justify-between p-3.5 bg-green-50 text-green-700 rounded-xl hover:bg-green-100 transition-colors font-medium border border-green-100"
+                           className="w-full flex items-center justify-between p-4 bg-linear-to-br from-[#58335e]/5 to-white text-[#58335e] rounded-2xl hover:bg-linear-to-br hover:from-[#58335e]/10 hover:to-white transition-all font-bold border border-[#58335e]/10 shadow-sm active:scale-[0.98]"
                         >
                           <span>Post Property</span>
                           <span className="text-xl">✨</span>
