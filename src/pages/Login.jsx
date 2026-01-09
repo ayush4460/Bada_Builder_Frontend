@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { motion } from "framer-motion";
-import "./Login.css";
+// import { motion } from "framer-motion"; // Removed unused import
+// import "./Login.css"; // Removed and replaced with Tailwind
 import { authService } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate, useLocation, Link } from "react-router-dom";
@@ -149,25 +149,25 @@ const Login = () => {
 
   // ------------------ UI ------------------
   return (
-    <div className="login-page">
+    <div className="flex justify-center items-center min-h-screen bg-linear-to-br from-[#f5f7fa] to-[#e8ecf1] p-5">
       {/* Full-screen loading overlay */}
       {loading ? (
         <motion.div
-          className="fullscreen-loading-overlay"
+          className="fixed inset-0 bg-black/70 backdrop-blur-[4px] flex items-center justify-center z-[9999] cursor-wait select-none pointer-events-auto"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.15 }}
         >
-          <div className="loading-content">
-            <div className="loading-spinner-large"></div>
-            <p className="loading-text">Signing you in...</p>
+          <div className="flex flex-col items-center gap-5 bg-white p-10 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.3)] max-w-[300px] text-center pointer-events-none">
+            <div className="w-10 h-10 border-4 border-[#58335e]/20 border-t-[#58335e] rounded-full animate-spin"></div>
+            <p className="m-0 text-base font-semibold text-[#333] leading-relaxed">Signing you in...</p>
           </div>
         </motion.div>
       ) : null}
 
       <motion.div
-        className="login-box"
+        className="bg-white p-10 rounded-2xl w-full max-w-[450px] shadow-[0_10px_40px_rgba(0,0,0,0.1)] sm:p-[30px_20px]"
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
@@ -175,6 +175,7 @@ const Login = () => {
         <motion.h2
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
+          className="mb-2 text-[32px] font-bold text-[#1a1a1a] text-center sm:text-[26px]"
         >
           Login
         </motion.h2>
@@ -184,75 +185,70 @@ const Login = () => {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="redirect-message"
-            style={{
-              backgroundColor: message.toLowerCase().includes('success') ? '#dcfce7' : '#fef3c7',
-              color: message.toLowerCase().includes('success') ? '#166534' : '#92400e',
-              padding: '12px 16px',
-              borderRadius: '8px',
-              marginBottom: '20px',
-              border: message.toLowerCase().includes('success') ? '1px solid #bbf7d0' : '1px solid #fbbf24',
-              fontSize: '14px',
-              textAlign: 'center'
-            }}
+            className={`p-3 px-4 rounded-lg mb-5 border text-sm text-center ${message.toLowerCase().includes('success') ? 'bg-green-100 text-green-800 border-green-200' : 'bg-amber-100 text-amber-800 border-amber-300'}`}
           >
             {message}
           </motion.div>
         )}
 
-        <form onSubmit={loginUser} className={`login-form ${loading ? 'form-disabled' : ''}`}>
+        <form onSubmit={loginUser} className={`flex flex-col gap-5 sm:gap-4 ${loading ? 'pointer-events-none opacity-70' : ''}`}>
           
-          <label>Email</label>
-          <input
-            name="email"
-            type="email"
-            value={formData.email}
-            onChange={handleChange}
-            disabled={loading}
-          />
-          {errors.email && <p className="error">{errors.email}</p>}
-
-          <label>Password</label>
-          <div className="password-wrapper">
+          <div>
+            <label className="block text-left mb-1.5 font-semibold text-sm text-[#333]">Email</label>
             <input
-              name="password"
-              type={showPassword ? "text" : "password"}
-              value={formData.password}
+              name="email"
+              type="email"
+              value={formData.email}
               onChange={handleChange}
-              className="password-input"
               disabled={loading}
+              className="w-full p-3 px-4 rounded-lg border-2 border-[#e0e0e0] text-[15px] text-[#1a1a1a] transition-all duration-200 font-inherit focus:outline-none focus:border-[#58335e] focus:shadow-[0_0_0_3px_rgba(88,51,94,0.1)] disabled:bg-[#f5f5f5] disabled:text-[#999] disabled:cursor-not-allowed disabled:border-[#e0e0e0] sm:p-[10px_14px] sm:text-sm"
             />
-            <button
-              type="button"
-              className="eye-btn"
-              onClick={() => setShowPassword((prev) => !prev)}
-              disabled={loading}
-            >
-              <i className={`far ${showPassword ? "fa-eye" : "fa-eye-slash"}`} />
-            </button>
+            {errors.email && <p className="text-red-600 text-sm -mt-1 text-left">{errors.email}</p>}
           </div>
-          {errors.password && <p className="error">{errors.password}</p>}
+
+          <div>
+            <label className="block text-left mb-1.5 font-semibold text-sm text-[#333]">Password</label>
+            <div className="relative flex items-center">
+              <input
+                name="password"
+                type={showPassword ? "text" : "password"}
+                value={formData.password}
+                onChange={handleChange}
+                className="w-full p-3 px-4 pr-[35px] rounded-lg border-2 border-[#e0e0e0] text-[15px] text-[#1a1a1a] transition-all duration-200 font-inherit focus:outline-none focus:border-[#58335e] focus:shadow-[0_0_0_3px_rgba(88,51,94,0.1)] disabled:bg-[#f5f5f5] disabled:text-[#999] disabled:cursor-not-allowed disabled:border-[#e0e0e0] sm:p-[10px_14px] sm:text-sm"
+                disabled={loading}
+              />
+              <button
+                type="button"
+                className="absolute right-[5px] bg-transparent border-none cursor-pointer p-0.5 flex items-center justify-center outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none"
+                onClick={() => setShowPassword((prev) => !prev)}
+                disabled={loading}
+              >
+                <i className={`far ${showPassword ? "fa-eye" : "fa-eye-slash"}`} />
+              </button>
+            </div>
+            {errors.password && <p className="text-red-600 text-sm mt-1 text-left">{errors.password}</p>}
+          </div>
 
           {errors.submit && (
-            <p className={`error submit-error ${
-              errors.submit.includes('successful') ? 'success-login' : 
-              errors.submit.includes('reset') ? 'info-message' : ''
+            <p className={`text-center p-3 rounded-lg border mt-0 text-sm ${
+              errors.submit.includes('successful') ? 'text-green-600 bg-green-50 border-green-200' : 
+              errors.submit.includes('reset') ? 'text-sky-700 bg-sky-50 border-sky-300' : 'text-center bg-[#fee] border-[#fcc] text-[#dc2626]'
             }`}>
               {errors.submit}
             </p>
           )}
 
           <button 
-            className="submit-btn" 
+            className="p-3.5 px-6 bg-linear-to-br from-[#58335e] to-[#6d4575] text-white border-none rounded-lg font-semibold text-base cursor-pointer transition-all duration-300 mt-2.5 hover:translate-y-[-2px] hover:shadow-[0_8px_20px_rgba(88,51,94,0.3)] disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none sm:p-[12px_20px] sm:text-[15px] !text-white" 
             disabled={loading}
           >
-            {loading ? <span className="spinner"></span> : "Login"}
+            {loading ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block"></span> : "Login"}
           </button>
         </form>
 
-        <p className="toggle-text">
+        <p className="mt-6 text-center text-[#666] text-[15px]">
           Don't have an account?{" "}
-          <Link to="/register" className="toggle-link">
+          <Link to="/register" className="text-[#58335e] cursor-pointer font-semibold transition-colors duration-200 hover:text-[#6d4575] hover:underline">
             Register
           </Link>
         </p>

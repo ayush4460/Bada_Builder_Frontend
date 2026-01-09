@@ -3,10 +3,10 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 // import { doc, getDoc } from 'firebase/firestore';
 // import { db } from '../firebase';
 import api from '../services/api';
-import './ProjectDetails.css';
+// import './ProjectDetails.css'; // Removed and replaced with Tailwind
 import { FiPhone, FiCheckCircle, FiInfo, FiMap } from 'react-icons/fi';
 import { FaChevronLeft, FaChevronRight, FaExpand } from 'react-icons/fa';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 
 const PropertyDetails = () => {
   const { id } = useParams();
@@ -153,7 +153,7 @@ const PropertyDetails = () => {
                 <button
                   key={idx}
                   onClick={() => setCurrentImageIndex(idx)}
-                  className={`relative w-16 h-12 flex-shrink-0 rounded-lg overflow-hidden border-2 transition-all ${currentImageIndex === idx ? 'border-blue-500 scale-110' : 'border-transparent opacity-70 hover:opacity-100'}`}
+                  className={`relative w-16 h-12 shrink-0 rounded-lg overflow-hidden border-2 transition-all ${currentImageIndex === idx ? 'border-blue-500 scale-110' : 'border-transparent opacity-70 hover:opacity-100'}`}
                 >
                   <img src={img} alt={`Thumb ${idx}`} className="w-full h-full object-cover" />
                 </button>
@@ -176,7 +176,7 @@ const PropertyDetails = () => {
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
             {propertyTags.map((tag, i) => (
-              <span key={i} className="px-4 py-1.5 text-xs font-bold ui-bg text-white rounded-full uppercase tracking-wider">
+              <span key={i} className="px-4 py-1.5 text-xs font-bold border-[3px] border-[#474545] bg-[#080918] text-white rounded-full uppercase tracking-wider">
                 {tag}
               </span>
             ))}
@@ -196,7 +196,7 @@ const PropertyDetails = () => {
       {/* Price & Summary Stats */}
       <div className="mt-10 grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Price Card */}
-        <div className="lg:col-span-1 ui-bg p-8 rounded-2xl shadow-xl flex flex-col justify-center">
+        <div className="lg:col-span-1 border-[3px] border-[#474545] bg-[#080918] p-8 rounded-2xl shadow-xl flex flex-col justify-center">
           <h2 className="text-gray-400 text-sm font-bold uppercase tracking-widest mb-2">Investment Range</h2>
           <p className="text-3xl font-black text-white">{displayPrice}</p>
           <p className="text-sm text-gray-500 mt-2 font-medium">
@@ -213,7 +213,7 @@ const PropertyDetails = () => {
               { label: 'Total Units', value: property.project_stats.units },
               { label: 'Config', value: property.residential_options?.join('/') || 'Project' }
             ].map((stat, i) => (
-              <div key={i} className="ui-bg p-4 rounded-2xl flex flex-col items-center justify-center text-center border border-gray-800">
+              <div key={i} className="border-[3px] border-[#474545] bg-[#080918] p-4 rounded-2xl flex flex-col items-center justify-center text-center">
                 <span className="text-gray-500 text-xs font-bold uppercase mb-1">{stat.label}</span>
                 <span className="text-xl font-black text-white">{stat.value || '--'}</span>
               </div>
@@ -227,8 +227,8 @@ const PropertyDetails = () => {
         {isDeveloper && (
           <div className="space-y-6">
             <h2 className="text-2xl font-extrabold">Project Compliance</h2>
-            <div className="ui-bg p-6 rounded-2xl border border-gray-800 space-y-4">
-              <div className="flex items-center justify-between py-2 border-b border-gray-800">
+            <div className="border-[3px] border-[#474545] bg-[#080918] p-6 rounded-2xl space-y-4">
+              <div className="flex items-center justify-between py-2 border-b">
                 <span className="text-gray-400 font-bold flex items-center gap-2"><FiCheckCircle className="text-green-500" /> RERA Status</span>
                 <span className="font-bold">{property.rera_status === 'Yes' ? 'Registered' : 'N/A'}</span>
               </div>
@@ -238,7 +238,7 @@ const PropertyDetails = () => {
                   <span className="font-mono text-sm bg-black p-2 rounded text-blue-400 break-all">{property.rera_number}</span>
                 </div>
               )}
-              <div className="flex items-center justify-between py-2 border-b border-gray-800">
+              <div className="flex items-center justify-between py-2 border-b">
                 <span className="text-gray-400 font-bold flex items-center gap-2"><FiInfo className="text-blue-500" /> Possession</span>
                 <span className="font-bold">{property.possession_status}</span>
               </div>
@@ -256,7 +256,7 @@ const PropertyDetails = () => {
         {(property.residential_options?.length > 0 || property.commercial_options?.length > 0) && (
           <div className="space-y-6">
             <h2 className="text-2xl font-extrabold">Available Options</h2>
-            <div className="ui-bg p-6 rounded-2xl border border-gray-800">
+            <div className="border-[3px] border-[#474545] bg-[#080918] p-6 rounded-2xl">
               {property.residential_options?.length > 0 && (
                 <div className="mb-4">
                   <p className="text-gray-500 text-xs font-bold uppercase mb-3">Residential</p>
@@ -290,7 +290,7 @@ const PropertyDetails = () => {
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {propertyFacilities.map((facility, idx) => (
-              <div key={idx} className="p-4 ui-bg rounded-2xl text-center text-sm font-bold border border-gray-800 hover:border-blue-500 transition-colors shadow-sm">
+              <div key={idx} className="p-4 border-[3px] border-[#474545] bg-[#080918] rounded-2xl text-center text-sm font-bold hover:border-blue-500 transition-colors shadow-sm">
                 {facility}
               </div>
             ))}
@@ -299,7 +299,7 @@ const PropertyDetails = () => {
       )}
 
       {/* Developer/Seller Info */}
-      <div className="mt-16 bg-gradient-to-r from-gray-900 to-black p-8 rounded-3xl border border-gray-800 shadow-2xl">
+      <div className="mt-16 bg-linear-to-r from-gray-900 to-black p-8 rounded-3xl border border-gray-800 shadow-2xl">
         <h2 className="text-xs font-black text-gray-500 uppercase tracking-[0.3em] mb-6">
           {isDeveloper ? 'Project Developer' : property.owner ? 'Property Owner' : 'Verified Seller'}
         </h2>

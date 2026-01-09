@@ -1,7 +1,7 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import listings from '../data/listings';
-import './ProjectDetails.css';
+// import './ProjectDetails.css'; // Removed and replaced with Tailwind
 
 const ProjectDetails = () => {
   const { id } = useParams();
@@ -47,15 +47,15 @@ const ProjectDetails = () => {
 
               return tooltipText ? (
                 <div key={i} className="relative group">
-                  <span className="px-3 py-1 text-xs font-medium ui-bg text-white rounded-full cursor-pointer">
+                  <span className="px-3 py-1 text-xs font-medium border-[3px] border-[#474545] bg-[#080918] text-white rounded-full cursor-pointer">
                     {tag}
                   </span>
-                  <div className="absolute ui-bg z-10 w-72 p-2 text-xs font-bold text-white bg-black rounded shadow-lg top-full mt-1 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                  <div className="absolute border-[3px] border-[#474545] bg-[#080918] z-10 w-72 p-2 text-xs font-bold text-white rounded shadow-lg top-full mt-1 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
                     {tooltipText}
                   </div>
                 </div>
               ) : (
-                <span key={i} className="px-3 py-1 text-xs font-medium ui-bg text-white rounded-full">
+                <span key={i} className="px-3 py-1 text-xs font-medium border-[3px] border-[#474545] bg-[#080918] text-white rounded-full">
                   {tag}
                 </span>
               );
@@ -75,7 +75,7 @@ const ProjectDetails = () => {
       </div>
 
       {/* Pricing */}
-      <div className="mt-8 ui-bg p-6 rounded-lg shadow-sm">
+      <div className="mt-8 border-[3px] border-[#474545] bg-[#080918] p-6 rounded-lg shadow-sm">
         <h2 className="text-xl font-semibold mb-4">Price Range</h2>
         <p className="text-2xl font-bold text-white">₹ {project.priceRange}</p>
         <p className="text-sm text-gray-400 mt-1">4 BHK Villa (1638 - 1796 sq.ft.)</p>
@@ -86,13 +86,13 @@ const ProjectDetails = () => {
         <h2 className="text-xl font-semibold mb-4">Floor Plans & Pricing</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {project.floorPlans?.map((plan, idx) => (
-            <div key={idx} className="ui-bg floor-plan-card rounded-lg shadow hover:shadow-lg transition overflow-hidden">
+            <div key={idx} className="border-[3px] border-[#474545] bg-[#080918] transition-transform duration-300 hover:scale-[1.02] rounded-lg shadow hover:shadow-lg overflow-hidden">
               <img src={plan.image} alt={`Plan ${idx + 1}`} className="w-full h-48 object-cover" />
               <div className="p-4">
                 <p className="text-lg  font-medium">{plan.size} sq.ft. • 4 BHK</p>
                 <p className="text-sm text-gray-400 mt-1">₹ {plan.price}</p>
                 <p className="text-xs text-gray-400 mt-1">Possession: Dec ‘25</p>
-                <button className="mt-3 w-full py-2 bg-blue-600 text-white rounded text-sm font-semibold">Request Callback</button>
+                <button className="mt-3 w-full py-2 bg-blue-600 text-white rounded text-sm font-semibold transition-all duration-300 hover:bg-[#1e40af]">Request Callback</button>
               </div>
             </div>
           ))}
@@ -102,7 +102,7 @@ const ProjectDetails = () => {
       {/* Seller Info */}
       <div className="mt-10">
         <h2 className="text-xl font-semibold mb-4">DEVELOPER</h2>
-        <div className="p-4 ui-bg rounded-lg shadow flex items-center justify-between">
+        <div className="p-4 border-[3px] border-[#474545] bg-[#080918] rounded-lg shadow flex items-center justify-between">
           <div>
             <p className="font-semibold text-lg">Shree Balaji Builders</p>
             <p className="text-sm text-gray-400">Builder</p>
@@ -115,7 +115,7 @@ const ProjectDetails = () => {
         <h2 className="text-xl font-semibold mb-4">Top Facilities</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4">
           {project.facilities?.map((facility, idx) => (
-            <div key={idx} className="p-3 ui-bg rounded-lg text-center text-sm font-medium">{facility}</div>
+            <div key={idx} className="p-3 border-[3px] border-[#474545] bg-[#080918] rounded-lg text-center text-sm font-medium">{facility}</div>
           ))}
         </div>
       </div>
@@ -125,7 +125,7 @@ const ProjectDetails = () => {
         <h2 className="text-xl font-semibold mb-4">Location Advantages</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {project.advantages?.map((item, idx) => (
-            <div key={idx} className="ui-bg p-4 rounded-lg shadow">
+            <div key={idx} className="border-[3px] border-[#474545] bg-[#080918] p-4 rounded-lg shadow">
               <p className="text-white font-bold">{item.place}</p>
               <p className="text-sm text-gray-500">{item.distance}</p>
             </div>

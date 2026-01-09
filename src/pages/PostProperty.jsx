@@ -7,7 +7,7 @@ import DeveloperForm from '../components/DeveloperForm/DeveloperForm';
 import SubscriptionGuard from '../components/SubscriptionGuard/SubscriptionGuard';
 import { propertyService, uploadService } from '../services/api';
 import { formatDate } from '../utils/dateFormatter';
-import './PostProperty.css';
+// import './PostProperty.css'; // Removed and replaced with Tailwind
 import { FiUser, FiBriefcase, FiPlus, FiEdit, FiClock, FiLock, FiAlertCircle, FiCheck, FiArrowLeft, FiImage, FiMapPin, FiHome, FiDollarSign } from 'react-icons/fi';
 
 // Reuse upload helper but pointing to our backend
@@ -415,53 +415,56 @@ const PostProperty = () => {
   };
 
   return (
-    <div className="post-property-page">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,#f8fafc_0%,#e2e8f0_100%)] pt-10 pb-20 px-5 relative overflow-hidden">
+      {/* Background flourish */}
+      <div className="absolute -top-[20%] -right-[10%] w-[60%] h-[60%] bg-[radial-gradient(circle,rgba(88,51,94,0.05)_0%,transparent_70%)] pointer-events-none z-0"></div>
+
       <motion.div
-        className="post-property-container"
+        className="max-w-[900px] mx-auto relative z-10 bg-white/95 backdrop-blur-xl rounded-3xl p-8 md:p-14 shadow-[0_20px_60px_rgba(0,0,0,0.06),0_1px_1px_rgba(0,0,0,0.05)] border border-white/60 transition-all duration-500"
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
-        <h1>{editingProperty ? 'Edit Property' : 'Post Your Property'}</h1>
-        <p className="subtitle">{editingProperty ? 'Modify the details of your property listing below.' : 'List your property in just a few simple steps and reach thousands of buyers instantly.'}</p>
+        <h1 className="text-4xl font-bold text-neutral-900 mb-3 text-center tracking-tight">{editingProperty ? 'Edit Property' : 'Post Your Property'}</h1>
+        <p className="text-center text-slate-500 mb-12 text-lg max-w-xl mx-auto leading-relaxed">{editingProperty ? 'Modify the details of your property listing below.' : 'List your property in just a few simple steps and reach thousands of buyers instantly.'}</p>
 
         {/* Step 1: User Type Selection */}
         {!userType && (
-          <div className="user-type-selection">
-            <h2>Select Your Role</h2>
-            <div className="user-type-cards">
+          <div className="text-center py-5">
+            <h2 className="text-2xl font-semibold text-neutral-900 mb-10">Select Your Role</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-[800px] mx-auto">
               <motion.div
-                className="user-type-card"
+                className="group bg-white border border-slate-200 rounded-[20px] p-10 cursor-pointer transition-all duration-400 text-center relative overflow-hidden hover:border-purple-900 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(88,51,94,0.1)]"
                 whileHover={{ y: -8, scale: 1.02 }}
                 onClick={() => setUserType('individual')}
               >
-                <div className="card-icon"><FiUser /></div>
-                <h3>Individual Owner</h3>
-                <p>Perfect for selling or renting your own property directly to buyers.</p>
-                <ul className="card-features">
-                  <li><FiCheck color="#10b981"/> Direct listing</li>
-                  <li><FiCheck color="#10b981"/> No commission</li>
-                  <li><FiCheck color="#10b981"/> Quick posting</li>
+                <div className="text-5xl mb-6 text-purple-900 bg-purple-50 w-[90px] h-[90px] inline-flex items-center justify-center rounded-full transition-all duration-300 group-hover:bg-purple-900 group-hover:text-white group-hover:scale-110"><FiUser /></div>
+                <h3 className="text-xl font-bold text-neutral-900 mb-3">Individual Owner</h3>
+                <p className="text-[15px] text-slate-500 mb-6 leading-relaxed">Perfect for selling or renting your own property directly to buyers.</p>
+                <ul className="list-none p-0 m-0 mb-6 text-left border-t border-slate-100 pt-4">
+                  <li className="text-sm text-slate-500 py-1.5 flex items-center gap-2"><FiCheck color="#10b981"/> Direct listing</li>
+                  <li className="text-sm text-slate-500 py-1.5 flex items-center gap-2"><FiCheck color="#10b981"/> No commission</li>
+                  <li className="text-sm text-slate-500 py-1.5 flex items-center gap-2"><FiCheck color="#10b981"/> Quick posting</li>
                 </ul>
-                <button type="button" className="select-type-btn">
+                <button type="button" className="bg-white text-purple-900 border-2 border-purple-900 py-3 px-8 rounded-xl text-[15px] font-semibold transition-all duration-300 w-full group-hover:bg-purple-900 group-hover:text-white">
                   Select Individual
                 </button>
               </motion.div>
 
               <motion.div
-                className="user-type-card"
+                className="group bg-white border border-slate-200 rounded-[20px] p-10 cursor-pointer transition-all duration-400 text-center relative overflow-hidden hover:border-purple-900 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(88,51,94,0.1)]"
                 whileHover={{ y: -8, scale: 1.02 }}
                 onClick={() => setUserType('developer')}
               >
-                <div className="card-icon"><FiBriefcase /></div>
-                <h3>Developer / Builder</h3>
-                <p>List entire projects, multiple units, and reach a wider audience.</p>
-                <ul className="card-features">
-                  <li><FiCheck color="#10b981"/> Project listing</li>
-                  <li><FiCheck color="#10b981"/> Multiple units</li>
-                  <li><FiCheck color="#10b981"/> RERA verified</li>
+                <div className="text-5xl mb-6 text-purple-900 bg-purple-50 w-[90px] h-[90px] inline-flex items-center justify-center rounded-full transition-all duration-300 group-hover:bg-purple-900 group-hover:text-white group-hover:scale-110"><FiBriefcase /></div>
+                <h3 className="text-xl font-bold text-neutral-900 mb-3">Developer / Builder</h3>
+                <p className="text-[15px] text-slate-500 mb-6 leading-relaxed">List entire projects, multiple units, and reach a wider audience.</p>
+                <ul className="list-none p-0 m-0 mb-6 text-left border-t border-slate-100 pt-4">
+                  <li className="text-sm text-slate-500 py-1.5 flex items-center gap-2"><FiCheck color="#10b981"/> Project listing</li>
+                  <li className="text-sm text-slate-500 py-1.5 flex items-center gap-2"><FiCheck color="#10b981"/> Multiple units</li>
+                  <li className="text-sm text-slate-500 py-1.5 flex items-center gap-2"><FiCheck color="#10b981"/> RERA verified</li>
                 </ul>
-                <button type="button" className="select-type-btn">
+                <button type="button" className="bg-white text-purple-900 border-2 border-purple-900 py-3 px-8 rounded-xl text-[15px] font-semibold transition-all duration-300 w-full group-hover:bg-purple-900 group-hover:text-white">
                   Select Developer
                 </button>
               </motion.div>
@@ -471,43 +474,43 @@ const PostProperty = () => {
 
         {/* Step 2: Property Flow Selection (New or Existing) */}
         {userType && !selectedPropertyFlow && (
-          <div className="property-flow-selection">
-            <div className="selected-type-badge">
-              <span>
+          <div className="text-center py-5">
+            <div className="flex justify-between items-center bg-slate-50 p-4 px-6 rounded-2xl mb-8 border border-slate-200">
+              <span className="text-base font-semibold text-slate-700 flex items-center gap-2">
                 {userType === 'individual' ? <><FiUser /> Individual Owner</> : <><FiBriefcase /> Developer</>}
               </span>
               <button
                 type="button"
-                className="change-type-btn"
+                className="bg-transparent text-purple-900 py-2 px-4 border border-purple-900/20 rounded-lg text-[13px] font-semibold cursor-pointer transition-all hover:bg-purple-900/5 hover:border-purple-900"
                 onClick={() => setUserType(null)}
               >
                 Change Role
               </button>
             </div>
-            <h2>What would you like to do?</h2>
-            <div className="property-flow-cards">
+            <h2 className="text-2xl font-semibold text-neutral-900 mb-10">What would you like to do?</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-[800px] mx-auto">
               <motion.div
-                className="property-flow-card"
+                className="group bg-white border border-slate-200 rounded-[20px] p-10 cursor-pointer transition-all duration-400 text-center relative overflow-hidden hover:border-purple-900 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(88,51,94,0.1)]"
                 whileHover={{ y: -8, scale: 1.02 }}
                 onClick={handleCreateNewProperty}
               >
-                <div className="card-icon"><FiPlus /></div>
-                <h3>Create New Property</h3>
-                <p>Start fresh and list a brand new property or project.</p>
-                <button type="button" className="select-type-btn">
+                <div className="text-5xl mb-6 text-purple-900 bg-purple-50 w-[90px] h-[90px] inline-flex items-center justify-center rounded-full transition-all duration-300 group-hover:bg-purple-900 group-hover:text-white group-hover:scale-110"><FiPlus /></div>
+                <h3 className="text-xl font-bold text-neutral-900 mb-3">Create New Property</h3>
+                <p className="text-[15px] text-slate-500 mb-6 leading-relaxed">Start fresh and list a brand new property or project.</p>
+                <button type="button" className="bg-white text-purple-900 border-2 border-purple-900 py-3 px-8 rounded-xl text-[15px] font-semibold transition-all duration-300 w-full group-hover:bg-purple-900 group-hover:text-white">
                   Create New
                 </button>
               </motion.div>
 
               <motion.div
-                className="property-flow-card"
+                className="group bg-white border border-slate-200 rounded-[20px] p-10 cursor-pointer transition-all duration-400 text-center relative overflow-hidden hover:border-purple-900 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(88,51,94,0.1)]"
                 whileHover={{ y: -8, scale: 1.02 }}
                 onClick={() => setSelectedPropertyFlow('existing')}
               >
-                <div className="card-icon"><FiEdit /></div>
-                <h3>Existing Property</h3>
-                <p>View, manage, or update your currently listed properties.</p>
-                <button type="button" className="select-type-btn">
+                <div className="text-5xl mb-6 text-purple-900 bg-purple-50 w-[90px] h-[90px] inline-flex items-center justify-center rounded-full transition-all duration-300 group-hover:bg-purple-900 group-hover:text-white group-hover:scale-110"><FiEdit /></div>
+                <h3 className="text-xl font-bold text-neutral-900 mb-3">Existing Property</h3>
+                <p className="text-[15px] text-slate-500 mb-6 leading-relaxed">View, manage, or update your currently listed properties.</p>
+                <button type="button" className="bg-white text-purple-900 border-2 border-purple-900 py-3 px-8 rounded-xl text-[15px] font-semibold transition-all duration-300 w-full group-hover:bg-purple-900 group-hover:text-white">
                   Manage Existing
                 </button>
               </motion.div>
@@ -525,27 +528,27 @@ const PostProperty = () => {
                 action="post a property"
                 onSubscriptionVerified={() => {}} // Empty handler as subscriptionVerified state is removed
               >
-                <div className="selected-type-badge">
-                  <span><FiUser /> Individual Owner</span>
+                <div className="flex justify-between items-center bg-slate-50 p-4 px-6 rounded-2xl mb-5 border border-slate-200">
+                  <span className="text-base font-semibold text-slate-700 flex items-center gap-2"><FiUser /> Individual Owner</span>
                   <button
                     type="button"
-                    className="change-type-btn"
+                    className="bg-transparent text-purple-900 py-2 px-4 border border-purple-900/20 rounded-lg text-[13px] font-semibold cursor-pointer transition-all hover:bg-purple-900/5 hover:border-purple-900"
                     onClick={() => { setUserType(null); setSelectedPropertyFlow(null); setEditingProperty(null); }}
                   >
                     Change
                   </button>
                 </div>
-                <div className="selected-flow-badge">
-                  <span><FiPlus /> Creating New Property</span>
+                <div className="flex justify-between items-center bg-slate-50 p-4 px-6 rounded-2xl mb-5 border border-slate-200">
+                  <span className="text-base font-semibold text-slate-700 flex items-center gap-2"><FiPlus /> Creating New Property</span>
                   <button
                     type="button"
-                    className="change-type-btn"
+                    className="bg-transparent text-purple-900 py-2 px-4 border border-purple-900/20 rounded-lg text-[13px] font-semibold cursor-pointer transition-all hover:bg-purple-900/5 hover:border-purple-900"
                     onClick={() => { setSelectedPropertyFlow(null); setEditingProperty(null); }}
                   >
                     Change Flow
                   </button>
                 </div>
-                <p className="subtitle">Fill in the details below to list your property.</p>
+                <p className="text-center text-slate-500 mb-12 text-lg max-w-xl mx-auto leading-relaxed">Fill in the details below to list your property.</p>
                 <PropertyForm
                   formData={formData}
                   handleChange={handleChange}
@@ -560,31 +563,31 @@ const PostProperty = () => {
               </SubscriptionGuard>
             ) : (
               <>
-                <div className="selected-type-badge">
-                  <span>
+                <div className="flex justify-between items-center bg-slate-50 p-4 px-6 rounded-2xl mb-5 border border-slate-200">
+                  <span className="text-base font-semibold text-slate-700 flex items-center gap-2">
                     {userType === 'individual' ? <><FiUser /> Individual Owner</> : <><FiBriefcase /> Developer</>}
                   </span>
                   <button
                     type="button"
-                    className="change-type-btn"
+                    className="bg-transparent text-purple-900 py-2 px-4 border border-purple-900/20 rounded-lg text-[13px] font-semibold cursor-pointer transition-all hover:bg-purple-900/5 hover:border-purple-900"
                     onClick={() => { setUserType(null); setSelectedPropertyFlow(null); setEditingProperty(null); }}
                   >
                     Change
                   </button>
                 </div>
-                <div className="selected-flow-badge">
-                  <span>
+                <div className="flex justify-between items-center bg-slate-50 p-4 px-6 rounded-2xl mb-5 border border-slate-200">
+                  <span className="text-base font-semibold text-slate-700 flex items-center gap-2">
                     {selectedPropertyFlow === 'new' ? <><FiPlus /> Create New Property</> : <><FiEdit /> Editing Existing Property</>}
                   </span>
                   <button
                     type="button"
-                    className="change-type-btn"
+                    className="bg-transparent text-purple-900 py-2 px-4 border border-purple-900/20 rounded-lg text-[13px] font-semibold cursor-pointer transition-all hover:bg-purple-900/5 hover:border-purple-900"
                     onClick={() => { setSelectedPropertyFlow(null); setEditingProperty(null); }}
                   >
                     Change Flow
                   </button>
                 </div>
-                <p className="subtitle">Fill in the details below to list your property.</p>
+                <p className="text-center text-slate-500 mb-12 text-lg max-w-xl mx-auto leading-relaxed">Fill in the details below to list your property.</p>
 
                 {/* Developer Credit Display */}
                 {userType === 'developer' && developerCredits !== null && (
@@ -640,11 +643,11 @@ const PostProperty = () => {
 
             {/* Loading Overlay */}
             {loading && (
-              <div className="loading-overlay">
-                <div className="loading-content">
-                  <div className="spinner-large"></div>
-                  <h3>{editingProperty ? 'Updating Your Property...' : 'Posting Your Property...'}</h3>
-                  <p>Please wait while we save your property details securey.</p>
+              <div className="fixed inset-0 bg-white/90 backdrop-blur-sm z-50 flex items-center justify-center">
+                <div className="text-center bg-white p-10 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.1)]">
+                  <div className="w-[50px] h-[50px] border-4 border-slate-100 border-t-purple-900 rounded-full animate-spin mx-auto mb-6"></div>
+                  <h3 className="text-xl font-bold text-neutral-900 mb-2">{editingProperty ? 'Updating Your Property...' : 'Posting Your Property...'}</h3>
+                  <p className="text-slate-500">Please wait while we save your property details securey.</p>
                 </div>
               </div>
             )}
@@ -654,75 +657,78 @@ const PostProperty = () => {
         {/* Step 3b: Existing Properties List */}
         {selectedPropertyFlow === 'existing' && !editingProperty && (
           <>
-            <div className="selected-type-badge">
-              <span>
+            <div className="flex justify-between items-center bg-slate-50 p-4 px-6 rounded-2xl mb-5 border border-slate-200">
+              <span className="text-base font-semibold text-slate-700 flex items-center gap-2">
                 {userType === 'individual' ? <><FiUser /> Individual Owner</> : <><FiBriefcase /> Developer</>}
               </span>
               <button
                 type="button"
-                className="change-type-btn"
+                className="bg-transparent text-purple-900 py-2 px-4 border border-purple-900/20 rounded-lg text-[13px] font-semibold cursor-pointer transition-all hover:bg-purple-900/5 hover:border-purple-900"
                 onClick={() => { setUserType(null); setSelectedPropertyFlow(null); }} // Reset both
               >
                 Change Role
               </button>
             </div>
-            <div className="selected-flow-badge">
-              <span>
+            <div className="flex justify-between items-center bg-slate-50 p-4 px-6 rounded-2xl mb-5 border border-slate-200">
+              <span className="text-base font-semibold text-slate-700 flex items-center gap-2">
                 <FiEdit /> Existing Properties
               </span>
               <button
                 type="button"
-                className="change-type-btn"
+                className="bg-transparent text-purple-900 py-2 px-4 border border-purple-900/20 rounded-lg text-[13px] font-semibold cursor-pointer transition-all hover:bg-purple-900/5 hover:border-purple-900"
                 onClick={() => setSelectedPropertyFlow(null)}
               >
                 Change Flow
               </button>
             </div>
-            <h2>Your Existing Properties</h2>
+            <h2 className="text-2xl font-semibold text-neutral-900 mb-10">Your Existing Properties</h2>
             {fetchingProperties ? (
               <div style={{ textAlign: 'center', padding: '40px' }}>
-                <div className="spinner-large" style={{width: '30px', height: '30px', borderWidth: '3px'}}></div>
+                <div className="w-[30px] h-[30px] border-[3px] border-slate-100 border-t-purple-900 rounded-full animate-spin mx-auto mb-4"></div>
                 <p>Loading your properties...</p>
               </div>
             ) : existingProperties.length > 0 ? (
-              <div className="existing-properties-list">
+              <div className="grid grid-cols-1 md:grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-8 mt-10">
                 {existingProperties.map((property) => {
                   const timeRemaining = getTimeRemaining(property.created_at);
                   const editable = isEditable(property.created_at);
                   return (
                     <motion.div
                       key={property.id}
-                      className={`property-card ${!editable ? 'expired-property' : ''}`}
+                      className={`bg-white border border-slate-100 rounded-[20px] overflow-hidden shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${!editable ? 'opacity-80 bg-slate-50 border-dashed' : ''}`}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.3 }}
                     >
-                      {property.image_url && <img src={property.image_url} alt={property.title} className="property-card-image" />}
-                      <div className="property-card-details">
-                        <h3>{property.title}</h3>
-                        <p><span><FiHome size={14} style={{ marginRight: '6px' }}/> {property.type}</span> <strong>{property.price}</strong></p>
-                        <p><span><FiMapPin size={14} style={{ marginRight: '6px' }}/> {property.location}</span></p>
-                        <p><span><FiClock size={14} style={{ marginRight: '6px' }}/> {formatDate(property.created_at)}</span></p>
+                      {property.image_url && <img src={property.image_url} alt={property.title} className="w-full h-[220px] object-cover" />}
+                      <div className="p-6">
+                        <h3 className="text-lg font-bold text-neutral-900 mb-3">{property.title}</h3>
+                        <p className="text-sm text-slate-500 mb-2 flex justify-between"><span><FiHome size={14} style={{ marginRight: '6px', display: 'inline' }}/> {property.type}</span> <strong className="text-slate-700">{property.price}</strong></p>
+                        <p className="text-sm text-slate-500 mb-2 flex justify-between"><span><FiMapPin size={14} style={{ marginRight: '6px', display: 'inline' }}/> {property.location}</span></p>
+                        <p className="text-sm text-slate-500 mb-2 flex justify-between"><span><FiClock size={14} style={{ marginRight: '6px', display: 'inline' }}/> {formatDate(property.created_at)}</span></p>
 
                         {/* Time Remaining Display */}
-                        <div className={`edit-timer ${timeRemaining.expired ? 'expired' : timeRemaining.urgent ? 'urgent' : 'active'}`}>
-                          <span className="timer-icon"><FiClock /></span>
-                          <span className="timer-text">{timeRemaining.text}</span>
+                        <div className={`flex items-center justify-center gap-2 p-3 rounded-xl text-[13px] font-semibold my-4 
+                          ${timeRemaining.expired ? 'bg-red-50 text-red-800 border border-red-200' : 
+                            timeRemaining.urgent ? 'bg-amber-50 text-amber-800 border border-amber-300' : 
+                            'bg-green-50 text-green-800 border border-green-200'}`}>
+                          <span className="text-lg"><FiClock /></span>
+                          <span>{timeRemaining.text}</span>
                         </div>
 
                         {editable ? (
                           <button
-                            className="edit-property-btn"
+                            className="bg-white text-neutral-900 border-2 border-slate-200 p-3 rounded-xl text-sm font-semibold w-full cursor-pointer transition-all duration-200 flex items-center justify-center gap-2 hover:border-neutral-900 hover:bg-slate-50"
                             onClick={() => handleEditProperty(property)}
                           >
                             <FiEdit /> Edit Property
                           </button>
                         ) : (
-                          <div className="edit-locked-section">
-                            <p className="edit-restriction-message">
+                          <div className="p-4 bg-red-50 rounded-xl text-center">
+                            <p className="text-red-800 font-semibold text-sm mb-1 flex items-center justify-center gap-2">
                               <FiLock /> Editing Locked
                             </p>
-                            <p className="edit-restriction-detail">
+                            <p className="text-red-900 text-xs">
                               Edit window (3 days) has expired.
                             </p>
                           </div>
@@ -743,62 +749,62 @@ const PostProperty = () => {
         {/* Disclaimer Modal */}
         <AnimatePresence>
           {showDisclaimer && (
-            <div className="disclaimer-overlay">
+            <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[1000] p-5">
               <motion.div
-                className="disclaimer-content"
+                className="bg-white rounded-[24px] w-full max-w-[500px] p-10 shadow-2xl border border-white/10"
                 initial={{ opacity: 0, scale: 0.9, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.9, y: 20 }}
               >
-                <div className="disclaimer-header">
-                  <div className="disclaimer-icon"><FiAlertCircle /></div>
-                  <h2>Post Property Disclaimer</h2>
+                <div className="text-center mb-8">
+                  <div className="text-4xl bg-amber-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5 text-amber-500"><FiAlertCircle /></div>
+                  <h2 className="text-2xl font-bold text-neutral-900">Post Property Disclaimer</h2>
                 </div>
                 <div className="disclaimer-body">
-                  <p>Please review your project details before posting. By clicking "Confirm & Post", you agree that:</p>
-                  <ul>
+                  <p className="mb-4 text-slate-600">Please review your project details before posting. By clicking "Confirm & Post", you agree that:</p>
+                  <ul className="list-disc pl-5 mb-6 text-slate-600 space-y-2">
                     <li>The information provided is accurate and authentic.</li>
                     <li>You have the necessary rights and permissions to list this project.</li>
                     <li>This project will be listed in the <strong>Developer Exhibition</strong>.</li>
                     <li>One credit will be deducted from your developer account.</li>
                   </ul>
 
-                  <div className="project-summary-box">
-                    <h4>Project Summary</h4>
-                    <div className="summary-item">
-                      <span>Project Name:</span>
-                      <strong>{formData.projectName}</strong>
+                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 mt-6">
+                    <h4 className="font-bold text-neutral-900 mb-3">Project Summary</h4>
+                    <div className="flex justify-between py-1 text-sm">
+                      <span className="text-slate-500">Project Name:</span>
+                      <strong className="text-neutral-900">{formData.projectName}</strong>
                     </div>
-                    <div className="summary-item">
-                      <span>Location:</span>
-                      <strong>{formData.projectLocation}</strong>
+                    <div className="flex justify-between py-1 text-sm">
+                      <span className="text-slate-500">Location:</span>
+                      <strong className="text-neutral-900">{formData.projectLocation}</strong>
                     </div>
-                    <div className="summary-item">
-                      <span>Price Range:</span>
-                      <strong>₹{formData.basePrice} - ₹{formData.maxPrice}</strong>
+                    <div className="flex justify-between py-1 text-sm">
+                      <span className="text-slate-500">Price Range:</span>
+                      <strong className="text-neutral-900">₹{formData.basePrice} - ₹{formData.maxPrice}</strong>
                     </div>
                   </div>
                 </div>
-                <div className="disclaimer-footer">
+                <div className="flex gap-4 mt-8">
                   <button
-                    className="cancel-btn"
+                    className="flex-1 bg-white border border-slate-200 text-slate-500 font-semibold py-3 rounded-xl transition-colors hover:bg-slate-50"
                     onClick={() => setShowDisclaimer(false)}
                     disabled={loading}
                   >
                     Go Back
                   </button>
                   <button
-                    className="confirm-btn"
+                    className="flex-1 bg-gradient-to-br from-purple-800 to-purple-700 text-white font-semibold py-3 rounded-xl shadow-lg shadow-purple-900/30 transition-all hover:-translate-y-0.5 hover:shadow-purple-900/40"
                     onClick={handleFinalSubmit}
                     disabled={loading}
                   >
                     {loading ? (
-                      <span className="flex items-center gap-2">
-                        <span className="spinner"></span>
+                      <span className="flex items-center justify-center gap-2">
+                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
                         Posting...
                       </span>
                     ) : (
-                      'Confirm & Post'
+                      "Confirm & Post"
                     )}
                   </button>
                 </div>

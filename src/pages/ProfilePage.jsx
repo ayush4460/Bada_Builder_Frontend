@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { FiUser, FiMail, FiPhone, FiHash, FiBriefcase, FiHome, FiUsers, FiCalendar, FiUpload, FiTrash2, FiEdit2, FiTrendingUp } from 'react-icons/fi';
+import { FiUser, FiHome, FiUsers, FiCalendar, FiTrendingUp } from 'react-icons/fi';
 // import { doc, updateDoc, collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
 // import { db } from '../firebase';
 import api from '../services/api';
-import './ProfilePage.css';
+// import './ProfilePage.css'; // Removed and replaced with Tailwind
 
 // Import removed as we use uploadService from api.js
 import { uploadService } from '../services/api';
@@ -111,7 +111,7 @@ const ProfilePage = () => {
     {
       id: 1,
       title: 'Properties Uploaded',
-      icon: <FiHome className="activity-icon" />,
+      icon: <FiHome className="text-xl text-slate-600" />,
       count: loadingActivity ? '...' : activityCounts.propertiesUploaded,
       path: '/my-properties',
       color: 'blue'
@@ -119,7 +119,7 @@ const ProfilePage = () => {
     {
       id: 2,
       title: 'Joined Live Groups',
-      icon: <FiUsers className="activity-icon" />,
+      icon: <FiUsers className="text-xl text-slate-600" />,
       count: loadingActivity ? '...' : activityCounts.joinedLiveGroups,
       path: '/exhibition/live-grouping',
       color: 'purple'
@@ -127,7 +127,7 @@ const ProfilePage = () => {
     {
       id: 3,
       title: 'Booked Site Visits',
-      icon: <FiCalendar className="activity-icon" />,
+      icon: <FiCalendar className="text-xl text-slate-600" />,
       count: loadingActivity ? '...' : activityCounts.bookedSiteVisits,
       path: '/my-bookings',
       color: 'green'
@@ -135,10 +135,10 @@ const ProfilePage = () => {
     {
       id: 4,
       title: 'Investments',
-      icon: <FiTrendingUp className="activity-icon" />,
+      icon: <FiTrendingUp className="text-xl text-slate-600" />,
       count: loadingActivity ? '...' : activityCounts.investments,
       path: '/profile/investments',
-      color: 'orange' // Reusing or adding a new color class if needed, checking css might be good but inline styles or existing classes work. ProfilePage.css likely has color classes.
+      color: 'orange' 
     }
   ];
 
@@ -246,32 +246,39 @@ const ProfilePage = () => {
     }
   };
 
+  const getUserTypeBadgeStyle = (type) => {
+    if (type?.toLowerCase() === 'developer') {
+      return 'bg-purple-50 text-purple-700 border border-purple-200';
+    }
+    return 'bg-blue-50 text-blue-600 border border-blue-100';
+  };
+
   return (
-    <div className="profile-page">
-      <div className="profile-container">
+    <div className="min-h-screen bg-slate-50 py-10 px-5 font-sans text-slate-800">
+      <div className="max-w-[1000px] mx-auto">
         
-        <div className="profile-layout">
+        <div className="grid grid-cols-1 md:grid-cols-[320px_1fr] gap-8 items-start">
           {/* Left Column: Identity Card */}
-          <div className="profile-identity-card">
-            <div className="profile-photo-wrapper">
+          <div className="bg-white rounded-[20px] shadow-sm p-8 border border-slate-200 text-center sticky top-10">
+            <div className="w-[120px] h-[120px] mx-auto mb-5 relative">
               {userData.profilePhoto ? (
                 <img
                   src={userData.profilePhoto}
                   alt="Profile"
-                  className="profile-photo"
+                  className="w-full h-full rounded-full object-cover border-4 border-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]"
                 />
               ) : (
-                <div className="profile-photo-placeholder">
-                  <FiUser className="profile-photo-icon" />
+                <div className="w-full h-full rounded-full border-4 border-white shadow-[0_4px_12px_rgba(0,0,0,0.08)] bg-slate-100 flex items-center justify-center text-slate-400">
+                  <FiUser className="w-12 h-12" />
                 </div>
               )}
               {uploading && (
-                <div className="photo-overlay">
-                  <div className="spinner"></div>
+                <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-full">
+                  <div className="w-6 h-6 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin"></div>
                 </div>
               )}
               <button 
-                className="edit-photo-btn"
+                className="absolute bottom-0 right-0 bg-white border border-slate-200 w-8 h-8 rounded-full flex items-center justify-center text-slate-700 cursor-pointer shadow-sm transition-all hover:bg-slate-50 hover:text-blue-500 hover:border-blue-500 hover:scale-105 hover:shadow-md z-10"
                 onClick={handleChangePhoto}
                 disabled={uploading}
               >
@@ -280,7 +287,7 @@ const ProfilePage = () => {
                   height="16" 
                   viewBox="0 0 24 24" 
                   fill="none" 
-                  stroke="#334155" 
+                  stroke="currentColor" 
                   strokeWidth="2" 
                   strokeLinecap="round" 
                   strokeLinejoin="round"
@@ -291,17 +298,21 @@ const ProfilePage = () => {
               </button>
             </div>
 
-            <h2 className="profile-name">{userData.name}</h2>
-            <div className="profile-role">
-              <span className={`role-badge ${userData.userType.toLowerCase()}`}>
+            <h2 className="text-2xl font-bold text-slate-900 mb-2">{userData.name}</h2>
+            <div className="mb-2">
+              <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide ${getUserTypeBadgeStyle(userData.userType)}`}>
                 {userData.userType}
               </span>
             </div>
-            <p className="profile-email">{userData.email}</p>
+            <p className="text-sm text-slate-500 mb-6">{userData.email}</p>
 
-            <div className="profile-actions">
+            <div className="flex flex-col gap-3">
               {userData.profilePhoto && (
-                 <button className="action-btn outline" onClick={handleRemovePhoto} disabled={uploading}>
+                 <button 
+                  className="w-full py-2.5 rounded-lg text-sm font-medium cursor-pointer transition-all bg-transparent border border-slate-200 text-slate-500 hover:border-slate-300 hover:text-red-500 hover:bg-red-50" 
+                  onClick={handleRemovePhoto} 
+                  disabled={uploading}
+                >
                   Remove Photo
                 </button>
               )}
@@ -317,44 +328,46 @@ const ProfilePage = () => {
           </div>
 
           {/* Right Column: Details & Stats */}
-          <div className="profile-info-section">
+          <div className="flex flex-col gap-6">
             
             {/* Quick Stats Row */}
-            <div className="stats-grid">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {activityItems.map((item) => (
                 <div 
                   key={item.id} 
-                  className="stat-card"
+                  className="bg-white p-6 rounded-2xl border border-slate-200 flex items-center gap-5 cursor-pointer transition-all shadow-sm hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300"
                   onClick={() => handleActivityClick(item.path)}
                 >
-                  <div className="stat-icon">{item.icon}</div>
-                  <div className="stat-info">
-                    <span className="stat-value">{item.count}</span>
-                    <span className="stat-label">{item.title}</span>
+                  <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center">
+                    {item.icon}
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-2xl font-bold text-slate-900 leading-tight">{item.count}</span>
+                    <span className="text-[13px] text-slate-500 font-medium">{item.title}</span>
                   </div>
                 </div>
               ))}
             </div>
 
             {/* Detailed Info */}
-            <div className="info-card">
-              <h3 className="section-title">Personal Information</h3>
-              <div className="info-list">
-                <div className="info-item">
-                  <div className="info-label">Phone</div>
-                  <div className="info-value">{userData.phone || 'Not provided'}</div>
+            <div className="bg-white rounded-[20px] shadow-sm p-8 border border-slate-200 flex flex-col">
+              <h3 className="text-lg font-semibold text-slate-900 mb-6 pb-4 border-b border-slate-100">Personal Information</h3>
+              <div className="flex flex-col gap-5">
+                <div className="flex justify-between items-center py-1">
+                  <div className="text-sm text-slate-500 font-medium">Phone</div>
+                  <div className="text-sm font-semibold text-slate-800">{userData.phone || 'Not provided'}</div>
                 </div>
-                <div className="info-item">
-                  <div className="info-label">User ID</div>
-                  <div className="info-value mono">{userData.userId}</div>
+                <div className="flex justify-between items-center py-1">
+                  <div className="text-sm text-slate-500 font-medium">User ID</div>
+                  <div className="text-[13px] font-mono bg-slate-100 px-2 py-1 rounded-md text-slate-800">{userData.userId}</div>
                 </div>
-                <div className="info-item">
-                  <div className="info-label">Location</div>
-                  <div className="info-value">{userData.location}</div> 
+                <div className="flex justify-between items-center py-1">
+                  <div className="text-sm text-slate-500 font-medium">Location</div>
+                  <div className="text-sm font-semibold text-slate-800">{userData.location}</div> 
                 </div>
-                <div className="info-item">
-                  <div className="info-label">Member Since</div>
-                  <div className="info-value">{formatDate(userData.createdAt)}</div>
+                <div className="flex justify-between items-center py-1">
+                  <div className="text-sm text-slate-500 font-medium">Member Since</div>
+                  <div className="text-sm font-semibold text-slate-800">{formatDate(userData.createdAt)}</div>
                 </div>
               </div>
             </div>
