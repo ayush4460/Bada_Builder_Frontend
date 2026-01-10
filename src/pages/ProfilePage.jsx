@@ -7,6 +7,7 @@ import {
   LogOut, Shield, Briefcase, Building, ChevronRight,
   TrendingUp, Clock, CheckCircle, AlertCircle
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import api, { uploadService } from '../services/api';
 
 const ProfilePage = () => {

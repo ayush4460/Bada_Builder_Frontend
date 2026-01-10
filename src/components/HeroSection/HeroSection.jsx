@@ -73,7 +73,7 @@ const HeroSection = () => {
            animate={{ opacity: 1, y: 0 }}
            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
         >
-          <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-[100px] font-bold mb-6 md:mb-10 leading-[1.0] md:leading-[0.9] tracking-[-0.04em] text-white!">
+          <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-[100px] font-bold mb-6 md:mb-10 leading-none md:leading-[0.9] tracking-[-0.04em] text-white!">
             Beyond <br /> 
             <span className="text-transparent bg-clip-text bg-linear-to-r from-purple-400 via-indigo-300 to-purple-400 animate-gradient-x px-2">Property.</span>
           </h1>

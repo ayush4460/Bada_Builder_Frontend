@@ -1,11 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
-// import { doc, getDoc } from 'firebase/firestore';
-// import { db } from '../firebase';
 import api from '../services/api';
-// import './ProjectDetails.css'; // Removed and replaced with Tailwind
-import { FiPhone, FiCheckCircle, FiInfo, FiMap } from 'react-icons/fi';
-import { FaChevronLeft, FaChevronRight, FaExpand } from 'react-icons/fa';
+import { FiPhone, FiCheckCircle, FiInfo, FiMapPin, FiClock, FiShield, FiHome, FiMaximize, FiArrowLeft, FiArrowRight, FiDownload } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const PropertyDetails = () => {
@@ -23,7 +19,6 @@ const PropertyDetails = () => {
         setLoading(false);
       } else if (id) {
         try {
-          // Fetch from backend API
           const response = await api.get(`/properties/${id}`);
           if (response.data) {
             setProperty(response.data);
@@ -37,7 +32,6 @@ const PropertyDetails = () => {
         setLoading(false);
       }
     };
-
     getPropertyData();
   }, [id, location.state]);
 
@@ -53,20 +47,21 @@ const PropertyDetails = () => {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <div className="spinner mb-4"></div>
-        <p className="text-gray-400">Loading property details...</p>
+      <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center">
+        <div className="w-16 h-16 border-4 border-slate-800 border-t-purple-600 rounded-full animate-spin mb-6"></div>
+        <p className="text-slate-400 font-light tracking-wide animate-pulse">Loading Exclusive Details...</p>
       </div>
     );
   }
 
   if (!property) {
     return (
-      <div className="text-center py-20">
-        <h2 className="text-2xl font-bold mb-4">Property not found</h2>
+      <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center p-4 text-center">
+        <h2 className="text-3xl font-bold text-white mb-4">Property Not Found</h2>
+        <p className="text-slate-400 mb-8">The property you are looking for might have been removed or is unavailable.</p>
         <button
           onClick={() => navigate(-1)}
-          className="text-blue-500 hover:underline"
+          className="px-8 py-3 bg-white text-black rounded-xl font-bold hover:bg-slate-200 transition-colors"
         >
           Go Back
         </button>
@@ -74,283 +69,303 @@ const PropertyDetails = () => {
     );
   }
 
-  // Prepare dynamic data
+  // --- Data Preparation ---
   const isDeveloper = property.user_type === 'developer';
   const propertyTitle = property.project_name || property.projectName || property.title;
-  const propertyImages = property.project_images || property.images || (property.image_url ? [property.image_url] : []) || [];
+  // Fallback images if none exist
+  const propertyImages = property.project_images?.length 
+    ? property.project_images 
+    : (property.images?.length ? property.images : (property.image_url ? [property.image_url] : []));
+  
+  if (propertyImages.length === 0) {
+      propertyImages.push("https://images.unsplash.com/photo-1600596542815-2a4d04774c13?q=80&w=2075&auto=format&fit=crop");
+  }
 
   const propertyTags = isDeveloper
-    ? [property.scheme_type || property.type, property.possession_status].filter(Boolean)
-    : property.tags || [property.status, property.type].filter(Boolean);
+    ? [property.scheme_type, property.possession_status].filter(Boolean)
+    : [property.status, property.type].filter(Boolean);
 
   if (property.rera_status === 'Yes' && !propertyTags.includes('RERA Registered')) {
     propertyTags.push('RERA Registered');
   }
 
   const propertyFacilities = property.amenities || property.facilities || [];
+  
+  // Price formatting
+  const formatPrice = (p) => {
+      if(!p) return '';
+      // If it's a number/string that looks like price
+      if(p.toString().match(/^\d+$/)) {
+          return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumSignificantDigits: 3 }).format(p);
+      }
+      return p;
+  };
+
   const displayPrice = property.price ||
-    (property.base_price && property.max_price ? `₹ ${property.base_price} - ₹ ${property.max_price}` : null) ||
-    property.groupPrice ||
-    property.priceRange ||
-    'Contact for Price';
+    (property.base_price && property.max_price ? `${formatPrice(property.base_price)} - ${formatPrice(property.max_price)}` : null) ||
+    'Price on Request';
 
   return (
-    <div className="max-w-7xl mx-auto p-4 sm:p-6 pb-20">
+    <div className="min-h-screen bg-[#050505] text-slate-300 font-sans selection:bg-purple-500/30 selection:text-white pb-20">
+      
+      {/* Navbar Placeholder / Back Button */}
+      <div className="max-w-[1400px] mx-auto pt-8 px-4 sm:px-6 lg:px-8 flex justify-between items-center mb-8">
+        <button 
+          onClick={() => navigate(-1)}
+          className="group flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-white transition-colors"
+        >
+          <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 transition-all">
+            <FiArrowLeft />
+          </div>
+          Back to Listings
+        </button>
+        <div className="px-3 py-1 bg-purple-900/20 border border-purple-500/20 rounded-full text-[10px] font-black uppercase tracking-widest text-purple-400">
+          {isDeveloper ? 'Developer Project' : 'Exclusive Property'}
+        </div>
+      </div>
 
-      {/* Modern Image Slider */}
-      <div className="relative w-full h-[300px] md:h-[500px] bg-gray-900 rounded-3xl overflow-hidden shadow-2xl mb-8 group flex items-center justify-center">
-        {propertyImages.length > 0 ? (
-          <>
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+        
+        {/* --- HERO SECTION --- */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
+          
+          {/* Main Image Slider */}
+          <div className="lg:col-span-8 relative group rounded-[40px] overflow-hidden bg-slate-900 aspect-[4/3] md:aspect-[16/9] shadow-[0_20px_50px_-10px_rgba(0,0,0,0.5)] border border-white/5">
             <AnimatePresence mode='wait'>
               <motion.img
                 key={currentImageIndex}
                 src={propertyImages[currentImageIndex]}
-                alt={`Property Image ${currentImageIndex + 1}`}
-                className="max-w-full max-h-full object-contain"
-                initial={{ opacity: 0, x: 100 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -100 }}
-                transition={{ duration: 0.4 }}
+                alt={`View ${currentImageIndex + 1}`}
+                className="w-full h-full object-cover"
+                initial={{ opacity: 0, scale: 1.1 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.7 }}
               />
             </AnimatePresence>
+            
+             {/* Gradient Overlay for Text Visibility */}
+            <div className="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-black/20 pointer-events-none"></div>
 
-            {/* Controls */}
-            <div className="absolute inset-0 flex items-center justify-between p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <button
-                onClick={(e) => { e.stopPropagation(); prevImage(); }}
-                className="p-3 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-white/40 transition-all hover:scale-110"
-              >
-                <FaChevronLeft size={24} />
-              </button>
-              <button
-                onClick={(e) => { e.stopPropagation(); nextImage(); }}
-                className="p-3 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-white/40 transition-all hover:scale-110"
-              >
-                <FaChevronRight size={24} />
-              </button>
-            </div>
-
-            {/* Brochure and Count Badge */}
-            <div className="absolute top-4 right-4 flex gap-3">
-              <span className="bg-black/50 backdrop-blur-md text-white px-3 py-1 rounded-full text-sm font-medium">
-                {currentImageIndex + 1} / {propertyImages.length}
-              </span>
-              {(property.brochure_url || property.brochure) && (
-                <a
-                  href={property.brochure_url || property.brochure}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-4 py-1.5 bg-white text-black text-sm font-bold rounded-full shadow-lg hover:bg-gray-200 transition"
-                >
-                  Download Brochure
-                </a>
-              )}
-            </div>
-
-            {/* Thumbnails Strip */}
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 overflow-x-auto max-w-[90%] p-2 bg-black/30 backdrop-blur-sm rounded-2xl scrollbar-hide">
-              {propertyImages.map((img, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setCurrentImageIndex(idx)}
-                  className={`relative w-16 h-12 shrink-0 rounded-lg overflow-hidden border-2 transition-all ${currentImageIndex === idx ? 'border-blue-500 scale-110' : 'border-transparent opacity-70 hover:opacity-100'}`}
-                >
-                  <img src={img} alt={`Thumb ${idx}`} className="w-full h-full object-cover" />
+            {/* Slider Controls */}
+            {propertyImages.length > 1 && (
+                <div className="absolute inset-0 flex items-center justify-between p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <button onClick={(e) => { e.stopPropagation(); prevImage(); }} className="w-12 h-12 flex items-center justify-center rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white hover:bg-white hover:text-black transition-all transform hover:scale-110">
+                    <FiArrowLeft size={20} />
                 </button>
-              ))}
-            </div>
-          </>
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gray-900">
-            <p className="text-gray-500">No images available</p>
-          </div>
-        )}
-      </div>
-
-      {/* Title & Header Section */}
-      <div className="mt-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-        <div className="w-full md:w-auto text-left">
-          <h1 className="text-4xl font-extrabold tracking-tight mb-2">{propertyTitle}</h1>
-          <p className="text-gray-400 font-bold flex items-center gap-2">
-            <FiMap /> {property.project_location || property.location}
-          </p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {propertyTags.map((tag, i) => (
-              <span key={i} className="px-4 py-1.5 text-xs font-bold border-[3px] border-[#474545] bg-[#080918] text-white rounded-full uppercase tracking-wider">
-                {tag}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-3 w-full md:w-auto">
-          <button
-            onClick={() => navigate('/book-visit', { state: { property } })}
-            className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-3 rounded-xl transition shadow-lg transform hover:-translate-y-1"
-          >
-            Book a Site Visit
-          </button>
-        </div>
-      </div>
-
-      {/* Price & Summary Stats */}
-      <div className="mt-10 grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Price Card */}
-        <div className="lg:col-span-1 border-[3px] border-[#474545] bg-[#080918] p-8 rounded-2xl shadow-xl flex flex-col justify-center">
-          <h2 className="text-gray-400 text-sm font-bold uppercase tracking-widest mb-2">Investment Range</h2>
-          <p className="text-3xl font-black text-white">{displayPrice}</p>
-          <p className="text-sm text-gray-500 mt-2 font-medium">
-            {property.scheme_type || property.type} {property.project_stats?.area && `• Project Area ${property.project_stats.area}`}
-          </p>
-        </div>
-
-        {/* Project Quick Highlights (Developer Only) */}
-        {isDeveloper && property.project_stats && (
-          <div className="lg:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {[
-              { label: 'Towers', value: property.project_stats.towers },
-              { label: 'Floors', value: property.project_stats.floors },
-              { label: 'Total Units', value: property.project_stats.units },
-              { label: 'Config', value: property.residential_options?.join('/') || 'Project' }
-            ].map((stat, i) => (
-              <div key={i} className="border-[3px] border-[#474545] bg-[#080918] p-4 rounded-2xl flex flex-col items-center justify-center text-center">
-                <span className="text-gray-500 text-xs font-bold uppercase mb-1">{stat.label}</span>
-                <span className="text-xl font-black text-white">{stat.value || '--'}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-10">
-        {/* Compliance & Status (Developer Specific) */}
-        {isDeveloper && (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-extrabold">Project Compliance</h2>
-            <div className="border-[3px] border-[#474545] bg-[#080918] p-6 rounded-2xl space-y-4">
-              <div className="flex items-center justify-between py-2 border-b">
-                <span className="text-gray-400 font-bold flex items-center gap-2"><FiCheckCircle className="text-green-500" /> RERA Status</span>
-                <span className="font-bold">{property.rera_status === 'Yes' ? 'Registered' : 'N/A'}</span>
-              </div>
-              {property.rera_number && (
-                <div className="flex flex-col gap-1 py-1">
-                  <span className="text-gray-400 text-xs font-bold uppercase">RERA ID</span>
-                  <span className="font-mono text-sm bg-black p-2 rounded text-blue-400 break-all">{property.rera_number}</span>
+                <button onClick={(e) => { e.stopPropagation(); nextImage(); }} className="w-12 h-12 flex items-center justify-center rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white hover:bg-white hover:text-black transition-all transform hover:scale-110">
+                    <FiArrowRight size={20} />
+                </button>
                 </div>
-              )}
-              <div className="flex items-center justify-between py-2 border-b">
-                <span className="text-gray-400 font-bold flex items-center gap-2"><FiInfo className="text-blue-500" /> Possession</span>
-                <span className="font-bold">{property.possession_status}</span>
-              </div>
-              {property.completion_date && (
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-gray-400 font-bold">Exp. Completion</span>
-                  <span className="font-bold text-orange-400">{property.completion_date}</span>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+            )}
 
-        {/* Options / Configurations */}
-        {(property.residential_options?.length > 0 || property.commercial_options?.length > 0) && (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-extrabold">Available Options</h2>
-            <div className="border-[3px] border-[#474545] bg-[#080918] p-6 rounded-2xl">
-              {property.residential_options?.length > 0 && (
-                <div className="mb-4">
-                  <p className="text-gray-500 text-xs font-bold uppercase mb-3">Residential</p>
-                  <div className="flex flex-wrap gap-2">
-                    {property.residential_options.map((opt, i) => (
-                      <span key={i} className="px-3 py-1 bg-purple-900/40 text-purple-200 border border-purple-800/50 rounded-lg text-sm font-bold">{opt}</span>
+            {/* Image Counter & Fullscreen */}
+            <div className="absolute top-6 right-6 flex gap-3">
+               <div className="px-4 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-xs font-bold text-white tracking-wider flex items-center gap-2">
+                 <FiMaximize /> {currentImageIndex + 1} / {propertyImages.length}
+               </div>
+            </div>
+            
+            {/* Quick Title Overlay (Mobile Friendly) */}
+            <div className="absolute bottom-6 left-6 md:bottom-10 md:left-10 z-10">
+                <div className="flex flex-wrap gap-2 mb-3">
+                    {propertyTags.map((tag, i) => (
+                        <span key={i} className="px-3 py-1 rounded-lg bg-white/10 backdrop-blur-md border border-white/10 text-[10px] md:text-xs font-bold uppercase tracking-wider text-white shadow-lg">
+                            {tag}
+                        </span>
                     ))}
-                  </div>
                 </div>
-              )}
-              {property.commercial_options?.length > 0 && (
+                <h1 className="text-3xl md:text-5xl font-black text-white! tracking-tight leading-tight shadow-black drop-shadow-lg">
+                    {propertyTitle}
+                </h1>
+                <p className="text-white! font-medium flex items-center gap-2 mt-2 text-sm md:text-base">
+                    <FiMapPin className="text-purple-400" /> {property.project_location || property.location}
+                </p>
+            </div>
+          </div>
+
+          {/* Quick Stats & CTA Sidebar */}
+          <div className="lg:col-span-4 flex flex-col gap-4">
+             {/* Price Card */}
+             <div className="p-8 rounded-[32px] bg-[#0A0A0A] border border-white/5 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-purple-600/10 rounded-full blur-[60px] -mr-16 -mt-16 transition-all group-hover:bg-purple-600/20"></div>
+                <p className="text-slate-500 text-xs font-bold uppercase tracking-[0.2em] mb-2">Estimated Price</p>
+                <h2 className="text-3xl md:text-4xl font-black text-white mb-1">{displayPrice}</h2>
+                <p className="text-xs text-slate-500 font-medium">
+                    {isDeveloper ? '*Base price excluding taxes' : '*Negotiable'}
+                </p>
+                <div className="w-full h-px bg-white/5 my-6"></div>
+                
+                {/* Key Stats Grid */}
+                <div className="grid grid-cols-2 gap-4">
+                     <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/5">
+                        <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Config</p>
+                        <p className="text-white font-bold text-sm md:text-base">
+                            {property.residential_options?.length ? property.residential_options[0] : (property.bhk || 'N/A')}
+                        </p>
+                     </div>
+                     <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/5">
+                        <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Area</p>
+                        <p className="text-white font-bold text-sm md:text-base">
+                             {property.project_stats?.area || property.area || property.size || 'N/A'}
+                        </p>
+                     </div>
+                     <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/5">
+                        <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Possession</p>
+                        <p className="text-white font-bold text-sm md:text-base">
+                             {property.possession_status || 'Ready'}
+                        </p>
+                     </div>
+                     <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/5">
+                        <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">RERA</p>
+                        <p className={`font-bold text-sm md:text-base ${property.rera_status === 'Yes' ? 'text-green-400' : 'text-slate-400'}`}>
+                             {property.rera_status === 'Yes' ? 'Verified' : 'N/A'}
+                        </p>
+                     </div>
+                </div>
+
+                <button 
+                  onClick={() => navigate('/contact', { state: { propertyId: property.id, propertyTitle } })}
+                  className="w-full mt-6 py-4 bg-white text-black font-black rounded-xl hover:bg-purple-50 transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-white/5"
+                >
+                    Request Callback
+                </button>
+             </div>
+
+             {/* Brochure Download */}
+             {(property.brochure_url || property.brochure) && (
+                 <a 
+                   href={property.brochure_url || property.brochure}
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   className="flex items-center justify-between p-6 rounded-[24px] bg-[#0A0A0A] border border-white/5 hover:border-purple-500/30 transition-all group"
+                 >
+                    <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-white group-hover:bg-purple-600 transition-colors">
+                            <FiDownload />
+                        </div>
+                        <div>
+                            <p className="text-white font-bold">Project Brochure</p>
+                            <p className="text-xs text-slate-500">PDF Format • 2.4 MB</p>
+                        </div>
+                    </div>
+                 </a>
+             )}
+          </div>
+        </div>
+
+        {/* --- DETAILS GRID --- */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+            
+            {/* Left Column: Description & Amenities */}
+            <div className="lg:col-span-2 space-y-12">
+                
+                {/* About Section */}
                 <div>
-                  <p className="text-gray-500 text-xs font-bold uppercase mb-3">Commercial</p>
-                  <div className="flex flex-wrap gap-2">
-                    {property.commercial_options.map((opt, i) => (
-                      <span key={i} className="px-3 py-1 bg-blue-900/40 text-blue-200 border border-blue-800/50 rounded-lg text-sm font-bold">{opt}</span>
-                    ))}
-                  </div>
+                    <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+                        <span className="w-1 h-8 bg-purple-500 rounded-full"></span>
+                        About {propertyTitle}
+                    </h3>
+                    <div className="prose prose-invert prose-lg max-w-none text-slate-400 leading-relaxed font-light">
+                        <p className="whitespace-pre-line">{property.description || "No description available for this premium property."}</p>
+                    </div>
                 </div>
-              )}
+
+                {/* Amenities Grid */}
+                {propertyFacilities.length > 0 && (
+                    <div>
+                        <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+                            <span className="w-1 h-8 bg-indigo-500 rounded-full"></span>
+                            Premium Amenities
+                        </h3>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                            {propertyFacilities.map((amenity, idx) => (
+                                <div key={idx} className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex flex-col items-center justify-center text-center hover:bg-white/[0.05] transition-colors group">
+                                    <div className="w-8 h-8 mb-3 text-slate-500 group-hover:text-purple-400 transition-colors">
+                                        <FiCheckCircle size={24} />
+                                    </div>
+                                    <span className="text-sm font-medium text-slate-300">{amenity}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+                
+                {/* Developer / Project Stats */}
+                {isDeveloper && property.project_stats && (
+                    <div className="bg-[#0A0A0A] rounded-[32px] p-8 border border-white/5">
+                        <h3 className="text-xl font-bold text-white mb-8 text-center">Project Configuration</h3>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                             <div className="text-center">
+                                 <p className="text-3xl font-black text-white mb-1">{property.project_stats.towers || '--'}</p>
+                                 <p className="text-xs uppercase tracking-widest text-slate-500 font-bold">Towers</p>
+                             </div>
+                             <div className="text-center border-l border-white/10">
+                                 <p className="text-3xl font-black text-white mb-1">{property.project_stats.floors || '--'}</p>
+                                 <p className="text-xs uppercase tracking-widest text-slate-500 font-bold">Floors</p>
+                             </div>
+                             <div className="text-center border-l border-white/10">
+                                 <p className="text-3xl font-black text-white mb-1">{property.project_stats.units || '--'}</p>
+                                 <p className="text-xs uppercase tracking-widest text-slate-500 font-bold">Units</p>
+                             </div>
+                             <div className="text-center border-l border-white/10">
+                                 <p className="text-3xl font-black text-white mb-1">{property.project_stats.area || '--'}</p>
+                                 <p className="text-xs uppercase tracking-widest text-slate-500 font-bold">Acres</p>
+                             </div>
+                        </div>
+                    </div>
+                )}
+
             </div>
-          </div>
-        )}
-      </div>
 
-      {/* Facilities/Amenities */}
-      {propertyFacilities.length > 0 && (
-        <div className="mt-16">
-          <h2 className="text-3xl font-extrabold mb-8 flex items-center gap-3">
-            Premium Features
-          </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {propertyFacilities.map((facility, idx) => (
-              <div key={idx} className="p-4 border-[3px] border-[#474545] bg-[#080918] rounded-2xl text-center text-sm font-bold hover:border-blue-500 transition-colors shadow-sm">
-                {facility}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+            {/* Right Column: Sticky Contact/Trust Card */}
+            <div className="lg:col-span-1">
+                <div className="sticky top-8 space-y-6">
+                    
+                    {/* Trust Card */}
+                    <div className="p-8 rounded-[32px] bg-linear-to-br from-slate-900 to-black border border-slate-800 shadow-2xl relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-40 h-40 bg-indigo-500/10 rounded-full blur-[80px] -mr-10 -mt-10"></div>
+                        
+                        <div className="relative z-10 flex flex-col items-center text-center">
+                             {(property.logo || property.developer_logo) ? (
+                                 <div className="w-24 h-24 bg-white rounded-2xl p-2 flex items-center justify-center mb-6 shadow-lg">
+                                     <img src={property.logo || property.developer_logo} alt="Logo" className="max-w-full max-h-full object-contain" />
+                                 </div>
+                             ) : (
+                                <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mb-6 text-3xl">
+                                    🏢
+                                </div>
+                             )}
 
-      {/* Developer/Seller Info */}
-      <div className="mt-16 bg-linear-to-r from-gray-900 to-black p-8 rounded-3xl border border-gray-800 shadow-2xl">
-        <h2 className="text-xs font-black text-gray-500 uppercase tracking-[0.3em] mb-6">
-          {isDeveloper ? 'Project Developer' : property.owner ? 'Property Owner' : 'Verified Seller'}
-        </h2>
-        <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-          <div className="flex items-center gap-6">
-            {property.logo && (
-              <div className="h-20 w-20 bg-white rounded-2xl p-2 flex items-center justify-center shadow-inner">
-                <img
-                  src={property.logo}
-                  alt="Logo"
-                  className="max-h-full max-w-full object-contain"
-                />
-              </div>
-            )}
-            <div>
-              <p className="text-2xl font-black text-white tracking-tight">
-                {property.developer || property.company_name || property.owner_name || property.owner || 'Premium Partner'}
-              </p>
-              <p className="text-gray-500 font-bold uppercase text-xs tracking-wider flex items-center gap-2 mt-1">
-                {isDeveloper ? 'Trusted Builder' : 'Property Owner'} • Since {new Date(property.created_at).getFullYear() || '2024'}
-              </p>
+                             <h4 className="text-white font-black text-xl mb-1">
+                                {property.developer || property.company_name || property.owner_name || "Verified Listing"}
+                             </h4>
+                             <p className="text-slate-500 text-sm font-medium mb-8">
+                                {isDeveloper ? 'Premium Developer' : 'Property Owner'} • {property.contact_phone ? 'Verified Contact' : 'Reach out via Form'}
+                             </p>
+
+                             {property.contact_phone && (
+                                <a href={`tel:${property.contact_phone}`} className="w-full flex items-center justify-center gap-3 py-4 rounded-xl bg-purple-600 text-white font-bold hover:bg-purple-700 transition-all shadow-lg shadow-purple-900/20 mb-3">
+                                    <FiPhone /> +91 {property.contact_phone}
+                                </a>
+                             )}
+                             
+                             <button className="w-full py-4 rounded-xl border border-white/10 text-slate-300 font-bold hover:bg-white/5 transition-colors flex items-center justify-center gap-2">
+                                <FiShield /> View Legitimacy Report
+                             </button>
+                        </div>
+                    </div>
+
+                    {/* Disclaimer */}
+                    <p className="text-xs text-slate-600 text-center leading-relaxed px-4">
+                        Bada Builder verifies all developer listings. However, we recommend conducting your own due diligence before any financial transaction.
+                    </p>
+
+                </div>
             </div>
-          </div>
 
-          <div className="flex flex-col gap-3 w-full md:w-auto">
-            {property.contact_phone && (
-              <a
-                href={`tel:+91${property.contact_phone}`}
-                className="flex items-center justify-center gap-3 bg-white text-black font-black px-8 py-4 rounded-2xl hover:bg-gray-200 transition transform hover:scale-105 active:scale-95 shadow-xl"
-              >
-                <FiPhone /> +91 {property.contact_phone}
-              </a>
-            )}
-            <button className="text-blue-400 font-bold hover:text-blue-300 transition text-sm">
-              View Developer Portfolio
-            </button>
-          </div>
         </div>
-      </div>
 
-      {/* Description */}
-      <div className="mt-16 max-w-4xl">
-        <h2 className="text-2xl font-extrabold mb-6">About this Property</h2>
-        <div className="prose prose-invert max-w-none">
-          <p className="text-gray-400 leading-relaxed text-lg whitespace-pre-line">
-            {property.description ||
-              `This stunning ${property.type} is located in ${property.location} and offers excellent value for money. 
-               Benefit from modern design, strategic location, and premium amenities. 
-               Contact us today to schedule an exclusive site visit.`}
-          </p>
-        </div>
       </div>
     </div>
   );
