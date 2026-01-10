@@ -184,7 +184,7 @@ const SubscriptionPlans = () => {
   };
 
   return (
-    <div className="subscription-section bg-[#050505]! text-white! py-32 px-4 sm:px-6 lg:px-8 relative overflow-hidden min-h-[800px] flex items-center">
+    <div className="subscription-section bg-[#050505]! text-white! py-16 md:py-32 px-4 sm:px-6 lg:px-8 relative overflow-hidden min-h-[800px] flex items-center">
       {/* Background Ambient Glows */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
         <div className="absolute top-[-10%] left-[10%] w-[600px] h-[600px] bg-purple-600/20 rounded-full blur-[120px] opacity-50"></div>
@@ -203,7 +203,7 @@ const SubscriptionPlans = () => {
           <div className="inline-block px-4 py-2 rounded-full bg-white/5 border border-white/10 text-[10px] font-black tracking-[0.3em] uppercase text-purple-300 mb-8">
             Premium Access
           </div>
-          <h1 className="text-5xl md:text-7xl font-black text-white! mb-8 tracking-tighter">
+          <h1 className="text-4xl md:text-7xl font-black text-white! mb-8 tracking-tighter">
             Scale Your <span className="text-transparent bg-clip-text bg-linear-to-r from-purple-400 to-indigo-400">Reach</span>
           </h1>
           <p className="text-xl text-slate-400 max-w-2xl mx-auto font-light leading-relaxed">
@@ -243,7 +243,7 @@ const SubscriptionPlans = () => {
                 <h3 className="text-white font-bold opacity-60 uppercase tracking-[0.2em] text-[10px] mb-4">{plan.duration}</h3>
                 <div className="flex items-baseline gap-1">
                   <span className="text-white text-2xl font-bold">₹</span>
-                  <span className="text-5xl md:text-6xl font-black text-white tracking-tighter">{plan.price.toLocaleString()}</span>
+                  <span className="text-4xl md:text-6xl font-black text-white tracking-tighter">{plan.price.toLocaleString()}</span>
                 </div>
               </div>
 

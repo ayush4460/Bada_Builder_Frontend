@@ -26,7 +26,7 @@ const HeroSection = () => {
 
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#050505] py-20 px-4 sm:px-6 lg:px-8 text-center text-white">
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#050505] py-12 md:py-20 px-4 sm:px-6 lg:px-8 text-center text-white">
       {/* Premium Ambient Background */}
       <div className="absolute inset-0 z-0">
         <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-purple-600/10 rounded-full blur-[120px] -mr-96 -mt-96 animate-pulse"></div>
@@ -73,7 +73,7 @@ const HeroSection = () => {
            animate={{ opacity: 1, y: 0 }}
            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
         >
-          <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-[120px] font-bold mb-10 leading-[0.9] tracking-[-0.04em] text-white">
+          <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-[100px] font-bold mb-6 md:mb-10 leading-[1.0] md:leading-[0.9] tracking-[-0.04em] text-white!">
             Beyond <br /> 
             <span className="text-transparent bg-clip-text bg-linear-to-r from-purple-400 via-indigo-300 to-purple-400 animate-gradient-x px-2">Property.</span>
           </h1>
@@ -83,7 +83,7 @@ const HeroSection = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-          className="text-xl sm:text-2xl text-slate-400 mb-16 max-w-2xl leading-relaxed font-light tracking-tight"
+          className="text-xl sm:text-2xl text-white! mb-16 max-w-2xl leading-relaxed font-light tracking-tight"
         >
           Discover curated investments and premium lifestyles across India's most iconic locations.
         </motion.p>

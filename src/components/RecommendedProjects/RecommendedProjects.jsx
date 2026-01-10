@@ -105,12 +105,12 @@ const RecommendedProjects = () => {
   }
 
   return (
-    <section className="py-24 px-4 sm:px-6 lg:px-8 bg-slate-50 text-slate-900">
+    <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 bg-slate-50 text-slate-900">
       <div className="max-w-[1400px] mx-auto">
         
         {/* Header */}
         <motion.div 
-          className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8"
+          className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 md:mb-16 gap-8"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
@@ -125,16 +125,16 @@ const RecommendedProjects = () => {
             >
               Exclusive Listings
             </motion.div>
-            <h2 className="text-4xl md:text-6xl font-bold text-slate-900 tracking-tight mb-6">
+            <h2 className="text-3xl md:text-6xl font-bold text-slate-900 tracking-tight mb-6">
               Featured <span className="text-transparent bg-clip-text bg-linear-to-r from-purple-600 to-indigo-600">Collections</span>
             </h2>
-            <p className="text-xl text-slate-500 font-light leading-relaxed">
+            <p className="text-lg md:text-xl text-slate-500 font-light leading-relaxed">
               Explore our handpicked selection of premium properties curated for exceptional lifestyles and high-growth investments.
             </p>
           </div>
           <Link 
             to="/exhibition" 
-            className="group flex items-center gap-3 px-8 py-4 rounded-2xl bg-white text-slate-900 font-bold border border-slate-200 hover:border-purple-200 hover:bg-slate-50 transition-all duration-300 shadow-sm hover:shadow-xl"
+            className="group flex items-center gap-3 px-8 py-4 rounded-2xl bg-white text-slate-900 font-bold border border-slate-200 hover:border-purple-200 hover:bg-slate-50 transition-all duration-300 shadow-sm hover:shadow-xl w-full md:w-auto justify-center md:justify-start"
           >
             Browse All Properties
             <span className="group-hover:translate-x-1 transition-transform duration-300">→</span>

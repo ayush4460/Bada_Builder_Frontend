@@ -31,8 +31,8 @@ const steps = [
 
 const Working = () => {
   return (
-    <div className="py-24 px-4 sm:px-6 lg:px-8 max-w-[1400px] mx-auto">
-      <div className="text-center mb-20">
+    <div className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 max-w-[1400px] mx-auto">
+      <div className="text-center mb-12 md:mb-20">
         <motion.div
            initial={{ opacity: 0, y: 20 }}
            whileInView={{ opacity: 1, y: 0 }}
@@ -46,7 +46,7 @@ const Working = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.1 }}
-          className="text-4xl md:text-5xl font-bold text-slate-900 mb-6"
+          className="text-3xl md:text-5xl font-bold text-slate-900 mb-6"
         >
           How Bada Builder <span className="text-transparent bg-clip-text bg-linear-to-r from-purple-600 to-indigo-600">Works</span>
         </motion.h2>

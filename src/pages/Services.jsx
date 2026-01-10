@@ -74,7 +74,7 @@ const Services = () => {
   };
 
   return (
-    <div className="services-page bg-slate-50 py-24 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <div className="services-page bg-slate-50 py-16 md:py-24 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       <div className="services-container max-w-[1400px] mx-auto relative z-10">
         <motion.div 
           className="services-header text-center mb-20"
@@ -172,7 +172,7 @@ const Services = () => {
           ></motion.div>
 
           {/* Content Container */}
-          <div className="relative z-10 p-12 md:p-20 text-center flex flex-col items-center">
+          <div className="relative z-10 p-8 md:p-20 text-center flex flex-col items-center">
             {/* Social Proof Badge */}
             <motion.div 
               className="flex items-center gap-3 bg-white/5 border border-white/10 px-5 py-2 rounded-full mb-10 transition-colors hover:bg-white/10"
@@ -191,7 +191,7 @@ const Services = () => {
               <span className="text-xs font-bold text-slate-300 tracking-wide">50+ Area Experts Active Now</span>
             </motion.div>
 
-            <h2 className="text-4xl md:text-6xl font-black text-white! mb-6 leading-tight max-w-3xl">
+            <h2 className="text-3xl md:text-6xl font-black text-white! mb-6 leading-tight max-w-3xl">
               Need <span className="text-transparent bg-clip-text bg-linear-to-r from-purple-400 via-indigo-400 to-purple-400 bg-size-[200%_auto] animate-gradient">Personalized Guidance?</span>
             </h2>
             
